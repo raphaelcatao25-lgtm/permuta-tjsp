@@ -40,3 +40,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .env.local
+# Backups locais do banco de dados
+backup-pre-publicacao/
