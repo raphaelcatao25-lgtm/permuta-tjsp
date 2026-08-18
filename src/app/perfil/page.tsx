@@ -1377,1224 +1377,1439 @@ return (
 
 <div className="mx-auto max-w-4xl space-y-6 px-6 py-8">
 
-<h1 className="text-2xl font-bold text-slate-900">
-
-Meu Perfil
-
-</h1>
-
-<p className="text-sm text-slate-500">
-
-Atualize seus dados e preferências de permuta.
-
-</p>
-
-
-
-
-{
-carregando && (
-
-<div className="rounded-xl bg-slate-100 p-4">
-
-Carregando informações...
-
-</div>
-
-)
-
-}
-
-
-
-
-
-{
-!carregando && (
-
-<>
-
-
-
-
-
-<div className="rounded-2xl bg-white p-6 shadow">
-
-<div className="flex flex-wrap items-start justify-between gap-4">
-<div>
-<h2 className="text-lg font-semibold text-slate-900">
-Status da busca por permuta
-</h2>
-<p className="mt-1 text-sm text-slate-500">
-Controle sua participação nas novas oportunidades de permuta.
-</p>
-</div>
-
-{
-emMatch ? (
-<span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1.5 text-sm font-semibold text-blue-800">
-Em permuta
-</span>
-) : buscaPausada ? (
-<span className="inline-flex items-center rounded-full bg-amber-100 px-3 py-1.5 text-sm font-semibold text-amber-800">
-Pausado
-</span>
-) : (
-<span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1.5 text-sm font-semibold text-green-800">
-Disponível
-</span>
-)
-}
-</div>
-
-{
-emMatch ? (
-<div className="mt-5 rounded-xl border border-blue-200 bg-blue-50 p-4">
-<p className="font-semibold text-blue-900">Você está em uma permuta confirmada.</p>
-<p className="mt-1 text-sm leading-6 text-blue-800">
-Enquanto essa permuta estiver em andamento, seu perfil não participa de novas buscas. Para voltar a receber oportunidades, encerre primeiro a permuta atual na página Propostas.
-</p>
-</div>
-) : buscaPausada ? (
-<div className="mt-5">
-<div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-<p className="font-semibold text-amber-900">Sua busca está pausada.</p>
-<p className="mt-1 text-sm leading-6 text-amber-800">
-Seu perfil, sua comarca e suas preferências continuam salvos, mas você não aparece em novas oportunidades de permuta.
-</p>
-</div>
-<button type="button" onClick={reativarBusca} disabled={processandoStatus} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-green-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-50">
-<PlayCircle size={18}/>
-{processandoStatus ? "Reativando..." : "Reativar busca"}
-</button>
-</div>
-) : (
-<div className="mt-5">
-<div className="rounded-xl border border-green-200 bg-green-50 p-4">
-<p className="font-semibold text-green-900">Seu perfil está disponível para novas oportunidades.</p>
-<p className="mt-1 text-sm leading-6 text-green-800">
-Você participa normalmente das buscas de permuta direta e das combinações em cadeia.
-</p>
-</div>
-<button type="button" onClick={()=>setConfirmarPausa(true)} disabled={processandoStatus} className="mt-4 inline-flex items-center gap-2 rounded-xl border border-amber-300 bg-white px-5 py-3 text-sm font-semibold text-amber-800 transition hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-50">
-<PauseCircle size={18}/>
-Pausar busca
-</button>
-</div>
-)
-}
-</div>
-
-
-<div className="rounded-2xl bg-white p-6 shadow">
-
-<h2 className="mb-5 text-lg font-semibold">
-
-Dados pessoais
-
-</h2>
-
-
-
-
-<div className="space-y-4">
-
-
-
-
-<div>
-
-<label className="mb-2 block text-sm font-medium">
-
-Nome
-
-</label>
-
-<input
-
-value={nome}
-
-onChange={(e)=>setNome(e.target.value)}
-
-className="
-w-full rounded-xl border
-border-slate-300
-px-4 py-3
-text-slate-900
-"
-
-/>
-
-</div>
-
-
-
-
-
-
-
-
-<div>
-
-<label className="mb-2 block text-sm font-medium">
-
-Cargo
-
-</label>
-
-
-<select
-
-value={cargo}
-
-onChange={(e)=>setCargo(e.target.value)}
-
-className="
-w-full rounded-xl border
-border-slate-300
-px-4 py-3
-text-slate-900
-"
-
->
-
-<option value="">
-
-Selecione
-
-</option>
-
-{
-
-CARGOS.map((item)=>(
-
-<option
-
-key={item}
-
-value={item}
-
->
-
-{item}
-
-</option>
-
-))
-
-}
-
-</select>
-
-
-</div>
-
-
-
-
-
-
-
-
-<div>
-
-<label className="mb-2 block text-sm font-medium">
-
-Telefone
-
-</label>
-
-<input
-
-value={telefone}
-
-onChange={(e)=>setTelefone(e.target.value)}
-
-className="
-w-full rounded-xl border
-border-slate-300
-px-4 py-3
-text-slate-900
-"
-
-/>
-
-<label className="mt-3 flex gap-2 text-sm">
-
-<input
-
-type="checkbox"
-
-checked={mostrarTelefone}
-
-onChange={(e)=>setMostrarTelefone(e.target.checked)}
-
-/>
-
-Mostrar telefone
-
-</label>
-
-</div>
-
-
-
-</div>
-
-</div>
-
-
-
-
-
-
-
-
-<div className="rounded-2xl bg-white p-6 shadow">
-
-<h2 className="mb-5 text-lg font-semibold">
-
-E-mail e segurança
-
-</h2>
-
-
-
-
-<p className="mb-4 text-sm text-slate-500">
-
-E-mail atual:
-
-<strong>
-
-{" "}{emailAtual}
-
-</strong>
-
-</p>
-
-
-
-
-<div className="space-y-4">
-
-<input
-
-type="email"
-
-value={novoEmail}
-
-onChange={(e)=>setNovoEmail(e.target.value)}
-
-className="
-w-full rounded-xl border
-border-slate-300
-px-4 py-3
-"
-
-placeholder="Novo e-mail"
-
-/>
-
-
-
-
-<input
-
-type="email"
-
-value={confirmarNovoEmail}
-
-onChange={(e)=>setConfirmarNovoEmail(e.target.value)}
-
-onPaste={(e)=>e.preventDefault()}
-
-className="
-w-full rounded-xl border
-border-slate-300
-px-4 py-3
-"
-
-placeholder="Confirmar novo e-mail"
-
-/>
-
-
-
-
-<button
-
-type="button"
-
-onClick={alterarEmail}
-
-className="
-rounded-xl
-bg-slate-800
-px-5
-py-3
-text-white
-"
-
->
-
-Alterar e-mail
-
-</button>
-
-
-
-</div>
-
-
-
-
-
-
-
-
-<hr className="my-6"/>
-
-
-
-
-
-
-
-<div className="space-y-4">
-
-
-<div className="relative">
-
-<input
-
-type={mostrarSenha ? "text":"password"}
-
-value={novaSenha}
-
-onChange={(e)=>setNovaSenha(e.target.value)}
-
-className="
-w-full rounded-xl border
-border-slate-300
-px-4 py-3 pr-12
-"
-
-placeholder="Nova senha"
-
-/>
-
-
-<button
-
-type="button"
-
-onClick={()=>setMostrarSenha(!mostrarSenha)}
-
-className="
-absolute right-3 top-1/2
--translate-y-1/2
-text-slate-500
-"
-
->
-
-{
-
-mostrarSenha
-
-?
-
-<EyeOff size={20}/>
-
-:
-
-<Eye size={20}/>
-
-}
-
-</button>
-
-</div>
-
-
-
-
-
-
-<input
-
-type={mostrarSenha ? "text":"password"}
-
-value={confirmarSenha}
-
-onChange={(e)=>setConfirmarSenha(e.target.value)}
-
-onPaste={(e)=>e.preventDefault()}
-
-className="
-w-full rounded-xl border
-border-slate-300
-px-4 py-3
-"
-
-placeholder="Confirmar nova senha"
-
-/>
-
-
-
-
-
-
-<button
-
-type="button"
-
-onClick={alterarSenha}
-
-className="
-rounded-xl
-bg-slate-800
-px-5
-py-3
-text-white
-"
-
->
-
-Alterar senha
-
-</button>
-
-
-
-
-</div>
-
-</div>
-
-
-
-
-
-
-
-
-<div className="rounded-2xl bg-white p-6 shadow">
-
-<h2 className="mb-5 text-lg font-semibold">
-
-Localização
-
-</h2>
-
-
-{
-emMatch && (
-
-<div className="
-mb-5
-rounded-xl
-border
-border-blue-200
-bg-blue-50
-p-4
-">
-
-<p className="
-font-semibold
-text-blue-900
-">
-
-Localização e preferências bloqueadas temporariamente
-
-</p>
-
-<p className="
-mt-1
-text-sm
-leading-6
-text-blue-800
-">
-
-Enquanto sua permuta estiver confirmada, sua comarca atual, seus destinos e a ordem de prioridade não podem ser alterados. Isso evita inconsistências na permuta em andamento.
-
-</p>
-
-</div>
-
-)
-}
-
-
-
-
-<div
-className={
-emMatch
-? "pointer-events-none select-none opacity-60"
-: ""
-}
->
-
-<ComarcaAtualSelector
-
-comarcas={comarcas}
-
-comarcaAtualId={comarcaAtualId}
-
-valorBusca={buscaComarcaAtual}
-
-onChangeBusca={setBuscaComarcaAtual}
-
-onSelecionar={selecionarComarcaAtual}
-
-/>
-
-{
-
-comarcaSelecionada && (
-
-<ComarcaInfoCard
-
-titulo="Comarca atual"
-
-nome={comarcaSelecionada.nome}
-
-circunscricao={comarcaSelecionada.circunscricao}
-
-raj={comarcaSelecionada.raj}
-
-/>
-
-)
-
-}
-
-
-
-<div className="mt-8">
-  <ComarcaDesejadaSelector
-    comarcas={comarcas}
-    comarcaAtualId={comarcaAtualId}
-    comarcasSelecionadasIds={destinosIds}
-    onAdicionar={adicionarDestino}
-  />
-</div>
-
-
-
-
-
-
-{
-
-destinos.length > 0 && (
-
-<div className="mt-6">
-
-<h3 className="mb-3 font-semibold">
-
-Prioridade das comarcas
-
-</h3>
-
-
-<ComarcaPrioridadeList
-
-  comarcas={destinos}
-
-  onChange={alterarPrioridade}
-
-  onRemove={removerDestino}
-
-/>
-
-
-</div>
-
-)
-
-}
-
-</div>
-
-
-</div>
-
-{
-
-erro && (
-
-<div className="
-rounded-xl
-bg-red-50
-p-4
-text-red-700
-">
-
-{erro}
-
-</div>
-
-)
-
-}
-
-
-
-
-
-{
-
-mensagem && (
-
-<div className="
-rounded-xl
-bg-green-50
-p-4
-text-green-700
-">
-
-{mensagem}
-
-</div>
-
-)
-
-}
-
-
-
-
-
-
-<button
-
-type="button"
-
-onClick={salvarPerfil}
-
-disabled={salvando}
-
-className="
-flex w-full
-items-center
-justify-center
-gap-2
-rounded-xl
-bg-blue-900
-py-3
-font-semibold
-text-white
-disabled:opacity-50
-"
-
->
-
-<Save size={18}/>
-
-{
-
-salvando
-
-?
-
-"Salvando..."
-
-:
-
-emMatch
-
-?
-
-"Salvar dados pessoais"
-
-:
-
-"Salvar alterações"
-
-}
-
-</button>
-
-
-{/* ========================================
-    ZONA DE RISCO
-======================================== */}
-
-<div className="
-  mt-8
-  rounded-2xl
-  border
-  border-red-200
-  bg-white
-  p-6
-  shadow
-">
-
-  <div className="
-    flex
-    flex-col
-    gap-4
-    sm:flex-row
-    sm:items-start
-    sm:justify-between
-  ">
-
-    <div className="max-w-2xl">
-
-      <h2 className="
-        text-lg
-        font-semibold
-        text-red-900
-      ">
-
-        Zona de risco
-
-      </h2>
-
-      <p className="
-        mt-2
+  <div>
+    <h1 className="text-2xl font-bold text-white">
+      Meu Perfil
+    </h1>
+
+    <p className="mt-1 text-sm text-slate-400">
+      Atualize seus dados e preferências de permuta.
+    </p>
+  </div>
+
+
+  {
+    carregando && (
+
+      <div className="
+        rounded-2xl
+        border
+        border-teal-300/10
+        bg-[#0d2232]
+        p-5
         text-sm
-        leading-6
-        text-slate-600
+        text-slate-300
+        shadow-[0_16px_40px_rgba(0,0,0,0.16)]
       ">
+        Carregando informações...
+      </div>
 
-        A exclusão da conta é permanente. Seus dados pessoais,
-        preferências, notificações e sua participação ativa na
-        plataforma serão removidos.
-
-      </p>
-
-      <p className="
-        mt-2
-        text-sm
-        leading-6
-        text-slate-500
-      ">
-
-        Registros necessários apenas para estatísticas poderão
-        permanecer de forma anônima.
-
-      </p>
+    )
+  }
 
 
-      {
-        emMatch && (
+  {
+    !carregando && (
 
-          <p className="
-            mt-3
-            text-sm
-            font-semibold
-            text-blue-800
-          ">
+      <>
 
-            Você possui uma permuta confirmada em andamento.
-            Encerre essa permuta antes de excluir sua conta.
+        {/* ========================================
+            STATUS DA BUSCA
+        ======================================== */}
+
+        <section className="
+          rounded-2xl
+          border
+          border-teal-300/10
+          bg-[#0d2232]
+          p-6
+          shadow-[0_16px_40px_rgba(0,0,0,0.16)]
+        ">
+
+          <div className="flex flex-wrap items-start justify-between gap-4">
+
+            <div>
+              <h2 className="text-lg font-semibold text-white">
+                Status da busca por permuta
+              </h2>
+
+              <p className="mt-1 text-sm text-slate-400">
+                Controle sua participação nas novas oportunidades de permuta.
+              </p>
+            </div>
+
+
+            {
+              emMatch ? (
+
+                <span className="
+                  inline-flex
+                  items-center
+                  gap-2
+                  rounded-full
+                  border
+                  border-cyan-300/20
+                  bg-cyan-400/10
+                  px-3
+                  py-1.5
+                  text-sm
+                  font-semibold
+                  text-cyan-300
+                ">
+                  <span className="h-2 w-2 rounded-full bg-cyan-400" />
+                  Em permuta
+                </span>
+
+              ) : buscaPausada ? (
+
+                <span className="
+                  inline-flex
+                  items-center
+                  gap-2
+                  rounded-full
+                  border
+                  border-amber-300/20
+                  bg-amber-400/10
+                  px-3
+                  py-1.5
+                  text-sm
+                  font-semibold
+                  text-amber-300
+                ">
+                  <span className="h-2 w-2 rounded-full bg-amber-400" />
+                  Pausado
+                </span>
+
+              ) : (
+
+                <span className="
+                  inline-flex
+                  items-center
+                  gap-2
+                  rounded-full
+                  border
+                  border-emerald-300/20
+                  bg-emerald-400/10
+                  px-3
+                  py-1.5
+                  text-sm
+                  font-semibold
+                  text-emerald-300
+                ">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                  Disponível
+                </span>
+
+              )
+            }
+
+          </div>
+
+
+          {
+            emMatch ? (
+
+              <div className="
+                mt-5
+                rounded-2xl
+                border
+                border-cyan-300/15
+                bg-cyan-400/[0.06]
+                p-5
+              ">
+
+                <p className="font-semibold text-cyan-200">
+                  Você está em uma permuta confirmada.
+                </p>
+
+                <p className="mt-1 text-sm leading-6 text-slate-300">
+                  Enquanto essa permuta estiver em andamento, seu perfil não
+                  participa de novas buscas. Para voltar a receber oportunidades,
+                  encerre primeiro a permuta atual na página Propostas.
+                </p>
+
+              </div>
+
+            ) : buscaPausada ? (
+
+              <div className="mt-5">
+
+                <div className="
+                  rounded-2xl
+                  border
+                  border-amber-300/15
+                  bg-amber-400/[0.06]
+                  p-5
+                ">
+
+                  <p className="font-semibold text-amber-200">
+                    Sua busca está pausada.
+                  </p>
+
+                  <p className="mt-1 text-sm leading-6 text-slate-300">
+                    Seu perfil, sua comarca e suas preferências continuam salvos,
+                    mas você não aparece em novas oportunidades de permuta.
+                  </p>
+
+                </div>
+
+
+                <button
+                  type="button"
+                  onClick={reativarBusca}
+                  disabled={processandoStatus}
+                  className="
+                    mt-4
+                    inline-flex
+                    items-center
+                    gap-2
+                    rounded-xl
+                    border
+                    border-emerald-300/20
+                    bg-emerald-500/15
+                    px-5
+                    py-3
+                    text-sm
+                    font-semibold
+                    text-emerald-200
+                    transition-all
+                    duration-200
+                    hover:-translate-y-[1px]
+                    hover:bg-emerald-500/25
+                    disabled:cursor-not-allowed
+                    disabled:opacity-50
+                  "
+                >
+                  <PlayCircle size={18}/>
+
+                  {processandoStatus ? "Reativando..." : "Reativar busca"}
+                </button>
+
+              </div>
+
+            ) : (
+
+              <div className="mt-5">
+
+                <div className="
+                  rounded-2xl
+                  border
+                  border-emerald-300/15
+                  bg-emerald-400/[0.06]
+                  p-5
+                ">
+
+                  <p className="font-semibold text-emerald-200">
+                    Seu perfil está disponível para novas oportunidades.
+                  </p>
+
+                  <p className="mt-1 text-sm leading-6 text-slate-300">
+                    Você participa normalmente das buscas de permuta direta e
+                    das combinações em cadeia.
+                  </p>
+
+                </div>
+
+
+                <button
+                  type="button"
+                  onClick={()=>setConfirmarPausa(true)}
+                  disabled={processandoStatus}
+                  className="
+                    mt-4
+                    inline-flex
+                    items-center
+                    gap-2
+                    rounded-xl
+                    border
+                    border-amber-300/20
+                    bg-amber-400/[0.05]
+                    px-5
+                    py-3
+                    text-sm
+                    font-semibold
+                    text-amber-300
+                    transition-all
+                    duration-200
+                    hover:-translate-y-[1px]
+                    hover:bg-amber-400/10
+                    hover:text-amber-200
+                    disabled:cursor-not-allowed
+                    disabled:opacity-50
+                  "
+                >
+                  <PauseCircle size={18}/>
+                  Pausar busca
+                </button>
+
+              </div>
+
+            )
+          }
+
+        </section>
+
+
+        {/* ========================================
+            DADOS PESSOAIS
+        ======================================== */}
+
+        <section className="
+          rounded-2xl
+          border
+          border-teal-300/10
+          bg-[#0d2232]
+          p-6
+          shadow-[0_16px_40px_rgba(0,0,0,0.16)]
+        ">
+
+          <h2 className="mb-5 text-lg font-semibold text-white">
+            Dados pessoais
+          </h2>
+
+
+          <div className="space-y-4">
+
+            <div>
+
+              <label className="mb-2 block text-sm font-medium text-slate-300">
+                Nome
+              </label>
+
+              <input
+                value={nome}
+                onChange={(e)=>setNome(e.target.value)}
+                className="
+                  w-full
+                  rounded-xl
+                  border
+                  border-teal-300/15
+                  bg-[#081b29]
+                  px-4
+                  py-3
+                  text-white
+                  outline-none
+                  transition
+                  placeholder:text-slate-600
+                  hover:border-teal-300/25
+                  focus:border-teal-400
+                  focus:ring-4
+                  focus:ring-teal-400/10
+                "
+              />
+
+            </div>
+
+
+            <div>
+
+              <label className="mb-2 block text-sm font-medium text-slate-300">
+                Cargo
+              </label>
+
+              <select
+                value={cargo}
+                onChange={(e)=>setCargo(e.target.value)}
+                className="
+                  w-full
+                  rounded-xl
+                  border
+                  border-teal-300/15
+                  bg-[#081b29]
+                  px-4
+                  py-3
+                  text-white
+                  outline-none
+                  transition
+                  hover:border-teal-300/25
+                  focus:border-teal-400
+                  focus:ring-4
+                  focus:ring-teal-400/10
+                "
+              >
+
+                <option value="">
+                  Selecione
+                </option>
+
+                {
+                  CARGOS.map((item)=>(
+
+                    <option
+                      key={item}
+                      value={item}
+                    >
+                      {item}
+                    </option>
+
+                  ))
+                }
+
+              </select>
+
+            </div>
+
+
+            <div>
+
+              <label className="mb-2 block text-sm font-medium text-slate-300">
+                Telefone
+              </label>
+
+              <input
+                value={telefone}
+                onChange={(e)=>setTelefone(e.target.value)}
+                className="
+                  w-full
+                  rounded-xl
+                  border
+                  border-teal-300/15
+                  bg-[#081b29]
+                  px-4
+                  py-3
+                  text-white
+                  outline-none
+                  transition
+                  placeholder:text-slate-600
+                  hover:border-teal-300/25
+                  focus:border-teal-400
+                  focus:ring-4
+                  focus:ring-teal-400/10
+                "
+              />
+
+              <label className="
+                mt-3
+                flex
+                w-fit
+                items-center
+                gap-2
+                text-sm
+                text-slate-300
+              ">
+
+                <input
+                  type="checkbox"
+                  checked={mostrarTelefone}
+                  onChange={(e)=>setMostrarTelefone(e.target.checked)}
+                  className="accent-teal-500"
+                />
+
+                Mostrar telefone
+
+              </label>
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+        {/* ========================================
+            E-MAIL E SEGURANÇA
+        ======================================== */}
+
+        <section className="
+          rounded-2xl
+          border
+          border-teal-300/10
+          bg-[#0d2232]
+          p-6
+          shadow-[0_16px_40px_rgba(0,0,0,0.16)]
+        ">
+
+          <h2 className="mb-5 text-lg font-semibold text-white">
+            E-mail e segurança
+          </h2>
+
+
+          <p className="mb-4 text-sm text-slate-400">
+
+            E-mail atual:
+
+            <strong className="text-slate-200">
+              {" "}{emailAtual}
+            </strong>
 
           </p>
 
-        )
-      }
+
+          <div className="space-y-4">
+
+            <input
+              type="email"
+              value={novoEmail}
+              onChange={(e)=>setNovoEmail(e.target.value)}
+              className="
+                w-full
+                rounded-xl
+                border
+                border-teal-300/15
+                bg-[#081b29]
+                px-4
+                py-3
+                text-white
+                outline-none
+                transition
+                placeholder:text-slate-600
+                hover:border-teal-300/25
+                focus:border-teal-400
+                focus:ring-4
+                focus:ring-teal-400/10
+              "
+              placeholder="Novo e-mail"
+            />
+
+
+            <input
+              type="email"
+              value={confirmarNovoEmail}
+              onChange={(e)=>setConfirmarNovoEmail(e.target.value)}
+              onPaste={(e)=>e.preventDefault()}
+              className="
+                w-full
+                rounded-xl
+                border
+                border-teal-300/15
+                bg-[#081b29]
+                px-4
+                py-3
+                text-white
+                outline-none
+                transition
+                placeholder:text-slate-600
+                hover:border-teal-300/25
+                focus:border-teal-400
+                focus:ring-4
+                focus:ring-teal-400/10
+              "
+              placeholder="Confirmar novo e-mail"
+            />
+
+
+            <button
+              type="button"
+              onClick={alterarEmail}
+              className="
+                rounded-xl
+                border
+                border-teal-300/20
+                bg-teal-500/15
+                px-5
+                py-3
+                font-semibold
+                text-teal-200
+                transition-all
+                duration-200
+                hover:-translate-y-[1px]
+                hover:bg-teal-500/25
+              "
+            >
+              Alterar e-mail
+            </button>
+
+          </div>
+
+
+          <hr className="my-6 border-teal-300/10"/>
+
+
+          <div className="space-y-4">
+
+            <div className="relative">
+
+              <input
+                type={mostrarSenha ? "text":"password"}
+                value={novaSenha}
+                onChange={(e)=>setNovaSenha(e.target.value)}
+                className="
+                  w-full
+                  rounded-xl
+                  border
+                  border-teal-300/15
+                  bg-[#081b29]
+                  px-4
+                  py-3
+                  pr-12
+                  text-white
+                  outline-none
+                  transition
+                  placeholder:text-slate-600
+                  hover:border-teal-300/25
+                  focus:border-teal-400
+                  focus:ring-4
+                  focus:ring-teal-400/10
+                "
+                placeholder="Nova senha"
+              />
+
+
+              <button
+                type="button"
+                onClick={()=>setMostrarSenha(!mostrarSenha)}
+                className="
+                  absolute
+                  right-2
+                  top-1/2
+                  flex
+                  h-9
+                  w-9
+                  -translate-y-1/2
+                  items-center
+                  justify-center
+                  rounded-lg
+                  text-slate-500
+                  transition
+                  hover:bg-teal-400/10
+                  hover:text-teal-300
+                "
+              >
+
+                {
+                  mostrarSenha
+                    ? <EyeOff size={20}/>
+                    : <Eye size={20}/>
+                }
+
+              </button>
+
+            </div>
+
+
+            <input
+              type={mostrarSenha ? "text":"password"}
+              value={confirmarSenha}
+              onChange={(e)=>setConfirmarSenha(e.target.value)}
+              onPaste={(e)=>e.preventDefault()}
+              className="
+                w-full
+                rounded-xl
+                border
+                border-teal-300/15
+                bg-[#081b29]
+                px-4
+                py-3
+                text-white
+                outline-none
+                transition
+                placeholder:text-slate-600
+                hover:border-teal-300/25
+                focus:border-teal-400
+                focus:ring-4
+                focus:ring-teal-400/10
+              "
+              placeholder="Confirmar nova senha"
+            />
+
+
+            <button
+              type="button"
+              onClick={alterarSenha}
+              className="
+                rounded-xl
+                border
+                border-teal-300/20
+                bg-teal-500/15
+                px-5
+                py-3
+                font-semibold
+                text-teal-200
+                transition-all
+                duration-200
+                hover:-translate-y-[1px]
+                hover:bg-teal-500/25
+              "
+            >
+              Alterar senha
+            </button>
+
+          </div>
+
+        </section>
+
+
+        {/* ========================================
+            LOCALIZAÇÃO
+        ======================================== */}
+
+        <section className="
+          rounded-2xl
+          border
+          border-teal-300/10
+          bg-[#0d2232]
+          p-6
+          shadow-[0_16px_40px_rgba(0,0,0,0.16)]
+        ">
+
+          <h2 className="mb-5 text-lg font-semibold text-white">
+            Localização
+          </h2>
+
+
+          {
+            emMatch && (
+
+              <div className="
+                mb-5
+                rounded-2xl
+                border
+                border-cyan-300/15
+                bg-cyan-400/[0.06]
+                p-4
+              ">
+
+                <p className="font-semibold text-cyan-200">
+                  Localização e preferências bloqueadas temporariamente
+                </p>
+
+                <p className="mt-1 text-sm leading-6 text-slate-300">
+                  Enquanto sua permuta estiver confirmada, sua comarca atual,
+                  seus destinos e a ordem de prioridade não podem ser alterados.
+                  Isso evita inconsistências na permuta em andamento.
+                </p>
+
+              </div>
+
+            )
+          }
+
+
+          <div
+            className={
+              emMatch
+                ? "pointer-events-none select-none opacity-60"
+                : ""
+            }
+          >
+
+            <ComarcaAtualSelector
+              comarcas={comarcas}
+              comarcaAtualId={comarcaAtualId}
+              valorBusca={buscaComarcaAtual}
+              onChangeBusca={setBuscaComarcaAtual}
+              onSelecionar={selecionarComarcaAtual}
+            />
+
+
+            {
+              comarcaSelecionada && (
+
+                <ComarcaInfoCard
+                  titulo="Comarca atual"
+                  nome={comarcaSelecionada.nome}
+                  circunscricao={comarcaSelecionada.circunscricao}
+                  raj={comarcaSelecionada.raj}
+                />
+
+              )
+            }
+
+
+            <div className="mt-8">
+
+              <ComarcaDesejadaSelector
+                comarcas={comarcas}
+                comarcaAtualId={comarcaAtualId}
+                comarcasSelecionadasIds={destinosIds}
+                onAdicionar={adicionarDestino}
+              />
+
+            </div>
+
+
+            {
+              destinos.length > 0 && (
+
+                <div className="mt-6">
+
+                  <h3 className="mb-3 font-semibold text-white">
+                    Prioridade das comarcas
+                  </h3>
+
+                  <ComarcaPrioridadeList
+                    comarcas={destinos}
+                    onChange={alterarPrioridade}
+                    onRemove={removerDestino}
+                  />
+
+                </div>
+
+              )
+            }
+
+          </div>
+
+        </section>
+
+
+        {/* ========================================
+            MENSAGENS
+        ======================================== */}
+
+        {
+          erro && (
+
+            <div className="
+              rounded-xl
+              border
+              border-red-400/20
+              bg-red-400/10
+              p-4
+              text-red-300
+            ">
+              {erro}
+            </div>
+
+          )
+        }
+
+
+        {
+          mensagem && (
+
+            <div className="
+              rounded-xl
+              border
+              border-emerald-400/20
+              bg-emerald-400/10
+              p-4
+              text-emerald-300
+            ">
+              {mensagem}
+            </div>
+
+          )
+        }
+
+
+        {/* ========================================
+            SALVAR PERFIL
+        ======================================== */}
+
+        <button
+          type="button"
+          onClick={salvarPerfil}
+          disabled={salvando}
+          className="
+            flex
+            w-full
+            items-center
+            justify-center
+            gap-2
+            rounded-xl
+            border
+            border-teal-300/20
+            bg-teal-600
+            py-3
+            font-semibold
+            text-white
+            shadow-[0_10px_25px_rgba(20,184,166,0.12)]
+            transition-all
+            duration-200
+            hover:-translate-y-[1px]
+            hover:bg-teal-500
+            disabled:cursor-not-allowed
+            disabled:opacity-50
+          "
+        >
+
+          <Save size={18}/>
+
+          {
+            salvando
+              ? "Salvando..."
+              : emMatch
+                ? "Salvar dados pessoais"
+                : "Salvar alterações"
+          }
+
+        </button>
+
+
+        {/* ========================================
+            ZONA DE RISCO
+        ======================================== */}
+
+        <section className="
+          mt-8
+          rounded-2xl
+          border
+          border-red-400/20
+          bg-red-950/[0.08]
+          p-6
+        ">
+
+          <div className="
+            flex
+            flex-col
+            gap-4
+            sm:flex-row
+            sm:items-start
+            sm:justify-between
+          ">
+
+            <div className="max-w-2xl">
+
+              <h2 className="text-lg font-semibold text-red-300">
+                Zona de risco
+              </h2>
+
+              <p className="mt-2 text-sm leading-6 text-slate-300">
+                A exclusão da conta é permanente. Seus dados pessoais,
+                preferências, notificações e sua participação ativa na
+                plataforma serão removidos.
+              </p>
+
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                Registros necessários apenas para estatísticas poderão
+                permanecer de forma anônima.
+              </p>
+
+
+              {
+                emMatch && (
+
+                  <p className="mt-3 text-sm font-semibold text-cyan-300">
+                    Você possui uma permuta confirmada em andamento.
+                    Encerre essa permuta antes de excluir sua conta.
+                  </p>
+
+                )
+              }
+
+            </div>
+
+
+            <button
+              type="button"
+              disabled={emMatch}
+              onClick={() => {
+
+                setErroExclusao("");
+                setConfirmacaoExclusao("");
+                setModalExcluirConta(true);
+
+              }}
+              className="
+                inline-flex
+                shrink-0
+                items-center
+                justify-center
+                gap-2
+                rounded-xl
+                border
+                border-red-400/25
+                bg-red-400/[0.05]
+                px-5
+                py-3
+                text-sm
+                font-semibold
+                text-red-300
+                transition-all
+                duration-200
+                hover:-translate-y-[1px]
+                hover:bg-red-400/10
+                hover:text-red-200
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+              "
+            >
+
+              <Trash2 size={18} />
+              Excluir minha conta
+
+            </button>
+
+          </div>
+
+        </section>
+
+      </>
+
+    )
+  }
+
+</div>
+
+
+{/* ========================================
+    MODAL - PAUSAR BUSCA
+======================================== */}
+
+{
+  confirmarPausa && (
+
+    <div className="
+      fixed
+      inset-0
+      z-[100]
+      flex
+      items-center
+      justify-center
+      bg-slate-950/75
+      px-4
+      py-8
+      backdrop-blur-sm
+    ">
+
+      <div className="
+        w-full
+        max-w-lg
+        overflow-hidden
+        rounded-2xl
+        border
+        border-amber-300/15
+        bg-[#0d2232]
+        shadow-2xl
+      ">
+
+        <div className="
+          flex
+          items-start
+          justify-between
+          gap-4
+          border-b
+          border-teal-300/10
+          px-6
+          py-5
+        ">
+
+          <div>
+
+            <h2 className="text-xl font-bold text-white">
+              Pausar busca por permuta
+            </h2>
+
+            <p className="mt-1 text-sm text-slate-400">
+              Confirme antes de continuar.
+            </p>
+
+          </div>
+
+
+          <button
+            type="button"
+            aria-label="Fechar"
+            disabled={processandoStatus}
+            onClick={()=>setConfirmarPausa(false)}
+            className="
+              flex
+              h-9
+              w-9
+              items-center
+              justify-center
+              rounded-lg
+              text-slate-400
+              transition
+              hover:bg-teal-400/10
+              hover:text-teal-300
+              disabled:opacity-50
+            "
+          >
+            <X size={20}/>
+          </button>
+
+        </div>
+
+
+        <div className="px-6 py-6">
+
+          <div className="
+            flex
+            h-12
+            w-12
+            items-center
+            justify-center
+            rounded-full
+            border
+            border-amber-300/20
+            bg-amber-400/10
+            text-amber-300
+          ">
+            <PauseCircle size={24}/>
+          </div>
+
+
+          <h3 className="mt-4 text-lg font-bold text-white">
+            Deseja pausar sua participação nas buscas por permuta?
+          </h3>
+
+
+          <p className="mt-2 text-sm leading-6 text-slate-300">
+            Seu perfil e suas preferências serão mantidos, mas você deixará de
+            aparecer em novas oportunidades até reativar a busca.
+          </p>
+
+
+          <div className="
+            mt-6
+            flex
+            flex-col-reverse
+            gap-3
+            sm:flex-row
+            sm:justify-end
+          ">
+
+            <button
+              type="button"
+              disabled={processandoStatus}
+              onClick={()=>setConfirmarPausa(false)}
+              className="
+                rounded-xl
+                border
+                border-teal-300/15
+                bg-transparent
+                px-4
+                py-2.5
+                text-sm
+                font-semibold
+                text-slate-300
+                transition
+                hover:bg-white/[0.04]
+                disabled:opacity-50
+              "
+            >
+              Cancelar
+            </button>
+
+
+            <button
+              type="button"
+              disabled={processandoStatus}
+              onClick={pausarBusca}
+              className="
+                inline-flex
+                items-center
+                justify-center
+                gap-2
+                rounded-xl
+                border
+                border-amber-300/20
+                bg-amber-500/15
+                px-4
+                py-2.5
+                text-sm
+                font-semibold
+                text-amber-200
+                transition-all
+                duration-200
+                hover:-translate-y-[1px]
+                hover:bg-amber-500/25
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+              "
+            >
+
+              <PauseCircle size={17}/>
+
+              {processandoStatus ? "Pausando..." : "Pausar busca"}
+
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
 
     </div>
 
+  )
+}
 
-    <button
-      type="button"
 
-      disabled={
-        emMatch
-      }
+{/* ========================================
+    MODAL - EXCLUIR CONTA
+======================================== */}
 
-      onClick={() => {
+{
+  modalExcluirConta && (
 
-        setErroExclusao("");
+    <div className="
+      fixed
+      inset-0
+      z-[110]
+      flex
+      items-center
+      justify-center
+      bg-slate-950/80
+      px-4
+      py-8
+      backdrop-blur-sm
+    ">
 
-        setConfirmacaoExclusao("");
-
-        setModalExcluirConta(
-          true
-        );
-
-      }}
-
-      className="
-        inline-flex
-        shrink-0
-        items-center
-        justify-center
-        gap-2
-        rounded-xl
+      <div className="
+        w-full
+        max-w-lg
+        overflow-hidden
+        rounded-2xl
         border
-        border-red-300
-        bg-white
-        px-5
-        py-3
-        text-sm
-        font-semibold
-        text-red-700
-        transition
-        hover:bg-red-50
-        disabled:cursor-not-allowed
-        disabled:opacity-50
-      "
-    >
-
-      <Trash2 size={18} />
-
-      Excluir minha conta
-
-    </button>
-
-  </div>
-
-</div>
-
-</>
-
-)
-
-}
-
-
-
-</div>
-
-{confirmarPausa && (
-<div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 px-4 py-8 backdrop-blur-sm">
-<div className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl">
-<div className="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5">
-<div>
-<h2 className="text-xl font-bold text-slate-900">Pausar busca por permuta</h2>
-<p className="mt-1 text-sm text-slate-500">Confirme antes de continuar.</p>
-</div>
-<button type="button" aria-label="Fechar" disabled={processandoStatus} onClick={()=>setConfirmarPausa(false)} className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50">
-<X size={20}/>
-</button>
-</div>
-<div className="px-6 py-6">
-<div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 text-amber-700">
-<PauseCircle size={24}/>
-</div>
-<h3 className="mt-4 text-lg font-bold text-slate-900">Deseja pausar sua participação nas buscas por permuta?</h3>
-<p className="mt-2 text-sm leading-6 text-slate-600">
-Seu perfil e suas preferências serão mantidos, mas você deixará de aparecer em novas oportunidades até reativar a busca.
-</p>
-<div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-<button type="button" disabled={processandoStatus} onClick={()=>setConfirmarPausa(false)} className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50">Cancelar</button>
-<button type="button" disabled={processandoStatus} onClick={pausarBusca} className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50">
-<PauseCircle size={17}/>
-{processandoStatus ? "Pausando..." : "Pausar busca"}
-</button>
-</div>
-</div>
-</div>
-</div>
-)}
-
-
-{
-modalExcluirConta && (
-
-<div className="
-fixed inset-0 z-[110]
-flex items-center justify-center
-bg-slate-950/60
-px-4 py-8
-backdrop-blur-sm
-">
-
-<div className="
-w-full
-max-w-lg
-overflow-hidden
-rounded-2xl
-bg-white
-shadow-2xl
-">
-
-<div className="
-flex
-items-start
-justify-between
-gap-4
-border-b
-border-red-100
-bg-red-50/70
-px-6
-py-5
-">
-
-<div>
-
-<h2 className="
-text-xl
-font-bold
-text-red-950
-">
-
-Excluir minha conta
-
-</h2>
-
-<p className="
-mt-1
-text-sm
-text-red-700
-">
-
-Esta ação não poderá ser desfeita.
-
-</p>
-
-</div>
-
-<button
-type="button"
-aria-label="Fechar"
-disabled={excluindoConta}
-onClick={()=>setModalExcluirConta(false)}
-className="
-flex h-9 w-9
-items-center
-justify-center
-rounded-lg
-text-red-400
-transition
-hover:bg-red-100
-hover:text-red-700
-disabled:opacity-50
-"
->
-
-<X size={20}/>
-
-</button>
-
-</div>
-
-<div className="
-px-6
-py-6
-">
-
-<div className="
-flex h-12 w-12
-items-center
-justify-center
-rounded-full
-bg-red-100
-text-red-700
-">
-
-<Trash2 size={24}/>
-
-</div>
-
-<h3 className="
-mt-4
-text-lg
-font-bold
-text-slate-900
-">
-
-Tem certeza de que deseja excluir sua conta?
-
-</h3>
-
-<p className="
-mt-2
-text-sm
-leading-6
-text-slate-600
-">
-
-Seus dados pessoais, preferências, notificações e propostas vinculadas serão removidos. Registros usados apenas para estatísticas poderão permanecer de forma anônima.
-
-</p>
-
-<div className="
-mt-5
-rounded-xl
-border
-border-red-200
-bg-red-50
-p-4
-">
-
-<p className="
-text-sm
-font-semibold
-text-red-900
-">
-
-Para confirmar, digite:
-
-</p>
-
-<p className="
-mt-1
-font-mono
-text-sm
-font-bold
-tracking-wider
-text-red-800
-">
-
-EXCLUIR
-
-</p>
-
-</div>
-
-<div className="mt-5">
-
-<label className="
-mb-2
-block
-text-sm
-font-semibold
-text-slate-700
-">
-
-Confirmação
-
-</label>
-
-<input
-type="text"
-value={confirmacaoExclusao}
-disabled={excluindoConta}
-onChange={(event)=>{
-setConfirmacaoExclusao(event.target.value);
-setErroExclusao("");
-}}
-onPaste={(event)=>event.preventDefault()}
-placeholder='Digite "EXCLUIR"'
-autoComplete="off"
-className="
-w-full
-rounded-xl
-border
-border-slate-300
-px-4
-py-3
-text-slate-900
-outline-none
-transition
-focus:border-red-500
-focus:ring-4
-focus:ring-red-100
-disabled:bg-slate-100
-"
-/>
-
-</div>
-
-{
-erroExclusao && (
-
-<div className="
-mt-4
-rounded-xl
-border
-border-red-200
-bg-red-50
-p-4
-text-sm
-text-red-700
-">
-
-{erroExclusao}
-
-</div>
-
-)
-}
-
-<div className="
-mt-6
-flex
-flex-col-reverse
-gap-3
-sm:flex-row
-sm:justify-end
-">
-
-<button
-type="button"
-disabled={excluindoConta}
-onClick={()=>setModalExcluirConta(false)}
-className="
-rounded-xl
-border
-border-slate-300
-bg-white
-px-4
-py-2.5
-text-sm
-font-semibold
-text-slate-700
-transition
-hover:bg-slate-50
-disabled:opacity-50
-"
->
-
-Cancelar
-
-</button>
-
-<button
-type="button"
-onClick={excluirConta}
-disabled={
-excluindoConta ||
-confirmacaoExclusao.trim().toUpperCase() !== "EXCLUIR"
-}
-className="
-inline-flex
-items-center
-justify-center
-gap-2
-rounded-xl
-bg-red-700
-px-4
-py-2.5
-text-sm
-font-semibold
-text-white
-transition
-hover:bg-red-800
-disabled:cursor-not-allowed
-disabled:opacity-50
-"
->
-
-<Trash2 size={17}/>
-
-{
-excluindoConta
-?
-"Excluindo..."
-:
-"Excluir conta definitivamente"
-}
-
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-)
+        border-red-400/20
+        bg-[#0d2232]
+        shadow-2xl
+      ">
+
+        <div className="
+          flex
+          items-start
+          justify-between
+          gap-4
+          border-b
+          border-red-400/15
+          bg-red-400/[0.04]
+          px-6
+          py-5
+        ">
+
+          <div>
+
+            <h2 className="text-xl font-bold text-red-300">
+              Excluir minha conta
+            </h2>
+
+            <p className="mt-1 text-sm text-red-300/75">
+              Esta ação não poderá ser desfeita.
+            </p>
+
+          </div>
+
+
+          <button
+            type="button"
+            aria-label="Fechar"
+            disabled={excluindoConta}
+            onClick={()=>setModalExcluirConta(false)}
+            className="
+              flex
+              h-9
+              w-9
+              items-center
+              justify-center
+              rounded-lg
+              text-red-400
+              transition
+              hover:bg-red-400/10
+              hover:text-red-300
+              disabled:opacity-50
+            "
+          >
+
+            <X size={20}/>
+
+          </button>
+
+        </div>
+
+
+        <div className="px-6 py-6">
+
+          <div className="
+            flex
+            h-12
+            w-12
+            items-center
+            justify-center
+            rounded-full
+            border
+            border-red-400/20
+            bg-red-400/10
+            text-red-300
+          ">
+
+            <Trash2 size={24}/>
+
+          </div>
+
+
+          <h3 className="mt-4 text-lg font-bold text-white">
+            Tem certeza de que deseja excluir sua conta?
+          </h3>
+
+
+          <p className="mt-2 text-sm leading-6 text-slate-300">
+            Seus dados pessoais, preferências, notificações e propostas
+            vinculadas serão removidos. Registros usados apenas para estatísticas
+            poderão permanecer de forma anônima.
+          </p>
+
+
+          <div className="
+            mt-5
+            rounded-xl
+            border
+            border-red-400/20
+            bg-red-400/[0.06]
+            p-4
+          ">
+
+            <p className="text-sm font-semibold text-red-200">
+              Para confirmar, digite:
+            </p>
+
+            <p className="
+              mt-1
+              font-mono
+              text-sm
+              font-bold
+              tracking-wider
+              text-red-300
+            ">
+              EXCLUIR
+            </p>
+
+          </div>
+
+
+          <div className="mt-5">
+
+            <label className="
+              mb-2
+              block
+              text-sm
+              font-semibold
+              text-slate-300
+            ">
+              Confirmação
+            </label>
+
+
+            <input
+              type="text"
+              value={confirmacaoExclusao}
+              disabled={excluindoConta}
+              onChange={(event)=>{
+
+                setConfirmacaoExclusao(event.target.value);
+                setErroExclusao("");
+
+              }}
+              onPaste={(event)=>event.preventDefault()}
+              placeholder='Digite "EXCLUIR"'
+              autoComplete="off"
+              className="
+                w-full
+                rounded-xl
+                border
+                border-red-400/20
+                bg-[#081b29]
+                px-4
+                py-3
+                text-white
+                outline-none
+                transition
+                placeholder:text-slate-600
+                focus:border-red-400
+                focus:ring-4
+                focus:ring-red-400/10
+                disabled:opacity-60
+              "
+            />
+
+          </div>
+
+
+          {
+            erroExclusao && (
+
+              <div className="
+                mt-4
+                rounded-xl
+                border
+                border-red-400/20
+                bg-red-400/10
+                p-4
+                text-sm
+                text-red-300
+              ">
+                {erroExclusao}
+              </div>
+
+            )
+          }
+
+
+          <div className="
+            mt-6
+            flex
+            flex-col-reverse
+            gap-3
+            sm:flex-row
+            sm:justify-end
+          ">
+
+            <button
+              type="button"
+              disabled={excluindoConta}
+              onClick={()=>setModalExcluirConta(false)}
+              className="
+                rounded-xl
+                border
+                border-teal-300/15
+                bg-transparent
+                px-4
+                py-2.5
+                text-sm
+                font-semibold
+                text-slate-300
+                transition
+                hover:bg-white/[0.04]
+                disabled:opacity-50
+              "
+            >
+              Cancelar
+            </button>
+
+
+            <button
+              type="button"
+              onClick={excluirConta}
+              disabled={
+                excluindoConta ||
+                confirmacaoExclusao.trim().toUpperCase() !== "EXCLUIR"
+              }
+              className="
+                inline-flex
+                items-center
+                justify-center
+                gap-2
+                rounded-xl
+                border
+                border-red-400/20
+                bg-red-600
+                px-4
+                py-2.5
+                text-sm
+                font-semibold
+                text-white
+                transition-all
+                duration-200
+                hover:-translate-y-[1px]
+                hover:bg-red-500
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+              "
+            >
+
+              <Trash2 size={17}/>
+
+              {
+                excluindoConta
+                  ? "Excluindo..."
+                  : "Excluir conta definitivamente"
+              }
+
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  )
 }
 
 </DashboardLayout>
@@ -2602,6 +2817,5 @@ excluindoConta
 </AuthGuard>
 
 );
-
 
 }

@@ -2,60 +2,157 @@
 
 import Link from "next/link";
 
+import {
+  MapPin,
+} from "lucide-react";
+
 
 export function Footer() {
-  return (
-    <footer className="border-t border-slate-200 bg-white py-6">
 
-      <div className="mx-auto flex max-w-7xl flex-col items-center justify-center gap-3 px-6 text-center text-sm text-slate-500">
+  return (
+
+    <footer
+      className="
+        relative
+        border-t
+        border-teal-300/10
+        bg-[#04111d]/82
+        py-8
+        backdrop-blur-xl
+      "
+    >
+
+      <div
+        className="
+          mx-auto
+          flex
+          max-w-7xl
+          flex-col
+          items-center
+          justify-center
+          gap-4
+          px-5
+          text-center
+          sm:px-6
+        "
+      >
+
+        {/* LOGO SIMPLES */}
+
+        <Link
+          href="/"
+          className="
+            group
+            flex
+            items-center
+            gap-2
+          "
+        >
+
+          <div
+            className="
+              relative
+              flex
+              h-9
+              w-9
+              items-center
+              justify-center
+              text-teal-400
+              transition
+              group-hover:-translate-y-0.5
+            "
+          >
+
+            <MapPin
+              size={32}
+              strokeWidth={1.8}
+            />
+
+            <span
+              className="
+                absolute
+                top-[8px]
+                text-[11px]
+                font-black
+                text-white
+              "
+            >
+              P
+            </span>
+
+          </div>
+
+
+          <span
+            className="
+              font-bold
+              text-white
+            "
+          >
+            Permuta TJSP
+          </span>
+
+        </Link>
 
 
         {/* LINKS */}
 
-        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+        <div
+          className="
+            flex
+            flex-wrap
+            items-center
+            justify-center
+            gap-x-5
+            gap-y-2
+            text-sm
+            text-slate-400
+          "
+        >
 
           <Link
             href="/sobre"
-            className="transition hover:text-blue-900"
+            className="
+              transition
+              hover:-translate-y-0.5
+              hover:!text-teal-300
+            "
           >
             Sobre o projeto
           </Link>
 
 
-          <span className="hidden text-slate-300 sm:inline">
-            |
-          </span>
-
-
           <Link
             href="/duvidas"
-            className="transition hover:text-blue-900"
+            className="
+              transition
+              hover:-translate-y-0.5
+              hover:!text-teal-300
+            "
           >
             Dúvidas frequentes
           </Link>
 
 
-          <span className="hidden text-slate-300 sm:inline">
-            |
-          </span>
-
-
           <Link
             href="/termos"
-            className="transition hover:text-blue-900"
+            className="
+              transition
+              hover:-translate-y-0.5
+              hover:!text-teal-300
+            "
           >
             Termos de Uso
           </Link>
 
 
-          <span className="hidden text-slate-300 sm:inline">
-            |
-          </span>
-
-
           <Link
             href="/privacidade"
-            className="transition hover:text-blue-900"
+            className="
+              transition
+              hover:-translate-y-0.5
+              hover:!text-teal-300
+            "
           >
             Política de Privacidade
           </Link>
@@ -67,7 +164,13 @@ export function Footer() {
 
         <Link
           href="/sobre"
-          className="font-medium text-blue-900 transition hover:underline"
+          className="
+            text-sm
+            font-semibold
+            text-teal-400
+            transition
+            hover:!text-teal-300
+          "
         >
           Desenvolvido por Raphael Catão Martinez
         </Link>
@@ -75,12 +178,23 @@ export function Footer() {
 
         {/* AVISO */}
 
-        <p className="text-xs text-slate-400">
-          Permuta TJSP - Ferramenta independente para auxiliar servidores na busca por permutas.
+        <p
+          className="
+            max-w-3xl
+            text-xs
+            leading-5
+            text-slate-600
+          "
+        >
+          Permuta TJSP — ferramenta independente para auxiliar
+          servidores na localização e organização de oportunidades
+          de permuta.
         </p>
 
       </div>
 
     </footer>
+
   );
+
 }

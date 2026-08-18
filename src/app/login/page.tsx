@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
+
 import {
-  useRouter
+  useRouter,
 } from "next/navigation";
 
 import {
   FormEvent,
   useEffect,
-  useState
+  useState,
 } from "react";
 
 import {
@@ -16,71 +17,79 @@ import {
   EyeOff,
   LockKeyhole,
   Mail,
-  ShieldCheck
+  ShieldCheck,
 } from "lucide-react";
 
 import {
-  PublicLayout
+  PublicLayout,
 } from "@/components/layout/PublicLayout";
 
 import {
-  Button
+  Button,
 } from "@/components/ui/Button";
 
 import {
-  Card
+  Card,
 } from "@/components/ui/Card";
 
 import {
-  supabase
+  supabase,
 } from "@/lib/supabase";
 
 
 export default function LoginPage() {
 
-  const router = useRouter();
+  const router =
+    useRouter();
 
 
   const [
     email,
-    setEmail
-  ] = useState("");
+    setEmail,
+  ] =
+    useState("");
 
 
   const [
     senha,
-    setSenha
-  ] = useState("");
+    setSenha,
+  ] =
+    useState("");
 
 
   const [
     mostrarSenha,
-    setMostrarSenha
-  ] = useState(false);
+    setMostrarSenha,
+  ] =
+    useState(false);
 
 
   const [
     carregando,
-    setCarregando
-  ] = useState(false);
+    setCarregando,
+  ] =
+    useState(false);
 
 
   const [
     carregandoGoogle,
-    setCarregandoGoogle
-  ] = useState(false);
+    setCarregandoGoogle,
+  ] =
+    useState(false);
 
 
   const [
     verificandoSessao,
-    setVerificandoSessao
-  ] = useState(true);
+    setVerificandoSessao,
+  ] =
+    useState(true);
 
 
   const [
     mensagemErro,
-    setMensagemErro
-  ] = useState("");
+    setMensagemErro,
+  ] =
+    useState("");
 
 
   /*
@@ -96,14 +105,16 @@ export default function LoginPage() {
 
   useEffect(() => {
 
-    let ativo = true;
+    let ativo =
+      true;
 
 
     async function verificarSessao() {
 
       const {
-        data
-      } = await supabase.auth.getSession();
+        data,
+      } =
+        await supabase.auth.getSession();
 
 
       if (!ativo) {
@@ -143,46 +154,52 @@ export default function LoginPage() {
     */
 
     const {
-      data: authListener
-    } = supabase.auth.onAuthStateChange(
-      (
-        evento,
-        sessao
-      ) => {
+      data: authListener,
+    } =
+      supabase.auth.onAuthStateChange(
+        (
+          evento,
+          sessao
+        ) => {
 
-        if (!ativo) {
-          return;
+          if (!ativo) {
+            return;
+          }
+
+
+          if (
+            evento === "SIGNED_IN"
+            &&
+            sessao?.user
+          ) {
+
+            router.replace(
+              "/dashboard"
+            );
+
+            router.refresh();
+
+          }
+
         }
-
-
-        if (
-          evento === "SIGNED_IN"
-          &&
-          sessao?.user
-        ) {
-
-          router.replace(
-            "/dashboard"
-          );
-
-          router.refresh();
-
-        }
-
-      }
-    );
+      );
 
 
     return () => {
 
-      ativo = false;
+      ativo =
+        false;
 
-      authListener.subscription.unsubscribe();
+      authListener
+        .subscription
+        .unsubscribe();
 
     };
 
 
-  }, [router]);
+  }, [
+    router,
+  ]);
 
 
   /*
@@ -335,18 +352,19 @@ export default function LoginPage() {
 
 
       const {
-        error
-      } = await supabase.auth.signInWithPassword(
-        {
-          email:
-            email
-              .trim()
-              .toLowerCase(),
+        error,
+      } =
+        await supabase.auth.signInWithPassword(
+          {
+            email:
+              email
+                .trim()
+                .toLowerCase(),
 
-          password:
-            senha
-        }
-      );
+            password:
+              senha,
+          }
+        );
 
 
       if (error) {
@@ -398,6 +416,7 @@ export default function LoginPage() {
 
     setMensagemErro("");
 
+
     try {
 
       setCarregandoGoogle(
@@ -406,17 +425,18 @@ export default function LoginPage() {
 
 
       const {
-        error
-      } = await supabase.auth.signInWithOAuth(
-        {
-          provider: "google",
+        error,
+      } =
+        await supabase.auth.signInWithOAuth(
+          {
+            provider: "google",
 
-          options: {
-            redirectTo:
-              `${window.location.origin}/login/google`
+            options: {
+              redirectTo:
+                `${window.location.origin}/login/google`,
+            },
           }
-        }
-      );
+        );
 
 
       if (error) {
@@ -430,6 +450,7 @@ export default function LoginPage() {
         );
 
       }
+
 
       /*
       O navegador será redirecionado para o Google.
@@ -476,15 +497,15 @@ export default function LoginPage() {
           shadow="lg"
         >
 
-          <div className="
-            py-8
-            text-center
-            text-sm
-            text-text-secondary
-          ">
-
+          <div
+            className="
+              py-8
+              text-center
+              text-sm
+              text-text-secondary
+            "
+          >
             Verificando acesso...
-
           </div>
 
         </Card>
@@ -515,23 +536,33 @@ export default function LoginPage() {
         shadow="lg"
       >
 
+        {/* =================================================
+            ÍCONE
+        ================================================= */}
 
-        <div className="
-          mb-7
-          flex
-          justify-center
-        ">
-
-          <div className="
+        <div
+          className="
+            mb-7
             flex
-            h-14
-            w-14
-            items-center
             justify-center
-            rounded-2xl
-            bg-primary-light
-            text-primary
-          ">
+          "
+        >
+
+          <div
+            className="
+              flex
+              h-14
+              w-14
+              items-center
+              justify-center
+              rounded-2xl
+              border
+              border-teal-300/15
+              bg-teal-400/10
+              text-teal-300
+              shadow-[0_0_28px_rgba(20,184,166,0.10)]
+            "
+          >
 
             <LockKeyhole
               aria-hidden="true"
@@ -547,17 +578,23 @@ export default function LoginPage() {
         </div>
 
 
-        {/* GOOGLE */}
+        {/* =================================================
+            GOOGLE
+        ================================================= */}
+
         <button
           type="button"
+
           onClick={
             entrarComGoogle
           }
+
           disabled={
             carregando
             ||
             carregandoGoogle
           }
+
           className="
             flex
             min-h-12
@@ -567,19 +604,27 @@ export default function LoginPage() {
             gap-3
             rounded-xl
             border
-            border-border-strong
-            bg-white
+            border-teal-300/15
+            bg-[#0b1e2d]
             px-4
             py-3
             text-sm
             font-semibold
-            text-text-primary
-            transition
-            hover:bg-slate-50
-            hover:border-slate-400
+            text-white
+            transition-all
+            duration-200
+
+            hover:-translate-y-0.5
+            hover:border-teal-300/30
+            hover:bg-[#10283a]
+
+            active:translate-y-0
+            active:scale-[0.98]
+
             focus-visible:outline-none
             focus-visible:ring-4
-            focus-visible:ring-primary/10
+            focus-visible:ring-teal-400/10
+
             disabled:cursor-not-allowed
             disabled:opacity-60
           "
@@ -594,23 +639,29 @@ export default function LoginPage() {
               shrink-0
             "
           >
+
             <path
               fill="#4285F4"
               d="M21.6 12.23c0-.71-.06-1.4-.19-2.07H12v3.91h5.38a4.6 4.6 0 0 1-1.99 3.02v2.51h3.23c1.89-1.74 2.98-4.31 2.98-7.37Z"
             />
+
             <path
               fill="#34A853"
               d="M12 22c2.7 0 4.97-.89 6.62-2.4l-3.23-2.51c-.9.6-2.05.96-3.39.96-2.6 0-4.81-1.76-5.6-4.12H3.06v2.59A10 10 0 0 0 12 22Z"
             />
+
             <path
               fill="#FBBC05"
               d="M6.4 13.93A6.02 6.02 0 0 1 6.09 12c0-.67.11-1.32.31-1.93V7.48H3.06A10 10 0 0 0 2 12c0 1.61.38 3.13 1.06 4.52l3.34-2.59Z"
             />
+
             <path
               fill="#EA4335"
               d="M12 5.95c1.47 0 2.79.51 3.83 1.5l2.87-2.87C16.96 2.96 14.7 2 12 2a10 10 0 0 0-8.94 5.48l3.34 2.59C7.19 7.71 9.4 5.95 12 5.95Z"
             />
+
           </svg>
+
 
           {
             carregandoGoogle
@@ -621,38 +672,55 @@ export default function LoginPage() {
         </button>
 
 
-        {/* DIVISOR */}
-        <div className="
-          my-6
-          flex
-          items-center
-          gap-4
-        ">
+        {/* =================================================
+            DIVISOR
+        ================================================= */}
 
-          <div className="
-            h-px
-            flex-1
-            bg-border
-          " />
+        <div
+          className="
+            my-6
+            flex
+            items-center
+            gap-4
+          "
+        >
 
-          <span className="
-            text-xs
-            font-medium
-            uppercase
-            tracking-wider
-            text-text-muted
-          ">
+          <div
+            className="
+              h-px
+              flex-1
+              bg-white/10
+            "
+          />
+
+
+          <span
+            className="
+              text-xs
+              font-medium
+              uppercase
+              tracking-wider
+              text-slate-500
+            "
+          >
             ou
           </span>
 
-          <div className="
-            h-px
-            flex-1
-            bg-border
-          " />
+
+          <div
+            className="
+              h-px
+              flex-1
+              bg-white/10
+            "
+          />
 
         </div>
 
+
+        {/* =================================================
+            FORMULÁRIO
+        ================================================= */}
 
         <form
           onSubmit={
@@ -661,9 +729,11 @@ export default function LoginPage() {
           noValidate
         >
 
-          <div className="
-            space-y-5
-          ">
+          <div
+            className="
+              space-y-5
+            "
+          >
 
 
             {/* E-MAIL */}
@@ -677,16 +747,18 @@ export default function LoginPage() {
                   block
                   text-sm
                   font-semibold
-                  text-text-primary
+                  text-white
                 "
               >
-
                 E-mail
-
               </label>
 
 
-              <div className="relative">
+              <div
+                className="
+                  relative
+                "
+              >
 
                 <Mail
                   aria-hidden="true"
@@ -698,7 +770,7 @@ export default function LoginPage() {
                     h-5
                     w-5
                     -translate-y-1/2
-                    text-text-muted
+                    text-slate-500
                   "
                   strokeWidth={1.8}
                 />
@@ -708,7 +780,10 @@ export default function LoginPage() {
                   id="email"
                   name="email"
                   type="email"
-                  value={email}
+
+                  value={
+                    email
+                  }
 
                   onChange={
                     evento => {
@@ -735,7 +810,9 @@ export default function LoginPage() {
 
                   autoCapitalize="none"
 
-                  spellCheck={false}
+                  spellCheck={
+                    false
+                  }
 
                   disabled={
                     carregando
@@ -748,22 +825,25 @@ export default function LoginPage() {
                     w-full
                     rounded-xl
                     border
-                    border-border-strong
-                    bg-white
+                    border-teal-300/15
+                    bg-[#081b29]
                     py-3
                     pl-11
                     pr-4
                     text-sm
-                    text-text-primary
+                    text-white
                     outline-none
                     transition
-                    placeholder:text-slate-400
-                    hover:border-slate-400
-                    focus:border-primary
+
+                    placeholder:text-slate-600
+
+                    hover:border-teal-300/30
+
+                    focus:border-teal-400
                     focus:ring-4
-                    focus:ring-primary/10
+                    focus:ring-teal-400/10
+
                     disabled:cursor-not-allowed
-                    disabled:bg-slate-100
                     disabled:opacity-70
                   "
                 />
@@ -777,13 +857,15 @@ export default function LoginPage() {
 
             <div>
 
-              <div className="
-                mb-2
-                flex
-                items-center
-                justify-between
-                gap-3
-              ">
+              <div
+                className="
+                  mb-2
+                  flex
+                  items-center
+                  justify-between
+                  gap-3
+                "
+              >
 
                 <label
                   htmlFor="senha"
@@ -791,28 +873,30 @@ export default function LoginPage() {
                     block
                     text-sm
                     font-semibold
-                    text-text-primary
+                    text-white
                   "
                 >
-
                   Senha
-
                 </label>
 
 
-                <span className="
-                  text-xs
-                  text-text-muted
-                ">
-
+                <span
+                  className="
+                    text-xs
+                    text-slate-500
+                  "
+                >
                   Mínimo de 8 caracteres
-
                 </span>
 
               </div>
 
 
-              <div className="relative">
+              <div
+                className="
+                  relative
+                "
+              >
 
                 <LockKeyhole
                   aria-hidden="true"
@@ -824,7 +908,7 @@ export default function LoginPage() {
                     h-5
                     w-5
                     -translate-y-1/2
-                    text-text-muted
+                    text-slate-500
                   "
                   strokeWidth={1.8}
                 />
@@ -840,7 +924,9 @@ export default function LoginPage() {
                       : "password"
                   }
 
-                  value={senha}
+                  value={
+                    senha
+                  }
 
                   onChange={
                     evento => {
@@ -876,22 +962,25 @@ export default function LoginPage() {
                     w-full
                     rounded-xl
                     border
-                    border-border-strong
-                    bg-white
+                    border-teal-300/15
+                    bg-[#081b29]
                     py-3
                     pl-11
                     pr-12
                     text-sm
-                    text-text-primary
+                    text-white
                     outline-none
                     transition
-                    placeholder:text-slate-400
-                    hover:border-slate-400
-                    focus:border-primary
+
+                    placeholder:text-slate-600
+
+                    hover:border-teal-300/30
+
+                    focus:border-teal-400
                     focus:ring-4
-                    focus:ring-primary/10
+                    focus:ring-teal-400/10
+
                     disabled:cursor-not-allowed
-                    disabled:bg-slate-100
                     disabled:opacity-70
                   "
                 />
@@ -934,13 +1023,16 @@ export default function LoginPage() {
                     items-center
                     justify-center
                     rounded-lg
-                    text-text-muted
+                    text-slate-500
                     transition
-                    hover:bg-slate-100
-                    hover:text-text-primary
+
+                    hover:bg-teal-400/10
+                    hover:!text-teal-300
+
                     focus-visible:outline-none
                     focus-visible:ring-2
-                    focus-visible:ring-primary/30
+                    focus-visible:ring-teal-400/30
+
                     disabled:cursor-not-allowed
                     disabled:opacity-50
                   "
@@ -990,26 +1082,28 @@ export default function LoginPage() {
 
                 <div
                   role="alert"
+
                   aria-live="polite"
+
                   className="
                     rounded-xl
                     border
-                    border-red-200
-                    bg-danger-light
+                    border-red-400/20
+                    bg-red-400/10
                     px-4
                     py-3
                   "
                 >
 
-                  <p className="
-                    text-sm
-                    font-medium
-                    leading-6
-                    text-danger
-                  ">
-
+                  <p
+                    className="
+                      text-sm
+                      font-medium
+                      leading-6
+                      text-red-300
+                    "
+                  >
                     {mensagemErro}
-
                   </p>
 
                 </div>
@@ -1031,134 +1125,215 @@ export default function LoginPage() {
 
               loadingText="Entrando..."
             >
-
               Entrar
-
             </Button>
-
 
           </div>
 
         </form>
 
 
-        {/* PRIMEIRO ACESSO */}
+        {/* =================================================
+            PRIMEIRO ACESSO
+        ================================================= */}
 
-        <div className="
-          my-7
-          flex
-          items-center
-          gap-4
-        ">
+        <div
+          className="
+            my-7
+            flex
+            items-center
+            gap-4
+          "
+        >
 
-          <div className="
-            h-px
-            flex-1
-            bg-border
-          " />
+          <div
+            className="
+              h-px
+              flex-1
+              bg-white/10
+            "
+          />
 
 
-          <span className="
-            text-xs
-            font-medium
-            uppercase
-            tracking-wider
-            text-text-muted
-          ">
-
+          <span
+            className="
+              text-xs
+              font-semibold
+              uppercase
+              tracking-[0.16em]
+              text-slate-500
+            "
+          >
             Primeiro acesso
-
           </span>
 
 
-          <div className="
-            h-px
-            flex-1
-            bg-border
-          " />
+          <div
+            className="
+              h-px
+              flex-1
+              bg-white/10
+            "
+          />
 
         </div>
 
 
-        <p className="
-          text-center
-          text-sm
-          leading-6
-          text-text-secondary
-        ">
+        {/* =================================================
+            CADASTRO
+        ================================================= */}
 
-          Ainda não possui uma conta?{" "}
+        <div
+          className="
+            flex
+            flex-col
+            items-center
+            justify-center
+            gap-3
+            sm:flex-row
+          "
+        >
+
+          <span
+            className="
+              text-sm
+              text-slate-300
+            "
+          >
+            Ainda não possui uma conta?
+          </span>
+
 
           <Link
             href="/cadastro"
+
             className="
+              inline-flex
+              min-h-10
+              items-center
+              justify-center
+              rounded-xl
+              border
+              border-teal-300/30
+              bg-teal-400/[0.05]
+              px-4
+              py-2
+              text-sm
               font-semibold
-              text-primary
-              transition
-              hover:text-primary-dark
-              hover:underline
+              !text-teal-300
+              transition-all
+              duration-200
+
+              hover:-translate-y-0.5
+              hover:border-teal-300/60
+              hover:bg-teal-400/10
+              hover:!text-teal-200
+              hover:shadow-lg
+              hover:shadow-teal-950/20
+
+              active:translate-y-0
+              active:scale-[0.97]
+
+              focus-visible:outline-none
+              focus-visible:ring-4
+              focus-visible:ring-teal-400/15
+            "
+          >
+            Criar cadastro
+          </Link>
+
+        </div>
+
+
+        {/* =================================================
+            SEGURANÇA
+        ================================================= */}
+
+        <div
+          className="
+            group
+            mt-7
+            rounded-2xl
+            border
+            border-teal-300/15
+            bg-[#0b1e2d]
+            p-5
+            shadow-sm
+            transition-all
+            duration-200
+
+            hover:-translate-y-0.5
+            hover:border-teal-300/30
+            hover:bg-[#0e2638]
+            hover:shadow-lg
+            hover:shadow-black/10
+          "
+        >
+
+          <div
+            className="
+              flex
+              items-start
+              gap-4
             "
           >
 
-            Criar cadastro
-
-          </Link>
-
-        </p>
-
-
-        {/* SEGURANÇA */}
-
-        <div className="
-          mt-7
-          rounded-xl
-          border
-          border-blue-100
-          bg-primary-light
-          p-4
-        ">
-
-          <div className="
-            flex
-            items-start
-            gap-3
-          ">
-
-            <ShieldCheck
-              aria-hidden="true"
+            <div
               className="
-                mt-0.5
-                h-5
-                w-5
+                flex
+                h-10
+                w-10
                 shrink-0
-                text-primary
+                items-center
+                justify-center
+                rounded-xl
+                border
+                border-teal-300/20
+                bg-teal-400/10
+                text-teal-300
+                transition
+                duration-200
+
+                group-hover:border-teal-300/35
+                group-hover:bg-teal-400/15
               "
-              strokeWidth={1.8}
-            />
+            >
+
+              <ShieldCheck
+                aria-hidden="true"
+                className="
+                  h-5
+                  w-5
+                "
+                strokeWidth={1.8}
+              />
+
+            </div>
 
 
             <div>
 
-              <p className="
-                text-sm
-                font-semibold
-                text-primary-dark
-              ">
-
+              <p
+                className="
+                  text-sm
+                  font-semibold
+                  text-white
+                "
+              >
                 Seus dados estão protegidos
-
               </p>
 
 
-              <p className="
-                mt-1
-                text-xs
-                leading-5
-                text-text-secondary
-              ">
-
-                Seus dados de contato somente serão compartilhados conforme as regras de aceite das propostas de permuta.
-
+              <p
+                className="
+                  mt-1.5
+                  text-xs
+                  leading-5
+                  text-slate-400
+                "
+              >
+                Seus dados de contato somente serão compartilhados
+                conforme as regras de aceite das propostas de permuta.
               </p>
 
             </div>
@@ -1167,22 +1342,25 @@ export default function LoginPage() {
 
         </div>
 
-
       </Card>
 
 
-      <p className="
-        mt-5
-        text-center
-        text-xs
-        leading-5
-        text-text-muted
-      ">
+      {/* =================================================
+          AVISO
+      ================================================= */}
 
-        Esta plataforma é independente e não representa um canal oficial do Tribunal de Justiça de São Paulo.
-
+      <p
+        className="
+          mt-5
+          text-center
+          text-xs
+          leading-5
+          text-slate-500
+        "
+      >
+        Esta plataforma é independente e não representa um canal oficial
+        do Tribunal de Justiça de São Paulo.
       </p>
-
 
     </PublicLayout>
 

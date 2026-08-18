@@ -1,24 +1,24 @@
 "use client";
 
 import type {
-  ReactNode
+  ReactNode,
 } from "react";
 
 import {
   useEffect,
-  useState
+  useState,
 } from "react";
 
 import {
-  Header
+  Header,
 } from "@/components/layout/Header";
 
 import {
-  Sidebar
+  Sidebar,
 } from "@/components/layout/Sidebar";
 
 import {
-  supabase
+  supabase,
 } from "@/lib/supabase";
 
 
@@ -34,24 +34,24 @@ const STORAGE_KEY =
 
 export function DashboardLayout({
   children,
-  nomeUsuario
+  nomeUsuario,
 }: DashboardLayoutProps) {
 
   const [
     sidebarAberta,
-    setSidebarAberta
+    setSidebarAberta,
   ] = useState(false);
 
 
   const [
     sidebarRetraida,
-    setSidebarRetraida
+    setSidebarRetraida,
   ] = useState(false);
 
 
   const [
     nomeUsuarioReal,
-    setNomeUsuarioReal
+    setNomeUsuarioReal,
   ] = useState(
     nomeUsuario || "Servidor"
   );
@@ -80,6 +80,7 @@ export function DashboardLayout({
     }
 
   }, []);
+
 
 
   /* ======================================================
@@ -129,8 +130,9 @@ export function DashboardLayout({
       */
 
       const {
-        data: dadosSessao
-      } = await supabase.auth.getSession();
+        data: dadosSessao,
+      } =
+        await supabase.auth.getSession();
 
 
       if (!ativo) {
@@ -159,15 +161,16 @@ export function DashboardLayout({
 
       const {
         data: perfil,
-        error
-      } = await supabase
-        .from("perfis")
-        .select("nome")
-        .eq(
-          "id",
-          usuario.id
-        )
-        .maybeSingle();
+        error,
+      } =
+        await supabase
+          .from("perfis")
+          .select("nome")
+          .eq(
+            "id",
+            usuario.id
+          )
+          .maybeSingle();
 
 
       if (!ativo) {
@@ -175,9 +178,7 @@ export function DashboardLayout({
       }
 
 
-      if (
-        error
-      ) {
+      if (error) {
 
         console.error(
           "Erro ao carregar nome do usuário:",
@@ -225,58 +226,63 @@ export function DashboardLayout({
     carregarNomeUsuario();
 
 
+
     /* ====================================================
        TROCA DE CONTA / LOGOUT / LOGIN
     ==================================================== */
 
     const {
-      data: authListener
-    } = supabase.auth.onAuthStateChange(
-      (
-        _evento,
-        sessao
-      ) => {
+      data: authListener,
+    } =
+      supabase.auth.onAuthStateChange(
+        (
+          _evento,
+          sessao
+        ) => {
 
-        if (!ativo) {
-          return;
+          if (!ativo) {
+            return;
+          }
+
+
+          if (
+            !sessao?.user
+          ) {
+
+            setNomeUsuarioReal(
+              "Servidor"
+            );
+
+            return;
+
+          }
+
+
+          /*
+          Quando mudar a sessão,
+          busca novamente o nome.
+          */
+
+          carregarNomeUsuario();
+
         }
-
-
-        if (
-          !sessao?.user
-        ) {
-
-          setNomeUsuarioReal(
-            "Servidor"
-          );
-
-          return;
-
-        }
-
-
-        /*
-        Quando mudar a sessão,
-        busca novamente o nome.
-        */
-
-        carregarNomeUsuario();
-
-      }
-    );
+      );
 
 
     return () => {
 
       ativo = false;
 
-      authListener.subscription.unsubscribe();
+      authListener
+        .subscription
+        .unsubscribe();
 
     };
 
   }, [
-    nomeUsuario
+    nomeUsuario,
   ]);
+
 
 
   /* ======================================================
@@ -306,16 +312,63 @@ export function DashboardLayout({
   }
 
 
+
   /* ======================================================
      RENDER
   ====================================================== */
 
   return (
 
-    <div className="
-      min-h-screen
-      bg-slate-50
-    ">
+    <div
+      className="
+        app-page-background
+        relative
+        min-h-screen
+        overflow-x-hidden
+      "
+    >
+
+      {/* =================================================
+          LUZ AMBIENTE SUPERIOR
+      ================================================= */}
+
+      <div
+        aria-hidden="true"
+        className="
+          pointer-events-none
+          fixed
+          left-[18%]
+          top-[-280px]
+          z-0
+          h-[560px]
+          w-[560px]
+          rounded-full
+          bg-teal-400/[0.055]
+          blur-[120px]
+        "
+      />
+
+
+      <div
+        aria-hidden="true"
+        className="
+          pointer-events-none
+          fixed
+          bottom-[-300px]
+          right-[-150px]
+          z-0
+          h-[620px]
+          w-[620px]
+          rounded-full
+          bg-cyan-500/[0.04]
+          blur-[130px]
+        "
+      />
+
+
+      {/* =================================================
+          SIDEBAR
+      ================================================= */}
 
       <Sidebar
         aberta={
@@ -338,13 +391,23 @@ export function DashboardLayout({
       />
 
 
+      {/* =================================================
+          CONTEÚDO
+      ================================================= */}
+
       <div
         className={[
-          "min-h-screen transition-[padding] duration-300",
+          `
+            relative
+            z-10
+            min-h-screen
+            transition-[padding]
+            duration-300
+          `,
 
           sidebarRetraida
             ? "lg:pl-20"
-            : "lg:pl-72"
+            : "lg:pl-72",
 
         ].join(" ")}
       >
@@ -362,19 +425,23 @@ export function DashboardLayout({
         />
 
 
-        <main className="
-          px-4
-          py-8
-          sm:px-6
-          lg:px-8
-          lg:py-10
-        ">
+        <main
+          className="
+            px-4
+            py-7
+            sm:px-6
+            lg:px-8
+            lg:py-9
+          "
+        >
 
-          <div className="
-            mx-auto
-            w-full
-            max-w-7xl
-          ">
+          <div
+            className="
+              mx-auto
+              w-full
+              max-w-7xl
+            "
+          >
 
             {children}
 

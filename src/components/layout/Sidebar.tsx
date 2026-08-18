@@ -3,13 +3,14 @@
 import Link from "next/link";
 
 import {
+  useCallback,
   useEffect,
   useRef,
-  useState
+  useState,
 } from "react";
 
 import {
-  usePathname
+  usePathname,
 } from "next/navigation";
 
 import {
@@ -18,62 +19,84 @@ import {
   ChevronRight,
   FileText,
   Home,
-  RefreshCcw,
+  RefreshCw,
+  Search,
   UserRound,
-  X
+  UsersRound,
+  X,
 } from "lucide-react";
 
 import {
-  Logo
+  Logo,
 } from "@/components/logo/Logo";
 
 import {
-  supabase
+  supabase,
 } from "@/lib/supabase";
 
 
 type SidebarProps = {
   aberta: boolean;
   onClose: () => void;
-  retraida?: boolean;
-  onToggleRetraida?: () => void;
+  retraida: boolean;
+  onToggleRetraida: () => void;
 };
 
 
-const menuItems = [
+/* =========================================================
+   ITENS DO MENU
+========================================================= */
+
+const itensMenu = [
+
   {
+    nome: "Início",
     href: "/dashboard",
-    label: "Início",
-    icon: Home
+    icone: Home,
   },
+
   {
+    nome: "Meu perfil",
     href: "/perfil",
-    label: "Meu perfil",
-    icon: UserRound
+    icone: UserRound,
   },
+
   {
+    nome: "Buscar permutas",
     href: "/buscar-permutas",
-    label: "Buscar permutas",
-    icon: RefreshCcw
+    icone: RefreshCw,
   },
+
   {
+    nome: "Buscar servidores",
+    href: "/buscar-servidores",
+    icone: UsersRound,
+  },
+
+  {
+    nome: "Propostas",
     href: "/propostas",
-    label: "Propostas",
-    icon: FileText
+    icone: FileText,
   },
+
   {
+    nome: "Notificações",
     href: "/notificacoes",
-    label: "Notificações",
-    icon: Bell
-  }
+    icone: Bell,
+  },
+
 ];
 
+
+/* =========================================================
+   COMPONENTE
+========================================================= */
 
 export function Sidebar({
   aberta,
   onClose,
-  retraida = false,
-  onToggleRetraida
+  retraida,
+  onToggleRetraida,
 }: SidebarProps) {
 
   const pathname =
@@ -82,236 +105,338 @@ export function Sidebar({
 
   const [
     notificacoesNaoLidas,
-    setNotificacoesNaoLidas
-  ] = useState(0);
+    setNotificacoesNaoLidas,
+  ] =
+    useState(0);
 
-
-  /* ======================================================
-     CONTADOR DE NOTIFICAÇÕES
-  ====================================================== */
 
   const consultaEmAndamento =
     useRef(false);
 
 
-  const tentativaPendente =
-    useRef<ReturnType<typeof setTimeout> | null>(
-      null
-    );
+  const componenteAtivo =
+    useRef(true);
 
 
-  useEffect(() => {
+  /* =======================================================
+     VERIFICA ROTA ATIVA
+  ======================================================= */
 
-    let ativo = true;
+  function rotaAtiva(
+    href: string
+  ) {
 
-
-    /*
-    ========================================
-    CONSULTA O CONTADOR
-    ========================================
-
-    Recebe o UUID quando ele já é conhecido
-    pelo evento de autenticação.
-
-    Isso evita chamar getSession() novamente
-    justamente durante a transição do login.
-    */
-
-    async function carregarNotificacoesNaoLidas(
-      usuarioIdDireto?: string,
-      permitirNovaTentativa = true
+    if (
+      href === "/dashboard"
     ) {
 
-      if (
-        !ativo
-        ||
-        consultaEmAndamento.current
-      ) {
-
-        return;
-
-      }
-
-
-      let idUsuario =
-        usuarioIdDireto;
-
-
-      /*
-      ========================================
-      OBTÉM A SESSÃO SOMENTE SE NECESSÁRIO
-      ========================================
-      */
-
-      if (!idUsuario) {
-
-        const {
-          data: dadosSessao,
-          error: erroSessao
-        } = await supabase.auth.getSession();
-
-
-        if (!ativo) {
-          return;
-        }
-
-
-        if (erroSessao) {
-
-          setNotificacoesNaoLidas(0);
-
-          return;
-
-        }
-
-
-        idUsuario =
-          dadosSessao.session?.user.id;
-
-      }
-
-
-      if (!idUsuario) {
-
-        setNotificacoesNaoLidas(0);
-
-        return;
-
-      }
-
-
-      consultaEmAndamento.current =
-        true;
-
-
-      try {
-
-        const {
-          count,
-          error
-        } = await supabase
-          .from(
-            "notificacoes"
-          )
-          .select(
-            "id",
-            {
-              count: "exact",
-              head: true
-            }
-          )
-          .eq(
-            "usuario_id",
-            idUsuario
-          )
-          .eq(
-            "lida",
-            false
-          );
-
-
-        if (!ativo) {
-          return;
-        }
-
-
-        /*
-        ========================================
-        ERRO TRANSITÓRIO APÓS LOGIN
-        ========================================
-
-        Durante SIGNED_IN pode existir uma
-        pequena janela até a sessão estar
-        totalmente disponível para a consulta.
-
-        Não exibimos console.error, pois isso
-        gerava o overlay vermelho do Next em
-        desenvolvimento.
-
-        Fazemos somente uma nova tentativa
-        curta. Se ainda falhar, o contador fica
-        em zero até o próximo evento de foco,
-        visibilidade ou atualização interna.
-        */
-
-        if (error) {
-
-          setNotificacoesNaoLidas(0);
-
-
-          if (
-            permitirNovaTentativa
-            &&
-            ativo
-          ) {
-
-            if (
-              tentativaPendente.current
-            ) {
-
-              clearTimeout(
-                tentativaPendente.current
-              );
-
-            }
-
-
-            tentativaPendente.current =
-              setTimeout(
-                () => {
-
-                  consultaEmAndamento.current =
-                    false;
-
-                  carregarNotificacoesNaoLidas(
-                    idUsuario,
-                    false
-                  );
-
-                },
-                500
-              );
-
-              return;
-
-          }
-
-
-          return;
-
-        }
-
-
-        setNotificacoesNaoLidas(
-          count ?? 0
-        );
-
-      }
-
-      finally {
-
-        consultaEmAndamento.current =
-          false;
-
-      }
+      return (
+        pathname === "/dashboard"
+      );
 
     }
 
 
-    /*
-    ========================================
-    PRIMEIRA CARGA
-    ========================================
-    */
+    return (
+
+      pathname === href
+
+      ||
+
+      pathname.startsWith(
+        `${href}/`
+      )
+
+    );
+
+  }
+
+
+  /* =======================================================
+     CARREGA CONTADOR DE NOTIFICAÇÕES
+  ======================================================= */
+
+  const carregarNotificacoesNaoLidas =
+    useCallback(
+
+      async (
+        usuarioIdDireto?: string
+      ) => {
+
+        /*
+        Evita consultas duplicadas.
+        */
+
+        if (
+          consultaEmAndamento.current
+        ) {
+
+          return;
+
+        }
+
+
+        consultaEmAndamento.current =
+          true;
+
+
+        try {
+
+          let usuarioId =
+            usuarioIdDireto;
+
+
+          /*
+          Caso o ID não tenha sido informado,
+          recupera a sessão atual.
+          */
+
+          if (!usuarioId) {
+
+            const {
+              data: dadosSessao,
+            } =
+              await supabase.auth.getSession();
+
+
+            if (
+              !componenteAtivo.current
+            ) {
+
+              return;
+
+            }
+
+
+            usuarioId =
+              dadosSessao.session?.user.id;
+
+          }
+
+
+          /*
+          Nenhum usuário autenticado.
+          */
+
+          if (!usuarioId) {
+
+            if (
+              componenteAtivo.current
+            ) {
+
+              setNotificacoesNaoLidas(0);
+
+            }
+
+
+            return;
+
+          }
+
+
+          /*
+          Conta as notificações não lidas
+          pertencentes ao usuário atual.
+          */
+
+          const {
+            count,
+            error,
+          } =
+            await supabase
+              .from("notificacoes")
+              .select(
+                "id",
+                {
+                  count: "exact",
+                  head: true,
+                }
+              )
+              .eq(
+                "usuario_id",
+                usuarioId
+              )
+              .eq(
+                "lida",
+                false
+              );
+
+
+          if (
+            !componenteAtivo.current
+          ) {
+
+            return;
+
+          }
+
+
+          /*
+          IMPORTANTE:
+
+          Não usamos console.error aqui.
+
+          Uma consulta pode falhar durante uma
+          transição de sessão ou enquanto o token
+          está sendo restaurado.
+
+          No Next.js 16, console.error em desenvolvimento
+          gera o painel vermelho na interface.
+          */
+
+          if (error) {
+
+            setNotificacoesNaoLidas(0);
+
+            return;
+
+          }
+
+
+          setNotificacoesNaoLidas(
+            Number(
+              count ?? 0
+            )
+          );
+
+        }
+
+        catch {
+
+          /*
+          Falha temporária não deve derrubar
+          a navegação nem gerar overlay do Next.
+          */
+
+          if (
+            componenteAtivo.current
+          ) {
+
+            setNotificacoesNaoLidas(0);
+
+          }
+
+        }
+
+        finally {
+
+          consultaEmAndamento.current =
+            false;
+
+        }
+
+      },
+
+      []
+
+    );
+
+
+  /* =======================================================
+     INICIALIZA CONTADOR
+  ======================================================= */
+
+  useEffect(() => {
+
+    componenteAtivo.current =
+      true;
+
 
     carregarNotificacoesNaoLidas();
 
 
-    /*
-    ========================================
-    QUANDO VOLTA PARA A JANELA
-    ========================================
-    */
+    return () => {
+
+      componenteAtivo.current =
+        false;
+
+    };
+
+  }, [
+    carregarNotificacoesNaoLidas,
+  ]);
+
+
+  /* =======================================================
+     AUTH
+  ======================================================= */
+
+  useEffect(() => {
+
+    const {
+      data: authListener,
+    } =
+      supabase.auth.onAuthStateChange(
+        (
+          _evento,
+          sessao
+        ) => {
+
+          /*
+          Executamos fora do ciclo imediato
+          do callback do Supabase.
+          */
+
+          setTimeout(
+            () => {
+
+              if (
+                !componenteAtivo.current
+              ) {
+
+                return;
+
+              }
+
+
+              if (
+                !sessao?.user
+              ) {
+
+                setNotificacoesNaoLidas(0);
+
+                return;
+
+              }
+
+
+              carregarNotificacoesNaoLidas(
+                sessao.user.id
+              );
+
+            },
+            0
+          );
+
+        }
+      );
+
+
+    return () => {
+
+      authListener
+        .subscription
+        .unsubscribe();
+
+    };
+
+  }, [
+    carregarNotificacoesNaoLidas,
+  ]);
+
+
+  /* =======================================================
+     EVENTOS DE ATUALIZAÇÃO
+  ======================================================= */
+
+  useEffect(() => {
+
+    function atualizarContador() {
+
+      carregarNotificacoesNaoLidas();
+
+    }
+
 
     function aoGanharFoco() {
 
@@ -319,12 +444,6 @@ export function Sidebar({
 
     }
 
-
-    /*
-    ========================================
-    QUANDO VOLTA PARA A ABA
-    ========================================
-    */
 
     function aoMudarVisibilidade() {
 
@@ -340,32 +459,15 @@ export function Sidebar({
     }
 
 
-    /*
-    ========================================
-    EVENTO INTERNO
-    ========================================
-
-    Usado quando uma notificação é marcada
-    como lida ou quando alguma ação gera uma
-    nova notificação.
-    */
-
-    function atualizarContador() {
-
-      carregarNotificacoesNaoLidas();
-
-    }
+    window.addEventListener(
+      "atualizar-notificacoes",
+      atualizarContador
+    );
 
 
     window.addEventListener(
       "focus",
       aoGanharFoco
-    );
-
-
-    window.addEventListener(
-      "atualizar-notificacoes",
-      atualizarContador
     );
 
 
@@ -375,78 +477,12 @@ export function Sidebar({
     );
 
 
-    /*
-    ========================================
-    AUTH
-    ========================================
-
-    No login usamos diretamente o UUID que
-    chegou na nova sessão. A consulta é
-    agendada para o próximo ciclo do navegador,
-    evitando disputar com a atualização interna
-    da sessão do Supabase.
-    */
-
-    const {
-      data: authListener
-    } = supabase.auth.onAuthStateChange(
-      (_evento, sessao) => {
-
-        if (!ativo) {
-          return;
-        }
-
-
-        if (!sessao?.user) {
-
-          setNotificacoesNaoLidas(0);
-
-          return;
-
-        }
-
-
-        if (
-          tentativaPendente.current
-        ) {
-
-          clearTimeout(
-            tentativaPendente.current
-          );
-
-        }
-
-
-        tentativaPendente.current =
-          setTimeout(
-            () => {
-
-              carregarNotificacoesNaoLidas(
-                sessao.user.id
-              );
-
-            },
-            0
-          );
-
-      }
-    );
-
-
     return () => {
 
-      ativo = false;
-
-
-      if (
-        tentativaPendente.current
-      ) {
-
-        clearTimeout(
-          tentativaPendente.current
-        );
-
-      }
+      window.removeEventListener(
+        "atualizar-notificacoes",
+        atualizarContador
+      );
 
 
       window.removeEventListener(
@@ -455,58 +491,41 @@ export function Sidebar({
       );
 
 
-      window.removeEventListener(
-        "atualizar-notificacoes",
-        atualizarContador
-      );
-
-
       document.removeEventListener(
         "visibilitychange",
         aoMudarVisibilidade
       );
 
-
-      authListener.subscription.unsubscribe();
-
     };
 
-  }, []);
+  }, [
+    carregarNotificacoesNaoLidas,
+  ]);
 
 
-  /*
-  ======================================================
-  ATUALIZA QUANDO MUDA DE PÁGINA
-  ======================================================
-
-  Mantemos o badge sincronizado quando a
-  navegação muda, mas sem criar uma segunda
-  consulta concorrente no login.
-  */
+  /* =======================================================
+     AO TROCAR DE PÁGINA
+  ======================================================= */
 
   useEffect(() => {
 
-    if (
-      pathname ===
-      "/notificacoes"
-    ) {
+    /*
+    Atualizamos o contador também quando
+    existe mudança de rota dentro da área
+    autenticada.
+    */
 
-      window.dispatchEvent(
-        new Event(
-          "atualizar-notificacoes"
-        )
-      );
+    carregarNotificacoesNaoLidas();
 
-    }
-
-  }, [pathname]);
+  }, [
+    pathname,
+    carregarNotificacoesNaoLidas,
+  ]);
 
 
-  /*
-  ======================================================
-  BADGE
-  ======================================================
-  */
+  /* =======================================================
+     BADGE
+  ======================================================= */
 
   const textoBadge =
 
@@ -519,23 +538,36 @@ export function Sidebar({
         );
 
 
+  /* =======================================================
+     RENDER
+  ======================================================= */
+
   return (
 
     <>
+
+      {/* ===================================================
+          FUNDO ESCURO MOBILE
+      =================================================== */}
 
       {
         aberta && (
 
           <button
             type="button"
+
             aria-label="Fechar menu"
-            onClick={onClose}
+
+            onClick={
+              onClose
+            }
+
             className="
               fixed
               inset-0
               z-40
-              bg-slate-950/40
-              backdrop-blur-sm
+              bg-slate-950/70
+              backdrop-blur-[2px]
               lg:hidden
             "
           />
@@ -544,84 +576,110 @@ export function Sidebar({
       }
 
 
+      {/* ===================================================
+          SIDEBAR
+      =================================================== */}
+
       <aside
         className={[
-          "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-slate-200 bg-white transition-[width,transform] duration-300",
+          `
+            fixed
+            inset-y-0
+            left-0
+            z-50
+            flex
+            flex-col
+            border-r
+            border-teal-300/10
+            bg-[#061521]
+            shadow-2xl
+            transition-all
+            duration-300
+          `,
 
           retraida
-            ? "lg:w-20"
-            : "lg:w-72",
-
-          "w-72 lg:translate-x-0",
+            ? "w-72 lg:w-20"
+            : "w-72",
 
           aberta
             ? "translate-x-0"
-            : "-translate-x-full"
+            : "-translate-x-full lg:translate-x-0",
 
         ].join(" ")}
       >
 
 
         {/* =================================================
-            CABEÇALHO
+            TOPO / LOGO
         ================================================= */}
 
         <div
           className={[
-            "flex min-h-16 items-center border-b border-slate-200 transition-all duration-300",
+            `
+              flex
+              min-h-[66px]
+              items-center
+              border-b
+              border-teal-300/10
+            `,
 
             retraida
-
-              ? "justify-center px-3 lg:justify-center"
-
-              : "justify-between px-5"
+              ? "justify-between px-4 lg:justify-center lg:px-2"
+              : "justify-between px-5",
 
           ].join(" ")}
         >
 
 
+          {/* LOGO */}
+
           <div
-            className={[
-              "min-w-0 overflow-hidden transition-all duration-300",
-
+            className={
               retraida
-
-                ? "lg:w-0 lg:opacity-0"
-
-                : "w-auto opacity-100"
-
-            ].join(" ")}
+                ? "lg:flex lg:justify-center"
+                : ""
+            }
           >
 
-            <Logo />
+            <Logo
+              href="/"
+              compact={
+                retraida
+              }
+            />
 
           </div>
 
 
+          {/* FECHAR MOBILE */}
+
           <button
             type="button"
-            onClick={onClose}
+
+            onClick={
+              onClose
+            }
+
             aria-label="Fechar menu"
+
             className="
               flex
               h-9
               w-9
               items-center
               justify-center
-              rounded-lg
-              text-slate-500
-              transition
-              hover:bg-slate-100
-              hover:text-slate-900
-              focus-visible:outline-none
-              focus-visible:ring-4
-              focus-visible:ring-blue-900/20
+              rounded-xl
+              text-slate-400
+              transition-all
+              duration-200
+              hover:-translate-y-[1px]
+              hover:bg-teal-400/10
+              hover:text-teal-200
               lg:hidden
             "
           >
 
             <X
-              aria-hidden="true"
               className="
                 h-5
                 w-5
@@ -632,8 +690,10 @@ export function Sidebar({
           </button>
 
 
+          {/* RECOLHER */}
+
           {
-            onToggleRetraida && (
+            !retraida && (
 
               <button
                 type="button"
@@ -642,66 +702,34 @@ export function Sidebar({
                   onToggleRetraida
                 }
 
-                aria-label={
-                  retraida
-                    ? "Expandir menu lateral"
-                    : "Recolher menu lateral"
-                }
+                aria-label="Recolher menu lateral"
 
-                title={
-                  retraida
-                    ? "Expandir menu lateral"
-                    : "Recolher menu lateral"
-                }
+                title="Recolher menu"
 
                 className="
                   hidden
                   h-9
                   w-9
-                  shrink-0
                   items-center
                   justify-center
-                  rounded-lg
-                  text-slate-500
-                  transition
-                  hover:bg-slate-100
-                  hover:text-blue-900
-                  focus-visible:outline-none
-                  focus-visible:ring-4
-                  focus-visible:ring-blue-900/20
+                  rounded-xl
+                  text-slate-400
+                  transition-all
+                  duration-200
+                  hover:-translate-y-[1px]
+                  hover:bg-teal-400/10
+                  hover:text-teal-200
                   lg:flex
                 "
               >
 
-                {
-                  retraida
-
-                    ? (
-
-                      <ChevronRight
-                        aria-hidden="true"
-                        className="
-                          h-5
-                          w-5
-                        "
-                        strokeWidth={1.8}
-                      />
-
-                    )
-
-                    : (
-
-                      <ChevronLeft
-                        aria-hidden="true"
-                        className="
-                          h-5
-                          w-5
-                        "
-                        strokeWidth={1.8}
-                      />
-
-                    )
-                }
+                <ChevronLeft
+                  className="
+                    h-5
+                    w-5
+                  "
+                  strokeWidth={1.8}
+                />
 
               </button>
 
@@ -712,90 +740,144 @@ export function Sidebar({
 
 
         {/* =================================================
-            ÁREA DO SERVIDOR
+            EXPANDIR
         ================================================= */}
 
-        <div
-          className={[
-            "overflow-hidden border-b border-slate-200 transition-all duration-300",
+        {
+          retraida && (
 
-            retraida
+            <div
+              className="
+                hidden
+                justify-center
+                border-b
+                border-teal-300/10
+                py-3
+                lg:flex
+              "
+            >
 
-              ? "lg:max-h-0 lg:border-b-0 lg:px-0 lg:py-0 lg:opacity-0"
+              <button
+                type="button"
 
-              : "max-h-40 px-5 py-5 opacity-100"
+                onClick={
+                  onToggleRetraida
+                }
 
-          ].join(" ")}
-        >
+                aria-label="Expandir menu lateral"
 
-          <p className="
-            whitespace-nowrap
-            text-xs
-            font-semibold
-            uppercase
-            tracking-wider
-            text-blue-900
-          ">
+                title="Expandir menu"
 
-            Área do servidor
+                className="
+                  flex
+                  h-9
+                  w-9
+                  items-center
+                  justify-center
+                  rounded-xl
+                  text-slate-400
+                  transition-all
+                  duration-200
+                  hover:-translate-y-[1px]
+                  hover:bg-teal-400/10
+                  hover:text-teal-200
+                "
+              >
 
-          </p>
+                <ChevronRight
+                  className="
+                    h-5
+                    w-5
+                  "
+                  strokeWidth={1.8}
+                />
 
+              </button>
 
-          <p className="
-            mt-1
-            min-w-60
-            text-sm
-            leading-5
-            text-slate-500
-          ">
+            </div>
 
-            Gerencie seu perfil e acompanhe oportunidades de permuta.
-
-          </p>
-
-        </div>
+          )
+        }
 
 
         {/* =================================================
-            MENU
+            ÁREA DO SERVIDOR
+        ================================================= */}
+
+        {
+          !retraida && (
+
+            <div
+              className="
+                border-b
+                border-teal-300/10
+                px-5
+                py-5
+              "
+            >
+
+              <p
+                className="
+                  text-[10px]
+                  font-bold
+                  uppercase
+                  tracking-[0.18em]
+                  text-teal-400
+                "
+              >
+                Área do servidor
+              </p>
+
+
+              <p
+                className="
+                  mt-2
+                  text-sm
+                  leading-6
+                  text-slate-400
+                "
+              >
+                Gerencie seu perfil e acompanhe
+                oportunidades de permuta.
+              </p>
+
+            </div>
+
+          )
+        }
+
+
+        {/* =================================================
+            NAVEGAÇÃO
         ================================================= */}
 
         <nav
           className={[
-            "flex-1 space-y-1 overflow-y-auto py-5 transition-all duration-300",
+            `
+              flex-1
+              space-y-2
+              overflow-y-auto
+              py-4
+            `,
 
             retraida
-              ? "lg:px-3"
-              : "px-3"
+              ? "px-3"
+              : "px-4",
 
           ].join(" ")}
         >
 
           {
-            menuItems.map(
+            itensMenu.map(
               item => {
 
-                const Icon =
-                  item.icon;
+                const Icone =
+                  item.icone;
 
 
                 const ativo =
-
-                  pathname ===
-                  item.href
-
-                  ||
-
-                  (
-                    item.href !==
-                    "/dashboard"
-
-                    &&
-
-                    pathname.startsWith(
-                      `${item.href}/`
-                    )
+                  rotaAtiva(
+                    item.href
                   );
 
 
@@ -828,61 +910,92 @@ export function Sidebar({
                       onClose
                     }
 
-                    aria-label={
-                      retraida
-                        ? item.label
-                        : undefined
-                    }
-
                     title={
                       retraida
-                        ? item.label
+                        ? item.nome
                         : undefined
                     }
 
                     className={[
-                      "group relative flex min-h-11 items-center rounded-xl py-2.5 text-sm font-medium transition",
+                      `
+                        group
+                        relative
+                        flex
+                        min-h-11
+                        items-center
+                        rounded-xl
+                        py-2.5
+                        text-sm
+                        font-medium
+                        transition-all
+                        duration-200
+                      `,
 
                       retraida
-
-                        ? "lg:justify-center lg:gap-0 lg:px-2"
-
-                        : "gap-3 px-3",
+                        ? `
+                          lg:justify-center
+                          lg:gap-0
+                          lg:px-2
+                        `
+                        : `
+                          gap-3
+                          px-3
+                        `,
 
                       ativo
-
-                        ? "bg-blue-900 text-white shadow-sm"
-
-                        : "text-slate-600 hover:bg-blue-50 hover:text-blue-900"
+                        ? `
+                          border
+                          border-teal-300/20
+                          bg-teal-500/20
+                          text-white
+                          shadow-[0_5px_18px_rgba(20,184,166,0.08)]
+                        `
+                        : `
+                          border
+                          border-transparent
+                          text-slate-400
+                          hover:-translate-y-[1px]
+                          hover:border-teal-300/10
+                          hover:bg-teal-400/[0.07]
+                          hover:text-teal-200
+                        `,
 
                     ].join(" ")}
                   >
 
 
-                    {/* ÍCONE + BADGE */}
+                    {/* ÍCONE */}
 
-                    <div className="
-                      relative
-                      shrink-0
-                    ">
+                    <div
+                      className="
+                        relative
+                        shrink-0
+                      "
+                    >
 
-                      <Icon
-                        aria-hidden="true"
-
+                      <Icone
                         className={[
-                          "h-5 w-5 shrink-0 transition",
+                          `
+                            h-5
+                            w-5
+                            shrink-0
+                            transition-colors
+                            duration-200
+                          `,
 
                           ativo
-
-                            ? "text-white"
-
-                            : "text-slate-500 group-hover:text-blue-900"
+                            ? "text-teal-200"
+                            : `
+                              text-slate-400
+                              group-hover:text-teal-300
+                            `,
 
                         ].join(" ")}
-
                         strokeWidth={1.8}
                       />
 
+
+                      {/* BADGE SIDEBAR RETRAÍDA */}
 
                       {
                         mostrarBadge &&
@@ -892,6 +1005,7 @@ export function Sidebar({
                             aria-label={
                               `${notificacoesNaoLidas} notificações não lidas`
                             }
+
                             className="
                               absolute
                               -right-3
@@ -902,20 +1016,18 @@ export function Sidebar({
                               items-center
                               justify-center
                               rounded-full
-                              bg-red-600
+                              bg-red-500
                               px-1
                               text-[10px]
                               font-bold
                               leading-none
                               text-white
-                              shadow-sm
+                              shadow
                               ring-2
-                              ring-white
+                              ring-[#061521]
                             "
                           >
-
                             {textoBadge}
-
                           </span>
 
                         )
@@ -927,92 +1039,68 @@ export function Sidebar({
                     {/* TEXTO */}
 
                     <span
-                      className={[
-                        "whitespace-nowrap transition-all duration-300",
-
+                      className={
                         retraida
-
-                          ? "lg:w-0 lg:overflow-hidden lg:opacity-0"
-
-                          : "w-auto opacity-100",
-
-                        ativo
-
-                          ? "text-white"
-
-                          : "text-slate-600 group-hover:text-blue-900"
-
-                      ].join(" ")}
+                          ? "lg:hidden"
+                          : ""
+                      }
                     >
-
-                      {item.label}
-
+                      {item.nome}
                     </span>
 
 
-                    {/* BADGE MENU ABERTO */}
+                    {/* BADGE NORMAL */}
 
                     {
-                      mostrarBadge && (
+                      mostrarBadge &&
+                      !retraida && (
 
                         <span
                           aria-label={
                             `${notificacoesNaoLidas} notificações não lidas`
                           }
 
-                          className={[
-                            "ml-auto flex min-h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-[10px] font-bold leading-none text-white shadow-sm",
-
-                            retraida
-                              ? "lg:hidden"
-                              : ""
-
-                          ].join(" ")}
+                          className="
+                            ml-auto
+                            flex
+                            min-h-5
+                            min-w-5
+                            items-center
+                            justify-center
+                            rounded-full
+                            bg-red-500
+                            px-1.5
+                            text-[10px]
+                            font-bold
+                            leading-none
+                            text-white
+                            shadow-sm
+                          "
                         >
-
                           {textoBadge}
-
                         </span>
 
                       )
                     }
 
 
-                    {/* TOOLTIP SIDEBAR RETRAÍDA */}
+                    {/* INDICADOR */}
 
                     {
-                      retraida && (
+                      ativo &&
+                      !retraida &&
+                      !mostrarBadge && (
 
-                        <span className="
-                          pointer-events-none
-                          absolute
-                          left-full
-                          z-50
-                          ml-3
-                          hidden
-                          whitespace-nowrap
-                          rounded-lg
-                          bg-slate-950
-                          px-3
-                          py-2
-                          text-xs
-                          font-semibold
-                          text-white
-                          opacity-0
-                          shadow-lg
-                          transition-opacity
-                          group-hover:opacity-100
-                          lg:block
-                        ">
-
-                          {item.label}
-
-                          {
-                            mostrarBadge &&
-                            ` (${notificacoesNaoLidas})`
-                          }
-
-                        </span>
+                        <span
+                          className="
+                            ml-auto
+                            h-1.5
+                            w-1.5
+                            rounded-full
+                            bg-teal-300
+                            shadow-[0_0_8px_rgba(94,234,212,0.8)]
+                          "
+                        />
 
                       )
                     }
@@ -1033,43 +1121,103 @@ export function Sidebar({
         ================================================= */}
 
         <div
-          className={[
-            "overflow-hidden border-t border-slate-200 transition-all duration-300",
-
-            retraida
-
-              ? "lg:max-h-0 lg:border-t-0 lg:px-0 lg:py-0 lg:opacity-0"
-
-              : "max-h-24 px-5 py-4 opacity-100"
-
-          ].join(" ")}
+          className="
+            border-t
+            border-teal-300/10
+            p-4
+          "
         >
 
-          <p className="
-            whitespace-nowrap
-            text-xs
-            leading-5
-            text-slate-400
-          ">
+          {
+            !retraida
 
-            Permuta TJSP
+              ? (
 
-          </p>
+                <div
+                  className="
+                    rounded-2xl
+                    border
+                    border-teal-300/10
+                    bg-teal-400/[0.04]
+                    px-4
+                    py-3
+                  "
+                >
+
+                  <div
+                    className="
+                      flex
+                      items-center
+                      gap-2
+                    "
+                  >
+
+                    <Search
+                      className="
+                        h-4
+                        w-4
+                        text-teal-400
+                      "
+                      strokeWidth={1.8}
+                    />
 
 
-          <p className="
-            whitespace-nowrap
-            text-xs
-            leading-5
-            text-slate-400
-          ">
+                    <p
+                      className="
+                        text-xs
+                        font-semibold
+                        text-slate-300
+                      "
+                    >
+                      Permuta TJSP
+                    </p>
 
-            Conectando servidores
+                  </div>
 
-          </p>
+
+                  <p
+                    className="
+                      mt-1.5
+                      text-[11px]
+                      leading-4
+                      text-slate-500
+                    "
+                  >
+                    Plataforma independente para auxiliar
+                    servidores na busca por permutas.
+                  </p>
+
+                </div>
+
+              )
+
+              : (
+
+                <div
+                  className="
+                    hidden
+                    justify-center
+                    lg:flex
+                  "
+                >
+
+                  <div
+                    className="
+                      h-2
+                      w-2
+                      rounded-full
+                      bg-teal-400
+                      shadow-[0_0_8px_rgba(45,212,191,0.6)]
+                    "
+                    title="Permuta TJSP"
+                  />
+
+                </div>
+
+              )
+          }
 
         </div>
-
 
       </aside>
 

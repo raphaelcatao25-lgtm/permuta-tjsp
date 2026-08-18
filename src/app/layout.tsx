@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 
-import { Geist, Geist_Mono } from "next/font/google";
+import {
+  Geist,
+  Geist_Mono,
+} from "next/font/google";
 
 import "./globals.css";
 
@@ -38,9 +41,21 @@ export default function RootLayout({
 
   return (
 
-    <html lang="pt-BR">
+    <html
+      lang="pt-BR"
+      className="
+        bg-[#04111d]
+      "
+    >
 
-      <body>
+      <body
+        className={`
+          ${geistSans.variable}
+          ${geistMono.variable}
+          min-h-screen
+          antialiased
+        `}
+      >
 
         {children}
 

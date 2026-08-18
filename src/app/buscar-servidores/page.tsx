@@ -938,7 +938,7 @@ export default function BuscarServidoresPage() {
             <h1 className="
               text-3xl
               font-bold
-              text-slate-900
+              text-white
             ">
 
               Buscar servidores
@@ -948,7 +948,7 @@ export default function BuscarServidoresPage() {
 
             <p className="
               mt-2
-              text-slate-500
+              text-slate-400
             ">
 
               Consulte servidores disponíveis e compare as preferências deles com as suas.
@@ -966,16 +966,16 @@ export default function BuscarServidoresPage() {
             overflow-hidden
             rounded-2xl
             border
-            border-blue-200
-            bg-white
-            shadow-sm
+            border-teal-300/10
+            bg-[#0d2232]
+            shadow-[0_16px_40px_rgba(0,0,0,0.16)]
           ">
 
 
             <div className="
               border-b
-              border-blue-100
-              bg-blue-50/70
+              border-teal-300/10
+              bg-[#0a1f2f]
               px-6
               py-5
             ">
@@ -983,7 +983,7 @@ export default function BuscarServidoresPage() {
               <h2 className="
                 text-xl
                 font-bold
-                text-blue-950
+                text-white
               ">
 
                 Suas informações
@@ -994,7 +994,7 @@ export default function BuscarServidoresPage() {
               <p className="
                 mt-1
                 text-sm
-                text-blue-800
+                text-slate-400
               ">
 
                 Use seus dados abaixo como referência ao pesquisar outros servidores.
@@ -1017,8 +1017,8 @@ export default function BuscarServidoresPage() {
               <div className="
                 rounded-xl
                 border
-                border-slate-200
-                bg-slate-50
+                border-teal-300/10
+                bg-[#081b29]
                 p-4
               ">
 
@@ -1027,7 +1027,7 @@ export default function BuscarServidoresPage() {
                   font-semibold
                   uppercase
                   tracking-wide
-                  text-slate-500
+                  text-slate-400
                 ">
 
                   Sua comarca atual
@@ -1038,7 +1038,7 @@ export default function BuscarServidoresPage() {
                 <p className="
                   mt-2
                   font-semibold
-                  text-slate-900
+                  text-white
                 ">
 
                   {
@@ -1058,8 +1058,8 @@ export default function BuscarServidoresPage() {
               <div className="
                 rounded-xl
                 border
-                border-slate-200
-                bg-slate-50
+                border-teal-300/10
+                bg-[#081b29]
                 p-4
               ">
 
@@ -1068,7 +1068,7 @@ export default function BuscarServidoresPage() {
                   font-semibold
                   uppercase
                   tracking-wide
-                  text-slate-500
+                  text-slate-400
                 ">
 
                   Suas comarcas desejadas
@@ -1098,12 +1098,12 @@ export default function BuscarServidoresPage() {
                               className="
                                 rounded-lg
                                 border
-                                border-blue-100
-                                bg-white
+                                border-teal-300/15
+                                bg-teal-400/[0.05]
                                 px-3
                                 py-2
                                 text-sm
-                                text-blue-900
+                                text-teal-300
                               "
                             >
 
@@ -1134,7 +1134,7 @@ export default function BuscarServidoresPage() {
                     <p className="
                       mt-2
                       text-sm
-                      text-slate-500
+                      text-slate-400
                     ">
 
                       Nenhuma comarca desejada cadastrada.
@@ -1161,14 +1161,14 @@ export default function BuscarServidoresPage() {
               <div className="
                 rounded-2xl
                 border
-                border-blue-200
-                bg-blue-50
+                border-teal-300/10
+                bg-teal-400/[0.07]
                 p-5
               ">
 
                 <p className="
                   font-semibold
-                  text-blue-900
+                  text-teal-200
                 ">
 
                   Você está em uma permuta confirmada.
@@ -1180,7 +1180,7 @@ export default function BuscarServidoresPage() {
                   mt-1
                   text-sm
                   leading-6
-                  text-blue-800
+                  text-slate-400
                 ">
 
                   Você pode consultar servidores, mas não poderá enviar uma nova proposta enquanto a permuta atual estiver em andamento.
@@ -1204,14 +1204,14 @@ export default function BuscarServidoresPage() {
               <div className="
                 rounded-2xl
                 border
-                border-amber-200
-                bg-amber-50
+                border-amber-300/20
+                bg-amber-400/[0.07]
                 p-5
               ">
 
                 <p className="
                   font-semibold
-                  text-amber-900
+                  text-amber-200
                 ">
 
                   Sua busca está pausada.
@@ -1223,7 +1223,7 @@ export default function BuscarServidoresPage() {
                   mt-1
                   text-sm
                   leading-6
-                  text-amber-800
+                  text-slate-300
                 ">
 
                   Você pode consultar servidores, mas deverá reativar sua busca em Meu Perfil antes de enviar uma proposta.
@@ -1244,17 +1244,17 @@ export default function BuscarServidoresPage() {
             overflow-visible
             rounded-2xl
             border
-            border-slate-200
-            bg-white
-            shadow-sm
+            border-teal-300/10
+            bg-[#0d2232]
+            shadow-[0_16px_40px_rgba(0,0,0,0.16)]
           ">
 
 
             <div className="
               rounded-t-2xl
               border-b
-              border-slate-100
-              bg-slate-50/70
+              border-teal-300/10
+              bg-[#0a1f2f]
               px-6
               py-5
             ">
@@ -1269,7 +1269,7 @@ export default function BuscarServidoresPage() {
                   className="
                     h-5
                     w-5
-                    text-blue-900
+                    text-teal-300
                   "
                 />
 
@@ -1279,7 +1279,7 @@ export default function BuscarServidoresPage() {
                   <h2 className="
                     text-xl
                     font-bold
-                    text-slate-900
+                    text-white
                   ">
 
                     Filtros da busca
@@ -1290,7 +1290,7 @@ export default function BuscarServidoresPage() {
                   <p className="
                     mt-1
                     text-sm
-                    text-slate-500
+                    text-slate-400
                   ">
 
                     Os campos abaixo se referem ao servidor que você deseja encontrar.
@@ -1459,14 +1459,18 @@ export default function BuscarServidoresPage() {
                     justify-center
                     gap-2
                     rounded-xl
-                    bg-blue-900
+                    border
+                    border-teal-300/20
+                    bg-teal-600
                     px-5
                     py-3
                     text-sm
                     font-semibold
                     text-white
-                    transition
-                    hover:bg-blue-800
+                    transition-all
+                    duration-200
+                    hover:-translate-y-[1px]
+                    hover:bg-teal-500
                     disabled:cursor-not-allowed
                     disabled:opacity-50
                   "
@@ -1504,15 +1508,19 @@ export default function BuscarServidoresPage() {
                     gap-2
                     rounded-xl
                     border
-                    border-slate-300
-                    bg-white
+                    border-teal-300/15
+                    bg-[#081b29]
                     px-5
                     py-3
                     text-sm
                     font-semibold
-                    text-slate-700
-                    transition
-                    hover:bg-slate-100
+                    text-slate-300
+                    transition-all
+                    duration-200
+                    hover:-translate-y-[1px]
+                    hover:border-teal-300/25
+                    hover:bg-teal-400/[0.07]
+                    hover:text-teal-200
                     disabled:opacity-50
                   "
                 >
@@ -1542,11 +1550,11 @@ export default function BuscarServidoresPage() {
               <div className="
                 rounded-xl
                 border
-                border-red-200
-                bg-red-50
+                border-red-400/20
+                bg-red-400/10
                 p-4
                 text-sm
-                text-red-700
+                text-red-300
               ">
 
                 {erro}
@@ -1567,12 +1575,12 @@ export default function BuscarServidoresPage() {
               <div className="
                 rounded-2xl
                 border
-                border-slate-200
-                bg-white
+                border-teal-300/10
+                bg-[#0d2232]
                 p-8
                 text-center
                 text-sm
-                text-slate-500
+                text-slate-400
               ">
 
                 Carregando dados da pesquisa...
@@ -1595,8 +1603,8 @@ export default function BuscarServidoresPage() {
                 rounded-2xl
                 border
                 border-dashed
-                border-slate-300
-                bg-white
+                border-teal-300/15
+                bg-[#081b29]
                 p-10
                 text-center
               ">
@@ -1615,7 +1623,7 @@ export default function BuscarServidoresPage() {
                   mt-4
                   text-lg
                   font-bold
-                  text-slate-900
+                  text-white
                 ">
 
                   Pesquise servidores disponíveis
@@ -1629,7 +1637,7 @@ export default function BuscarServidoresPage() {
                   max-w-xl
                   text-sm
                   leading-6
-                  text-slate-500
+                  text-slate-400
                 ">
 
                   Digite parte do nome da comarca e escolha uma opção da lista para pesquisar.
@@ -1655,8 +1663,8 @@ export default function BuscarServidoresPage() {
               <div className="
                 rounded-2xl
                 border
-                border-slate-200
-                bg-white
+                border-teal-300/10
+                bg-[#0d2232]
                 p-10
                 text-center
               ">
@@ -1675,7 +1683,7 @@ export default function BuscarServidoresPage() {
                   mt-4
                   text-lg
                   font-bold
-                  text-slate-900
+                  text-white
                 ">
 
                   Nenhum servidor encontrado
@@ -1686,7 +1694,7 @@ export default function BuscarServidoresPage() {
                 <p className="
                   mt-2
                   text-sm
-                  text-slate-500
+                  text-slate-400
                 ">
 
                   Tente alterar ou remover um dos filtros.
@@ -1716,7 +1724,7 @@ export default function BuscarServidoresPage() {
                   <h2 className="
                     text-xl
                     font-bold
-                    text-slate-900
+                    text-white
                   ">
 
                     Servidores encontrados
@@ -1727,7 +1735,7 @@ export default function BuscarServidoresPage() {
                   <p className="
                     mt-1
                     text-sm
-                    text-slate-500
+                    text-slate-400
                   ">
 
                     {
@@ -1837,7 +1845,7 @@ function AutocompleteComarca({
         block
         text-sm
         font-semibold
-        text-slate-700
+        text-slate-300
       ">
 
         {label}
@@ -1877,18 +1885,20 @@ function AutocompleteComarca({
             w-full
             rounded-xl
             border
-            border-slate-300
-            bg-white
+            border-teal-300/15
+            bg-[#081b29]
             px-4
             py-3
             pr-20
             text-sm
-            text-slate-900
+            text-white
             outline-none
             transition
-            focus:border-blue-500
+            placeholder:text-slate-600
+            hover:border-teal-300/25
+            focus:border-teal-400
             focus:ring-4
-            focus:ring-blue-100
+            focus:ring-teal-400/10
           "
         />
 
@@ -1914,8 +1924,8 @@ function AutocompleteComarca({
                 p-1
                 text-slate-400
                 transition
-                hover:bg-slate-100
-                hover:text-slate-700
+                hover:bg-teal-400/[0.07]
+                hover:text-slate-300
               "
             >
 
@@ -1959,10 +1969,10 @@ function AutocompleteComarca({
             overflow-y-auto
             rounded-xl
             border
-            border-slate-200
-            bg-white
+            border-teal-300/10
+            bg-[#081b29]
             p-1
-            shadow-xl
+            shadow-[0_20px_50px_rgba(0,0,0,0.35)]
           ">
 
             {
@@ -1998,10 +2008,10 @@ function AutocompleteComarca({
                         py-2.5
                         text-left
                         text-sm
-                        text-slate-700
+                        text-slate-300
                         transition
-                        hover:bg-blue-50
-                        hover:text-blue-900
+                        hover:bg-teal-400/[0.07]
+                        hover:text-teal-200
                       "
                     >
 
@@ -2018,7 +2028,7 @@ function AutocompleteComarca({
                   px-3
                   py-4
                   text-sm
-                  text-slate-500
+                  text-slate-400
                 ">
 
                   Nenhuma comarca encontrada.
@@ -2062,9 +2072,9 @@ function ServidorCard({
       overflow-hidden
       rounded-2xl
       border
-      border-slate-200
-      bg-white
-      shadow-sm
+      border-teal-300/10
+      bg-[#0d2232]
+      shadow-[0_12px_32px_rgba(0,0,0,0.14)]
     ">
 
 
@@ -2104,8 +2114,10 @@ function ServidorCard({
                 items-center
                 justify-center
                 rounded-full
-                bg-blue-50
-                text-blue-900
+                border
+                border-teal-300/15
+                bg-teal-400/[0.08]
+                text-teal-300
               ">
 
                 <UserRound
@@ -2120,7 +2132,7 @@ function ServidorCard({
                 <h3 className="
                   text-lg
                   font-bold
-                  text-slate-900
+                  text-white
                 ">
 
                   {servidor.nome}
@@ -2137,12 +2149,14 @@ function ServidorCard({
                       items-center
                       gap-1.5
                       rounded-full
-                      bg-green-100
+                      border
+                      border-emerald-300/15
+                      bg-emerald-400/10
                       px-2.5
                       py-1
                       text-xs
                       font-semibold
-                      text-green-800
+                      text-emerald-300
                     ">
 
                       <CheckCircle2
@@ -2159,12 +2173,14 @@ function ServidorCard({
                       mt-1
                       inline-flex
                       rounded-full
-                      bg-slate-100
+                      border
+                      border-slate-600/40
+                      bg-white/[0.04]
                       px-2.5
                       py-1
                       text-xs
                       font-semibold
-                      text-slate-600
+                      text-slate-400
                     ">
 
                       Sem compatibilidade direta
@@ -2186,8 +2202,8 @@ function ServidorCard({
               <div className="
                 rounded-xl
                 border
-                border-slate-200
-                bg-slate-50
+                border-teal-300/10
+                bg-[#081b29]
                 p-4
               ">
 
@@ -2196,7 +2212,7 @@ function ServidorCard({
                   font-semibold
                   uppercase
                   tracking-wide
-                  text-slate-500
+                  text-slate-400
                 ">
 
                   Comarca atual do servidor
@@ -2208,7 +2224,7 @@ function ServidorCard({
                   mt-2
                   text-sm
                   font-semibold
-                  text-slate-900
+                  text-white
                 ">
 
                   {
@@ -2221,7 +2237,7 @@ function ServidorCard({
                 <p className="
                   mt-1
                   text-xs
-                  text-slate-500
+                  text-slate-400
                 ">
 
                   {
@@ -2254,7 +2270,7 @@ function ServidorCard({
                 <MapPin
                   size={17}
                   className="
-                    text-blue-700
+                    text-teal-300
                   "
                 />
 
@@ -2262,7 +2278,7 @@ function ServidorCard({
                 <h4 className="
                   text-sm
                   font-bold
-                  text-slate-900
+                  text-white
                 ">
 
                   Destinos desejados pelo servidor
@@ -2297,12 +2313,12 @@ function ServidorCard({
                             className="
                               rounded-lg
                               border
-                              border-blue-100
-                              bg-blue-50
+                              border-teal-300/10
+                              bg-teal-400/[0.07]
                               px-3
                               py-2
                               text-sm
-                              text-blue-900
+                              text-teal-200
                             "
                           >
 
@@ -2333,7 +2349,7 @@ function ServidorCard({
                   <p className="
                     mt-3
                     text-sm
-                    text-slate-500
+                    text-slate-400
                   ">
 
                     Nenhum destino ativo informado.
@@ -2375,14 +2391,18 @@ function ServidorCard({
                     justify-center
                     gap-2
                     rounded-xl
-                    bg-blue-600
+                    border
+                    border-teal-300/20
+                    bg-teal-600
                     px-4
                     py-3
                     text-sm
                     font-semibold
                     text-white
-                    transition
-                    hover:bg-blue-700
+                    transition-all
+                    duration-200
+                    hover:-translate-y-[1px]
+                    hover:bg-teal-500
                     disabled:cursor-not-allowed
                     disabled:opacity-50
                   "
@@ -2401,8 +2421,8 @@ function ServidorCard({
                 <div className="
                   rounded-xl
                   border
-                  border-slate-200
-                  bg-slate-50
+                  border-teal-300/10
+                  bg-[#081b29]
                   p-4
                   text-center
                 ">
@@ -2410,7 +2430,7 @@ function ServidorCard({
                   <p className="
                     text-xs
                     leading-5
-                    text-slate-500
+                    text-slate-400
                   ">
 
                     As preferências atuais não fecham uma permuta direta.

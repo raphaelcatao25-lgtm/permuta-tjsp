@@ -3,11 +3,11 @@
 import {
   LogOut,
   Menu,
-  UserRound
+  UserRound,
 } from "lucide-react";
 
 import {
-  supabase
+  supabase,
 } from "@/lib/supabase";
 
 
@@ -19,7 +19,7 @@ type HeaderProps = {
 
 export function Header({
   nomeUsuario = "Servidor",
-  onOpenSidebar
+  onOpenSidebar,
 }: HeaderProps) {
 
 
@@ -28,8 +28,9 @@ export function Header({
     try {
 
       const {
-        error
-      } = await supabase.auth.signOut();
+        error,
+      } =
+        await supabase.auth.signOut();
 
 
       if (error) {
@@ -43,7 +44,7 @@ export function Header({
 
     }
 
-    catch(error) {
+    catch (error) {
 
       console.error(
         "Erro inesperado ao sair da conta:",
@@ -58,10 +59,6 @@ export function Header({
       ========================================
       REDIRECIONAMENTO COMPLETO
       ========================================
-
-      Força a saída da área autenticada e
-      desmonta Header, Sidebar, notificações,
-      listeners e demais estados da sessão.
       */
 
       window.location.href = "/";
@@ -73,24 +70,29 @@ export function Header({
 
   return (
 
-    <header className="
-      sticky
-      top-0
-      z-30
-      flex
-      min-h-16
-      items-center
-      justify-between
-      border-b
-      border-slate-200
-      bg-white
-      px-4
-      sm:px-6
-      lg:px-8
-    ">
+    <header
+      className="
+        sticky
+        top-0
+        z-30
+        flex
+        min-h-[70px]
+        items-center
+        justify-between
+        border-b
+        border-teal-300/10
+        bg-[#061521]/88
+        px-4
+        backdrop-blur-xl
+        sm:px-6
+        lg:px-8
+      "
+    >
 
 
-      {/* MENU MOBILE */}
+      {/* =====================================================
+          MENU MOBILE
+      ===================================================== */}
 
       <button
         type="button"
@@ -103,15 +105,20 @@ export function Header({
 
         className="
           flex
-          h-10
-          w-10
+          h-11
+          w-11
           items-center
           justify-center
           rounded-xl
-          text-slate-600
+          border
+          border-teal-300/10
+          bg-white/[0.035]
+          text-slate-300
           transition
-          hover:bg-slate-100
-          hover:text-blue-900
+          hover:border-teal-300/25
+          hover:bg-teal-400/10
+          hover:!text-teal-300
+          active:scale-[0.95]
           lg:hidden
         "
       >
@@ -127,67 +134,79 @@ export function Header({
       </button>
 
 
-      {/* USUÁRIO */}
 
-      <div className="
-        ml-auto
-        flex
-        items-center
-      ">
+      {/* =====================================================
+          USUÁRIO
+      ===================================================== */}
 
-
-        <div className="
+      <div
+        className="
+          ml-auto
           flex
           items-center
-          gap-3
-        ">
+        "
+      >
 
+        <div
+          className="
+            flex
+            items-center
+            gap-3
+          "
+        >
 
-          <div className="
-            hidden
-            text-right
-            sm:block
-          ">
+          <div
+            className="
+              hidden
+              text-right
+              sm:block
+            "
+          >
 
-            <p className="
-              text-xs
-              font-medium
-              text-slate-500
-            ">
-
+            <p
+              className="
+                text-[11px]
+                font-medium
+                uppercase
+                tracking-[0.08em]
+                text-slate-500
+              "
+            >
               Usuário conectado
-
             </p>
 
 
-            <p className="
-              mt-0.5
-              max-w-40
-              truncate
-              text-sm
-              font-bold
-              text-slate-900
-            ">
-
+            <p
+              className="
+                mt-1
+                max-w-40
+                truncate
+                text-sm
+                font-bold
+                text-white
+              "
+            >
               {nomeUsuario}
-
             </p>
 
           </div>
 
 
-          <div className="
-            flex
-            h-10
-            w-10
-            items-center
-            justify-center
-            rounded-full
-            border
-            border-blue-100
-            bg-blue-50
-            text-blue-900
-          ">
+          <div
+            className="
+              flex
+              h-11
+              w-11
+              items-center
+              justify-center
+              rounded-full
+              border
+              border-teal-300/20
+              bg-teal-400/10
+              text-teal-300
+              shadow-[0_0_25px_rgba(20,184,166,0.12)]
+            "
+          >
 
             <UserRound
               className="
@@ -202,17 +221,21 @@ export function Header({
         </div>
 
 
-        <div className="
-          mx-3
-          hidden
-          h-7
-          w-px
-          bg-slate-200
-          sm:block
-        " />
+        <div
+          className="
+            mx-3
+            hidden
+            h-8
+            w-px
+            bg-teal-300/10
+            sm:block
+          "
+        />
 
 
-        {/* SAIR DA CONTA */}
+        {/* =====================================================
+            SAIR
+        ===================================================== */}
 
         <button
           type="button"
@@ -223,16 +246,21 @@ export function Header({
 
           className="
             flex
-            h-8
+            h-9
             items-center
             gap-1.5
-            rounded-lg
-            px-2
+            rounded-xl
+            border
+            border-transparent
+            px-2.5
             text-xs
             font-semibold
-            text-red-600
+            text-red-400
             transition
-            hover:bg-red-50
+            hover:border-red-400/15
+            hover:bg-red-400/10
+            hover:!text-red-300
+            active:scale-[0.96]
           "
         >
 
@@ -245,17 +273,16 @@ export function Header({
           />
 
 
-          <span className="
-            hidden
-            sm:inline
-          ">
-
+          <span
+            className="
+              hidden
+              sm:inline
+            "
+          >
             Sair da conta
-
           </span>
 
         </button>
-
 
       </div>
 

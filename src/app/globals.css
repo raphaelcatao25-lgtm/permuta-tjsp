@@ -1,47 +1,76 @@
 @import "tailwindcss";
 
+/* ============================================================
+   PERMUTA TJSP
+   IDENTIDADE VISUAL DARK — AZUL PETRÓLEO + TEAL
+   ============================================================ */
+
 :root {
-  --background: #f4f7fb;
-  --foreground: #172033;
+  /* Fundos */
+  --background: #071725;
+  --background-deep: #04111d;
+  --background-soft: #0b1e2d;
 
-  --primary: #173f7a;
-  --primary-dark: #102e5d;
-  --primary-light: #eaf2ff;
+  /* Texto */
+  --foreground: #f4fbfb;
+  --text-primary: #f4fbfb;
+  --text-secondary: #b8c9d1;
+  --text-muted: #7f9aa6;
 
-  --secondary: #64748b;
+  /* Identidade */
+  --primary: #0f948f;
+  --primary-dark: #0b7472;
+  --primary-light: #22c7bc;
+  --primary-soft: #103d46;
 
-  --success: #15803d;
-  --success-light: #f0fdf4;
+  --secondary: #6f8f9c;
 
-  --warning: #d97706;
-  --warning-light: #fffbeb;
+  /* Superfícies */
+  --surface: #0b1e2d;
+  --surface-secondary: #0f2636;
+  --surface-tertiary: #123044;
 
-  --danger: #dc2626;
-  --danger-light: #fef2f2;
+  /* Bordas */
+  --border: rgb(93 150 163 / 22%);
+  --border-strong: rgb(45 212 191 / 38%);
 
-  --surface: #ffffff;
-  --surface-secondary: #f8fafc;
+  /* Estados */
+  --success: #18b981;
+  --success-light: #0b352e;
 
-  --border: #dbe3ee;
-  --border-strong: #c5d0df;
+  --warning: #f59e0b;
+  --warning-light: #382a0d;
 
-  --text-primary: #172033;
-  --text-secondary: #526071;
-  --text-muted: #7a8798;
+  --danger: #ef4444;
+  --danger-light: #3d171b;
 
-  --shadow-sm: 0 1px 2px rgb(15 23 42 / 5%);
+  /* Sombras */
+  --shadow-sm:
+    0 2px 8px rgb(0 0 0 / 18%);
+
   --shadow-md:
-    0 4px 6px -1px rgb(15 23 42 / 8%),
-    0 2px 4px -2px rgb(15 23 42 / 6%);
-  --shadow-lg:
-    0 12px 25px -8px rgb(15 23 42 / 16%),
-    0 6px 12px -8px rgb(15 23 42 / 10%);
+    0 12px 30px -12px rgb(0 0 0 / 45%),
+    0 4px 12px rgb(0 0 0 / 22%);
 
+  --shadow-lg:
+    0 25px 65px -22px rgb(0 0 0 / 65%),
+    0 10px 30px rgb(0 0 0 / 25%);
+
+  --shadow-teal:
+    0 12px 34px rgb(20 184 166 / 20%);
+
+  /* Raios */
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
   --radius-lg: 1rem;
   --radius-xl: 1.25rem;
+  --radius-2xl: 1.5rem;
 }
+
+
+/* ============================================================
+   TAILWIND THEME
+   ============================================================ */
 
 @theme inline {
   --color-background: var(--background);
@@ -76,26 +105,128 @@
   --font-mono: var(--font-geist-mono);
 }
 
+
+/* ============================================================
+   BASE
+   ============================================================ */
+
 * {
   box-sizing: border-box;
 }
 
 html {
   min-height: 100%;
-  background: var(--background);
+  background: var(--background-deep);
   scroll-behavior: smooth;
+  color-scheme: dark;
 }
 
 body {
   min-height: 100vh;
   margin: 0;
-  background: var(--background);
+
+  background:
+    radial-gradient(
+      circle at 15% 12%,
+      rgb(13 148 136 / 14%),
+      transparent 32rem
+    ),
+    radial-gradient(
+      circle at 88% 18%,
+      rgb(14 116 144 / 13%),
+      transparent 34rem
+    ),
+    radial-gradient(
+      circle at 75% 90%,
+      rgb(20 184 166 / 9%),
+      transparent 36rem
+    ),
+    linear-gradient(
+      145deg,
+      #04111d 0%,
+      #071725 42%,
+      #081c2b 72%,
+      #061521 100%
+    );
+
   color: var(--foreground);
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+
+  font-family:
+    var(--font-geist-sans),
+    Arial,
+    Helvetica,
+    sans-serif;
+
   text-rendering: optimizeLegibility;
+
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+
+/* ============================================================
+   FUNDO ORGÂNICO
+   ============================================================ */
+
+body::before {
+  content: "";
+
+  position: fixed;
+  inset: 0;
+
+  pointer-events: none;
+  z-index: -2;
+
+  background:
+    radial-gradient(
+      ellipse 55% 32% at 98% 5%,
+      rgb(20 184 166 / 8%),
+      transparent 72%
+    ),
+    radial-gradient(
+      ellipse 48% 30% at 4% 85%,
+      rgb(15 148 143 / 8%),
+      transparent 75%
+    );
+}
+
+
+/* Linha/pontos tecnológicos extremamente sutis */
+
+body::after {
+  content: "";
+
+  position: fixed;
+  inset: 0;
+
+  z-index: -1;
+  pointer-events: none;
+
+  opacity: 0.18;
+
+  background-image:
+    radial-gradient(
+      circle,
+      rgb(45 212 191 / 16%) 1px,
+      transparent 1px
+    );
+
+  background-size: 28px 28px;
+
+  mask-image:
+    linear-gradient(
+      to bottom,
+      transparent,
+      black 20%,
+      black 75%,
+      transparent
+    );
+}
+
+
+/* ============================================================
+   ELEMENTOS NATIVOS
+   ============================================================ */
 
 button,
 input,
@@ -121,7 +252,7 @@ textarea {
 
 input::placeholder,
 textarea::placeholder {
-  color: #94a3b8;
+  color: #6f8995;
   opacity: 1;
 }
 
@@ -140,23 +271,493 @@ svg {
   background: var(--primary);
 }
 
+
+/* ============================================================
+   FOCO
+   ============================================================ */
+
 :focus-visible {
-  outline: 3px solid rgb(59 130 246 / 30%);
-  outline-offset: 2px;
+  outline: 3px solid rgb(45 212 191 / 30%);
+  outline-offset: 3px;
 }
 
-.app-page-background {
+
+/* ============================================================
+   FUNDO GERAL DAS PÁGINAS
+   ============================================================ */
+
+.app-page-background,
+.public-page-background {
+  position: relative;
+
   min-height: 100vh;
+
   background:
     radial-gradient(
-      circle at 15% 10%,
-      rgb(219 234 254 / 65%),
-      transparent 28rem
+      ellipse 52% 28% at 95% 5%,
+      rgb(20 184 166 / 8%),
+      transparent 70%
     ),
     radial-gradient(
-      circle at 90% 85%,
-      rgb(224 242 254 / 55%),
-      transparent 30rem
+      ellipse 45% 32% at 3% 88%,
+      rgb(8 145 178 / 7%),
+      transparent 72%
     ),
-    var(--background);
+    transparent;
+}
+
+
+/* ============================================================
+   COMPATIBILIDADE COM O VISUAL ANTIGO
+   ============================================================ */
+
+/*
+   Estas regras permitem transformar as telas existentes
+   sem precisar editar imediatamente centenas de classes Tailwind.
+*/
+
+
+/* FUNDOS */
+
+.bg-white {
+  background-color: var(--surface) !important;
+}
+
+.bg-slate-50 {
+  background-color: transparent !important;
+}
+
+.bg-slate-100 {
+  background-color: var(--surface-secondary) !important;
+}
+
+.bg-slate-200 {
+  background-color: var(--surface-tertiary) !important;
+}
+
+
+/* TEXTOS */
+
+.text-slate-900,
+.text-slate-950 {
+  color: var(--text-primary) !important;
+}
+
+.text-slate-800,
+.text-slate-700 {
+  color: #dbe8ec !important;
+}
+
+.text-slate-600,
+.text-slate-500 {
+  color: var(--text-secondary) !important;
+}
+
+.text-slate-400 {
+  color: var(--text-muted) !important;
+}
+
+
+/* BORDAS */
+
+.border-slate-100,
+.border-slate-200,
+.border-slate-300 {
+  border-color: var(--border) !important;
+}
+
+
+/* AZUL ANTIGO → TEAL */
+
+.bg-blue-900,
+.bg-blue-800,
+.bg-blue-700 {
+  background-color: var(--primary) !important;
+}
+
+.text-blue-900,
+.text-blue-800,
+.text-blue-700,
+.text-blue-600 {
+  color: var(--primary-light) !important;
+}
+
+.border-blue-100,
+.border-blue-200,
+.border-blue-300 {
+  border-color: rgb(45 212 191 / 25%) !important;
+}
+
+.bg-blue-50 {
+  background-color: rgb(15 148 143 / 10%) !important;
+}
+
+.bg-blue-100 {
+  background-color: rgb(15 148 143 / 16%) !important;
+}
+
+
+/* ============================================================
+   CARDS
+   ============================================================ */
+
+.card-dark {
+  background:
+    linear-gradient(
+      145deg,
+      rgb(15 38 54 / 96%),
+      rgb(8 29 43 / 96%)
+    );
+
+  border: 1px solid var(--border);
+
+  border-radius: var(--radius-xl);
+
+  box-shadow: var(--shadow-md);
+
+  backdrop-filter: blur(14px);
+}
+
+
+/*
+   Melhora automática de cards existentes
+*/
+
+.rounded-2xl.bg-white,
+.rounded-xl.bg-white,
+.rounded-lg.bg-white {
+  background:
+    linear-gradient(
+      145deg,
+      rgb(15 38 54 / 97%),
+      rgb(9 28 42 / 97%)
+    ) !important;
+
+  border-color: var(--border) !important;
+
+  box-shadow: var(--shadow-md);
+}
+
+
+/* ============================================================
+   INPUTS
+   ============================================================ */
+
+input,
+select,
+textarea {
+  border-color: var(--border) !important;
+
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: rgb(45 212 191 / 40%) !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--primary-light) !important;
+
+  box-shadow:
+    0 0 0 3px rgb(20 184 166 / 12%);
+
+  outline: none;
+}
+
+
+/* ============================================================
+   BOTÕES — REAÇÃO VISUAL
+   ============================================================ */
+
+button,
+a[role="button"],
+a[class*="bg-blue"],
+a[class*="bg-primary"] {
+  transition:
+    transform 150ms ease,
+    box-shadow 170ms ease,
+    filter 170ms ease,
+    background-color 170ms ease,
+    border-color 170ms ease;
+}
+
+
+/* Passar mouse */
+
+button:not(:disabled):hover,
+a[role="button"]:hover,
+a[class*="bg-blue"]:hover,
+a[class*="bg-primary"]:hover {
+  transform: translateY(-2px);
+
+  filter: brightness(1.08);
+
+  box-shadow:
+    0 12px 28px rgb(0 0 0 / 26%),
+    0 7px 20px rgb(20 184 166 / 14%);
+}
+
+
+/* Clique */
+
+button:not(:disabled):active,
+a[role="button"]:active,
+a[class*="bg-blue"]:active,
+a[class*="bg-primary"]:active {
+  transform:
+    translateY(1px)
+    scale(0.975);
+
+  filter: brightness(0.93);
+
+  box-shadow:
+    0 3px 10px rgb(0 0 0 / 26%);
+}
+
+
+/* Desabilitado */
+
+button:disabled {
+  opacity: 0.5;
+
+  transform: none !important;
+
+  filter: none !important;
+
+  box-shadow: none !important;
+}
+
+
+/* ============================================================
+   BOTÃO PRINCIPAL NOVO
+   ============================================================ */
+
+.btn-primary {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 0.65rem;
+
+  min-height: 46px;
+
+  padding:
+    0.75rem
+    1.35rem;
+
+  border: 1px solid rgb(45 212 191 / 30%);
+
+  border-radius: 9999px;
+
+  color: #ffffff;
+
+  font-weight: 700;
+
+  background:
+    linear-gradient(
+      135deg,
+      #0c807e,
+      #10a39d
+    );
+
+  box-shadow:
+    0 10px 30px rgb(13 148 136 / 20%);
+
+  transition:
+    transform 150ms ease,
+    box-shadow 170ms ease,
+    filter 170ms ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+
+  filter: brightness(1.1);
+
+  box-shadow:
+    0 15px 38px rgb(20 184 166 / 28%);
+}
+
+.btn-primary:active {
+  transform:
+    translateY(1px)
+    scale(0.97);
+
+  filter: brightness(0.92);
+}
+
+
+/* ============================================================
+   BOTÃO SECUNDÁRIO
+   ============================================================ */
+
+.btn-secondary {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 0.65rem;
+
+  min-height: 46px;
+
+  padding:
+    0.75rem
+    1.35rem;
+
+  border: 1px solid rgb(45 212 191 / 42%);
+
+  border-radius: 9999px;
+
+  color: var(--text-primary);
+
+  font-weight: 650;
+
+  background:
+    rgb(7 23 37 / 55%);
+
+  backdrop-filter: blur(12px);
+
+  transition:
+    transform 150ms ease,
+    background-color 170ms ease,
+    border-color 170ms ease,
+    box-shadow 170ms ease;
+}
+
+.btn-secondary:hover {
+  transform: translateY(-2px);
+
+  background:
+    rgb(15 148 143 / 12%);
+
+  border-color:
+    rgb(45 212 191 / 70%);
+
+  box-shadow:
+    0 10px 28px rgb(0 0 0 / 20%);
+}
+
+.btn-secondary:active {
+  transform:
+    translateY(1px)
+    scale(0.97);
+}
+
+
+/* ============================================================
+   BADGE
+   ============================================================ */
+
+.badge-teal {
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 0.45rem;
+
+  border:
+    1px solid
+    rgb(45 212 191 / 32%);
+
+  border-radius: 9999px;
+
+  padding:
+    0.4rem
+    0.8rem;
+
+  color: #5eead4;
+
+  background:
+    rgb(13 148 136 / 8%);
+
+  font-size: 0.75rem;
+
+  font-weight: 700;
+
+  letter-spacing: 0.025em;
+}
+
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+
+* {
+  scrollbar-width: thin;
+
+  scrollbar-color:
+    #175464
+    #071725;
+}
+
+*::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #071725;
+}
+
+*::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+
+  background:
+    linear-gradient(
+      #146a72,
+      #0f948f
+    );
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #14b8a6;
+}
+
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media (max-width: 768px) {
+  body::after {
+    opacity: 0.1;
+
+    background-size:
+      34px
+      34px;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    min-height: 48px;
+  }
+}
+
+
+/* ============================================================
+   REDUÇÃO DE MOVIMENTO
+   ACESSIBILIDADE
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+
+    transition-duration: 0.01ms !important;
+
+    animation-duration: 0.01ms !important;
+
+    animation-iteration-count: 1 !important;
+  }
 }

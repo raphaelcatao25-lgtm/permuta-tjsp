@@ -1404,8 +1404,9 @@ export default function DashboardPage() {
                           gap-3
                           rounded-xl
                           border
-                          border-blue-200
-                          bg-blue-50
+                          border-cyan-300/25
+                          bg-cyan-400/[0.08]
+                          shadow-[0_10px_28px_rgba(34,211,238,0.08)]
                           px-4
                           py-3
                         ">
@@ -1414,7 +1415,8 @@ export default function DashboardPage() {
                             h-3
                             w-3
                             rounded-full
-                            bg-blue-700
+                            bg-cyan-300
+                            shadow-[0_0_14px_rgba(103,232,249,0.55)]
                           " />
 
 
@@ -1423,7 +1425,7 @@ export default function DashboardPage() {
                             <p className="
                               text-sm
                               font-bold
-                              text-blue-900
+                              text-cyan-200
                             ">
 
                               Em permuta
@@ -1433,7 +1435,7 @@ export default function DashboardPage() {
 
                             <p className="
                               text-xs
-                              text-blue-800
+                              text-slate-300
                             ">
 
                               Você está participando de uma permuta confirmada.
@@ -1457,8 +1459,9 @@ export default function DashboardPage() {
                           gap-3
                           rounded-xl
                           border
-                          border-amber-200
-                          bg-amber-50
+                          border-amber-300/25
+                          bg-amber-400/[0.07]
+                          shadow-[0_10px_28px_rgba(251,191,36,0.06)]
                           px-4
                           py-3
                         ">
@@ -1467,7 +1470,8 @@ export default function DashboardPage() {
                             h-3
                             w-3
                             rounded-full
-                            bg-amber-600
+                            bg-amber-300
+                            shadow-[0_0_14px_rgba(252,211,77,0.45)]
                           " />
 
 
@@ -1476,7 +1480,7 @@ export default function DashboardPage() {
                             <p className="
                               text-sm
                               font-bold
-                              text-amber-900
+                              text-amber-200
                             ">
 
                               Busca pausada
@@ -1486,7 +1490,7 @@ export default function DashboardPage() {
 
                             <p className="
                               text-xs
-                              text-amber-800
+                              text-slate-300
                             ">
 
                               Seu perfil está temporariamente fora das novas oportunidades de permuta.
@@ -1508,8 +1512,9 @@ export default function DashboardPage() {
                           gap-3
                           rounded-xl
                           border
-                          border-green-200
-                          bg-green-50
+                          border-emerald-300/25
+                          bg-emerald-400/[0.07]
+                          shadow-[0_10px_28px_rgba(52,211,153,0.06)]
                           px-4
                           py-3
                         ">
@@ -1518,7 +1523,8 @@ export default function DashboardPage() {
                             h-3
                             w-3
                             rounded-full
-                            bg-green-600
+                            bg-emerald-300
+                            shadow-[0_0_14px_rgba(110,231,183,0.5)]
                           " />
 
 
@@ -1527,7 +1533,7 @@ export default function DashboardPage() {
                             <p className="
                               text-sm
                               font-bold
-                              text-green-800
+                              text-emerald-200
                             ">
 
                               Perfil disponível
@@ -1537,7 +1543,7 @@ export default function DashboardPage() {
 
                             <p className="
                               text-xs
-                              text-green-700
+                              text-slate-300
                             ">
 
                               Você está participando das buscas por permuta.
@@ -1673,16 +1679,19 @@ export default function DashboardPage() {
                     overflow-hidden
                     rounded-2xl
                     border
-                    border-amber-200
-                    bg-white
-                    shadow-sm
+                    border-amber-300/20
+                    bg-gradient-to-r
+                    from-[#111f2d]
+                    via-[#102333]
+                    to-[#0d1d2b]
+                    shadow-[0_16px_40px_rgba(0,0,0,0.18)]
                   ">
 
                     <div className="
                       flex
                       flex-col
                       gap-5
-                      bg-amber-50/70
+                      bg-amber-400/[0.035]
                       p-6
                       sm:flex-row
                       sm:items-center
@@ -1703,8 +1712,11 @@ export default function DashboardPage() {
                           items-center
                           justify-center
                           rounded-xl
-                          bg-amber-100
-                          text-amber-700
+                          border
+                          border-amber-300/20
+                          bg-amber-400/10
+                          text-amber-300
+                          shadow-[0_0_24px_rgba(251,191,36,0.08)]
                         ">
 
                           <Star
@@ -1723,7 +1735,7 @@ export default function DashboardPage() {
                           <p className="
                             text-sm
                             font-semibold
-                            text-amber-800
+                            text-amber-300
                           ">
 
                             Permuta concluída
@@ -1735,7 +1747,7 @@ export default function DashboardPage() {
                             mt-1
                             text-xl
                             font-bold
-                            text-slate-900
+                            text-white
                           ">
 
                             Como foi sua experiência?
@@ -1748,7 +1760,7 @@ export default function DashboardPage() {
                             max-w-2xl
                             text-sm
                             leading-6
-                            text-slate-600
+                            text-slate-300
                           ">
 
                             {
@@ -1777,14 +1789,22 @@ export default function DashboardPage() {
                           justify-center
                           gap-2
                           rounded-xl
-                          bg-amber-600
+                          border
+                          border-amber-300/20
+                          bg-amber-500
                           px-5
                           py-3
                           text-sm
                           font-semibold
-                          text-white
-                          transition
-                          hover:bg-amber-700
+                          text-[#17110a]
+                          shadow-[0_10px_24px_rgba(245,158,11,0.18)]
+                          transition-all
+                          duration-200
+                          hover:-translate-y-0.5
+                          hover:bg-amber-400
+                          hover:shadow-[0_14px_30px_rgba(245,158,11,0.24)]
+                          active:translate-y-0
+                          active:scale-[0.97]
                         "
                       >
 
@@ -2408,7 +2428,7 @@ export default function DashboardPage() {
                               <p className="
                                 text-sm
                                 font-semibold
-                                text-slate-800
+                                text-slate-100
                               ">
 
                                 {item.rotulo}
@@ -2421,7 +2441,7 @@ export default function DashboardPage() {
                             <span className="
                               text-xs
                               font-bold
-                              text-slate-500
+                              text-slate-400
                             ">
 
                               {item.peso}%
@@ -2460,7 +2480,7 @@ export default function DashboardPage() {
                         <h2 className="
                           text-xl
                           font-bold
-                          text-slate-900
+                          text-white
                         ">
 
                           Próximos passos
@@ -2471,7 +2491,7 @@ export default function DashboardPage() {
                         <p className="
                           mt-1
                           text-sm
-                          text-slate-500
+                          text-slate-400
                         ">
 
                           Acompanhe sua movimentação na plataforma.
@@ -2509,7 +2529,8 @@ export default function DashboardPage() {
                             h-5
                             w-5
                             shrink-0
-                            text-green-600
+                            text-emerald-400
+                            drop-shadow-[0_0_8px_rgba(52,211,153,0.25)]
                           "
                         />
 
@@ -2519,7 +2540,7 @@ export default function DashboardPage() {
                           <p className="
                             text-sm
                             font-semibold
-                            text-slate-800
+                            text-slate-100
                           ">
 
                             Cadastro concluído
@@ -2531,7 +2552,7 @@ export default function DashboardPage() {
                             mt-1
                             text-xs
                             leading-5
-                            text-slate-500
+                            text-slate-400
                           ">
 
                             Seus dados básicos já estão registrados.
@@ -2559,7 +2580,8 @@ export default function DashboardPage() {
                                 h-5
                                 w-5
                                 shrink-0
-                                text-blue-700
+                                text-cyan-300
+                                drop-shadow-[0_0_8px_rgba(34,211,238,0.25)]
                               "
                             />
 
@@ -2569,7 +2591,7 @@ export default function DashboardPage() {
                               <p className="
                                 text-sm
                                 font-semibold
-                                text-slate-800
+                                text-slate-100
                               ">
 
                                 Permuta confirmada
@@ -2581,7 +2603,7 @@ export default function DashboardPage() {
                                 mt-1
                                 text-xs
                                 leading-5
-                                text-slate-500
+                                text-slate-400
                               ">
 
                                 Consulte a página de propostas e notificações para acompanhar sua permuta.
@@ -2610,8 +2632,9 @@ export default function DashboardPage() {
                               shrink-0
                               rounded-full
                               border-2
-                              border-amber-600
-                              bg-white
+                              border-amber-300
+                              bg-amber-400/15
+                              shadow-[0_0_10px_rgba(251,191,36,0.18)]
                             " />
 
 
@@ -2620,7 +2643,7 @@ export default function DashboardPage() {
                               <p className="
                                 text-sm
                                 font-semibold
-                                text-slate-800
+                                text-slate-100
                               ">
 
                                 Busca pausada
@@ -2632,7 +2655,7 @@ export default function DashboardPage() {
                                 mt-1
                                 text-xs
                                 leading-5
-                                text-slate-500
+                                text-slate-400
                               ">
 
                                 Reative sua busca em Meu Perfil quando quiser voltar a receber novas oportunidades.
@@ -2659,8 +2682,9 @@ export default function DashboardPage() {
                               shrink-0
                               rounded-full
                               border-2
-                              border-blue-700
-                              bg-white
+                              border-cyan-300
+                              bg-cyan-400/15
+                              shadow-[0_0_10px_rgba(34,211,238,0.18)]
                             " />
 
 
@@ -2669,7 +2693,7 @@ export default function DashboardPage() {
                               <p className="
                                 text-sm
                                 font-semibold
-                                text-slate-800
+                                text-slate-100
                               ">
 
                                 Consulte suas oportunidades
@@ -2681,7 +2705,7 @@ export default function DashboardPage() {
                                 mt-1
                                 text-xs
                                 leading-5
-                                text-slate-500
+                                text-slate-400
                               ">
 
                                 O motor já está buscando permutas diretas e em cadeia para você.
@@ -2708,8 +2732,8 @@ export default function DashboardPage() {
                           shrink-0
                           rounded-full
                           border-2
-                          border-slate-300
-                          bg-white
+                          border-slate-500
+                          bg-slate-400/10
                         " />
 
 
@@ -2718,7 +2742,7 @@ export default function DashboardPage() {
                           <p className="
                             text-sm
                             font-semibold
-                            text-slate-800
+                            text-slate-100
                           ">
 
                             Mantenha suas preferências atualizadas
@@ -2730,7 +2754,7 @@ export default function DashboardPage() {
                             mt-1
                             text-xs
                             leading-5
-                            text-slate-500
+                            text-slate-400
                           ">
 
                             A ordem das comarcas define suas prioridades.
@@ -3024,8 +3048,10 @@ export default function DashboardPage() {
                 max-w-xl
                 overflow-hidden
                 rounded-2xl
-                bg-white
-                shadow-2xl
+                border
+                border-amber-300/15
+                bg-[#081b29]
+                shadow-[0_24px_70px_rgba(0,0,0,0.45)]
               ">
 
                 <div className="
@@ -3034,7 +3060,7 @@ export default function DashboardPage() {
                   justify-between
                   gap-4
                   border-b
-                  border-slate-200
+                  border-white/10
                   px-6
                   py-5
                 ">
@@ -3044,7 +3070,7 @@ export default function DashboardPage() {
                     <p className="
                       text-sm
                       font-semibold
-                      text-amber-700
+                      text-amber-300
                     ">
 
                       Avaliação da plataforma
@@ -3056,7 +3082,7 @@ export default function DashboardPage() {
                       mt-1
                       text-xl
                       font-bold
-                      text-slate-900
+                      text-white
                     ">
 
                       Como foi sua experiência?
@@ -3067,7 +3093,7 @@ export default function DashboardPage() {
                     <p className="
                       mt-1
                       text-sm
-                      text-slate-500
+                      text-slate-400
                     ">
 
                       Sua avaliação é sobre a experiência com a Permuta TJSP, não sobre outro servidor.
@@ -3098,8 +3124,8 @@ export default function DashboardPage() {
                       rounded-lg
                       text-slate-400
                       transition
-                      hover:bg-slate-100
-                      hover:text-slate-700
+                      hover:bg-white/5
+                      hover:text-slate-300
                       disabled:opacity-50
                     "
                   >
@@ -3130,7 +3156,7 @@ export default function DashboardPage() {
                       block
                       text-sm
                       font-semibold
-                      text-slate-800
+                      text-slate-100
                     ">
 
                       Como você avalia sua experiência?
@@ -3187,7 +3213,7 @@ export default function DashboardPage() {
                                   estrela <=
                                   notaAvaliacao
                                     ? "fill-amber-400 text-amber-500"
-                                    : "text-slate-300"
+                                    : "text-slate-500"
 
                                 ].join(" ")}
                                 strokeWidth={1.7}
@@ -3205,7 +3231,7 @@ export default function DashboardPage() {
                     <p className="
                       mt-2
                       text-xs
-                      text-slate-500
+                      text-slate-400
                     ">
 
                       {
@@ -3230,7 +3256,7 @@ export default function DashboardPage() {
                     <p className="
                       text-sm
                       font-semibold
-                      text-slate-800
+                      text-slate-100
                     ">
 
                       Você recomendaria a plataforma a outros servidores?
@@ -3260,8 +3286,8 @@ export default function DashboardPage() {
                           "rounded-xl border px-4 py-3 text-sm font-semibold transition",
 
                           recomendaria === true
-                            ? "border-green-600 bg-green-50 text-green-800"
-                            : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                            ? "border-emerald-300/40 bg-emerald-400/10 text-emerald-200"
+                            : "border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.06]"
 
                         ].join(" ")}
                       >
@@ -3286,8 +3312,8 @@ export default function DashboardPage() {
                           "rounded-xl border px-4 py-3 text-sm font-semibold transition",
 
                           recomendaria === false
-                            ? "border-red-500 bg-red-50 text-red-700"
-                            : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                            ? "border-red-300/40 bg-red-400/10 text-red-200"
+                            : "border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.06]"
 
                         ].join(" ")}
                       >
@@ -3309,7 +3335,7 @@ export default function DashboardPage() {
                       block
                       text-sm
                       font-semibold
-                      text-slate-800
+                      text-slate-100
                     ">
 
                       Comentário
@@ -3317,7 +3343,7 @@ export default function DashboardPage() {
                       <span className="
                         ml-1
                         font-normal
-                        text-slate-500
+                        text-slate-400
                       ">
 
                         (opcional)
@@ -3349,17 +3375,18 @@ export default function DashboardPage() {
                         resize-y
                         rounded-xl
                         border
-                        border-slate-300
+                        border-white/10
+                        bg-[#0b2030]
                         px-4
                         py-3
                         text-sm
-                        text-slate-900
+                        text-white
                         outline-none
                         transition
-                        focus:border-blue-500
+                        focus:border-teal-400
                         focus:ring-4
-                        focus:ring-blue-100
-                        disabled:bg-slate-100
+                        focus:ring-teal-400/10
+                        disabled:bg-white/[0.03]
                       "
                     />
 
@@ -3386,12 +3413,12 @@ export default function DashboardPage() {
                     gap-3
                     rounded-xl
                     border
-                    border-slate-200
-                    bg-slate-50
+                    border-white/10
+                    bg-white/[0.03]
                     p-4
                     text-sm
                     leading-6
-                    text-slate-600
+                    text-slate-300
                   ">
 
                     <input
@@ -3413,7 +3440,7 @@ export default function DashboardPage() {
                         h-4
                         w-4
                         shrink-0
-                        accent-blue-900
+                        accent-teal-500
                       "
                     />
 
@@ -3434,11 +3461,11 @@ export default function DashboardPage() {
                         className="
                           rounded-xl
                           border
-                          border-red-200
-                          bg-red-50
+                          border-red-300/20
+                          bg-red-400/10
                           p-4
                           text-sm
-                          text-red-700
+                          text-red-300
                         "
                       >
 
@@ -3457,8 +3484,8 @@ export default function DashboardPage() {
                   flex-col-reverse
                   gap-3
                   border-t
-                  border-slate-200
-                  bg-slate-50/70
+                  border-white/10
+                  bg-white/[0.02]
                   px-6
                   py-4
                   sm:flex-row
@@ -3478,15 +3505,15 @@ export default function DashboardPage() {
                     className="
                       rounded-xl
                       border
-                      border-slate-300
-                      bg-white
+                      border-white/10
+                      bg-white/[0.03]
                       px-5
                       py-3
                       text-sm
                       font-semibold
-                      text-slate-700
+                      text-slate-300
                       transition
-                      hover:bg-slate-100
+                      hover:bg-white/5
                       disabled:opacity-50
                     "
                   >
@@ -3512,14 +3539,20 @@ export default function DashboardPage() {
                       justify-center
                       gap-2
                       rounded-xl
-                      bg-blue-900
+                      border
+                      border-amber-300/20
+                      bg-amber-500
                       px-5
                       py-3
                       text-sm
                       font-semibold
-                      text-white
-                      transition
-                      hover:bg-blue-800
+                      text-[#17110a]
+                      transition-all
+                      duration-200
+                      hover:-translate-y-0.5
+                      hover:bg-amber-400
+                      active:translate-y-0
+                      active:scale-[0.97]
                       disabled:cursor-not-allowed
                       disabled:opacity-50
                     "

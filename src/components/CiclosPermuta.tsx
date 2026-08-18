@@ -458,14 +458,14 @@ export default function CiclosPermuta({
       <div className="
         rounded-2xl
         border
-        bg-white
+        bg-[#081b29]
         p-8
         text-center
       ">
 
         <div className="
           font-medium
-          text-gray-600
+          text-slate-300
         ">
 
           Buscando melhores combinações...
@@ -492,7 +492,7 @@ export default function CiclosPermuta({
       <div className="
         rounded-2xl
         border
-        bg-white
+        bg-[#081b29]
         p-8
         text-center
       ">
@@ -501,7 +501,7 @@ export default function CiclosPermuta({
           className="
             mx-auto
             mb-3
-            text-gray-400
+            text-slate-500
           "
           size={40}
         />
@@ -509,7 +509,7 @@ export default function CiclosPermuta({
 
         <h3 className="
           font-semibold
-          text-gray-900
+          text-white
         ">
 
           Nenhuma permuta encontrada
@@ -520,7 +520,7 @@ export default function CiclosPermuta({
         <p className="
           mt-2
           text-sm
-          text-gray-500
+          text-slate-500
         ">
 
           O sistema ainda não encontrou uma combinação compatível.
@@ -869,7 +869,7 @@ async function proporPermuta() {
       rounded-2xl
       border
       border-gray-200
-      bg-white
+      bg-[#081b29]
       shadow-sm
     ">
 
@@ -883,7 +883,7 @@ async function proporPermuta() {
         justify-between
         gap-4
         border-b
-        border-gray-100
+        border-teal-300/10
         p-5
       ">
 
@@ -907,7 +907,7 @@ async function proporPermuta() {
             <h3 className="
               text-xl
               font-bold
-              text-gray-900
+              text-white
             ">
 
               {titulo}
@@ -918,7 +918,7 @@ async function proporPermuta() {
             <p className="
               mt-1
               text-sm
-              text-gray-500
+              text-slate-500
             ">
 
               Permuta em cadeia com 3 servidores
@@ -944,15 +944,19 @@ async function proporPermuta() {
   }
 
   className="
-    rounded-full
-    bg-blue-600
+    rounded-xl
+    border
+    border-teal-300/20
+    bg-teal-600
     px-4
     py-2
     text-sm
     font-semibold
     text-white
-    transition
-    hover:bg-blue-700
+    transition-all
+    duration-200
+    hover:-translate-y-[1px]
+    hover:bg-teal-500
     disabled:cursor-not-allowed
     disabled:opacity-50
   "
@@ -1053,7 +1057,7 @@ async function proporPermuta() {
                         className="
                           mx-auto
                           my-3
-                          text-blue-400
+                          text-teal-400
                         "
                         size={22}
                       />
@@ -1088,7 +1092,7 @@ async function proporPermuta() {
 
       <div className="
         border-t
-        border-gray-100
+        border-teal-300/10
         p-5
       ">
 
@@ -1108,13 +1112,18 @@ async function proporPermuta() {
             gap-2
             rounded-xl
             border
-            border-gray-300
+            border-teal-300/15
+            bg-[#081b29]
             px-4
             py-3
             font-semibold
-            text-gray-800
-            transition
-            hover:bg-gray-50
+            text-slate-300
+            transition-all
+            duration-200
+            hover:-translate-y-[1px]
+            hover:border-teal-300/25
+            hover:bg-teal-400/[0.07]
+            hover:text-teal-200
           "
         >
 
@@ -1204,9 +1213,9 @@ function ServidorCard({
         ${
           voce
 
-            ? "border-blue-300 bg-blue-50/30"
+            ? "border-teal-300/25 bg-teal-400/[0.08]"
 
-            : "border-gray-200 bg-white"
+            : "border-teal-300/10 bg-[#081b29]"
         }
       `}
     >
@@ -1235,7 +1244,7 @@ function ServidorCard({
 
           <div className="
             font-bold
-            text-gray-900
+            text-white
           ">
 
             {nome}
@@ -1298,7 +1307,7 @@ function ServidorCard({
 
           <ArrowRight
             size={24}
-            className="text-blue-500"
+            className="text-teal-400"
           />
 
         </div>
@@ -1310,7 +1319,7 @@ function ServidorCard({
             size={20}
             className="
               mx-auto
-              text-blue-500
+              text-teal-400
             "
           />
 
@@ -1382,9 +1391,9 @@ function Local({
           ${
             destino
 
-              ? "text-blue-600"
+              ? "text-teal-300"
 
-              : "text-gray-500"
+              : "text-slate-500"
           }
         `}
       >
@@ -1399,7 +1408,7 @@ function Local({
       <div className="
         font-semibold
         leading-snug
-        text-gray-900
+        text-white
       ">
 
         {nome}
@@ -1413,7 +1422,7 @@ function Local({
           <div className="
             mt-2
             text-xs
-            text-gray-500
+            text-slate-500
           ">
 
             Circunscrição:{" "}
@@ -1431,7 +1440,7 @@ function Local({
           <div className="
             mt-1
             text-xs
-            text-gray-500
+            text-slate-500
           ">
 
             RAJ: {raj}
@@ -1465,7 +1474,7 @@ function FluxoCircular({
       rounded-2xl
       border
       border-gray-200
-      bg-gray-50/40
+      bg-[#081b29]
       p-5
     ">
 
@@ -1476,7 +1485,7 @@ function FluxoCircular({
         <h4 className="
           text-lg
           font-bold
-          text-gray-900
+          text-white
         ">
 
           Como fica a permuta
@@ -1487,7 +1496,7 @@ function FluxoCircular({
         <p className="
           mt-1
           text-sm
-          text-gray-500
+          text-slate-500
         ">
 
           Fluxo entre os 3 servidores
@@ -1533,7 +1542,7 @@ function FluxoCircular({
 
               <path
                 d="M0,0 L0,6 L7,3 z"
-                fill="#64748b"
+                fill="#2dd4bf"
               />
 
             </marker>
@@ -1544,7 +1553,7 @@ function FluxoCircular({
           <path
             d="M175 45 C255 55 285 105 260 160"
             fill="none"
-            stroke="#94a3b8"
+            stroke="#2dd4bf"
             strokeWidth="2"
             markerEnd="url(#arrowCircle)"
           />
@@ -1553,7 +1562,7 @@ function FluxoCircular({
           <path
             d="M235 195 C190 240 125 240 80 195"
             fill="none"
-            stroke="#94a3b8"
+            stroke="#2dd4bf"
             strokeWidth="2"
             markerEnd="url(#arrowCircle)"
           />
@@ -1562,7 +1571,7 @@ function FluxoCircular({
           <path
             d="M60 160 C35 100 70 55 145 45"
             fill="none"
-            stroke="#94a3b8"
+            stroke="#2dd4bf"
             strokeWidth="2"
             markerEnd="url(#arrowCircle)"
           />
@@ -1621,7 +1630,7 @@ function FluxoCircular({
         rounded-xl
         border
         border-gray-200
-        bg-white
+        bg-[#081b29]
         p-4
       ">
 
@@ -1691,7 +1700,7 @@ function LegendaFluxo({
 
         <div className="
           font-semibold
-          text-gray-900
+          text-white
         ">
 
           {participante.nome}
@@ -1702,7 +1711,7 @@ function LegendaFluxo({
         <div className="
           mt-1
           text-sm
-          text-gray-500
+          text-slate-500
         ">
 
           {participante.origem}
@@ -1716,7 +1725,7 @@ function LegendaFluxo({
           items-center
           gap-1
           text-sm
-          text-blue-600
+          text-teal-300
         ">
 
           <ArrowRight size={14} />
@@ -1754,15 +1763,15 @@ function DetalhesPermuta({
       mt-4
       rounded-xl
       border
-      border-blue-100
-      bg-blue-50/30
+      border-teal-300/10
+      bg-teal-400/[0.05]
       p-5
     ">
 
 
       <h4 className="
         font-bold
-        text-gray-900
+        text-white
       ">
 
         Como os servidores devem proceder
@@ -1773,7 +1782,7 @@ function DetalhesPermuta({
       <p className="
         mt-1
         text-sm
-        text-gray-500
+        text-slate-500
       ">
 
         A permuta em cadeia funciona quando cada participante
@@ -1804,7 +1813,7 @@ function DetalhesPermuta({
                   rounded-xl
                   border
                   border-gray-200
-                  bg-white
+                  bg-[#081b29]
                   p-4
                 "
               >
@@ -1822,7 +1831,7 @@ function DetalhesPermuta({
 
                   <div className="
                     font-semibold
-                    text-gray-900
+                    text-white
                   ">
 
                     {participante.nome}
@@ -1834,13 +1843,13 @@ function DetalhesPermuta({
                     mt-2
                     text-sm
                     leading-relaxed
-                    text-gray-600
+                    text-slate-300
                   ">
 
 
                     <span className="
                       font-medium
-                      text-gray-900
+                      text-white
                     ">
 
                       {participante.nome}
@@ -1865,7 +1874,7 @@ function DetalhesPermuta({
 
                     <span className="
                       font-semibold
-                      text-blue-700
+                      text-teal-300
                     ">
 
                       {participante.destino}
@@ -1888,10 +1897,10 @@ function DetalhesPermuta({
 
                     <span className="
                       rounded-lg
-                      bg-gray-100
+                      bg-[#081b29]/[0.05]
                       px-3
                       py-1.5
-                      text-gray-700
+                      text-slate-300
                     ">
 
                       {participante.origem}
@@ -1901,17 +1910,17 @@ function DetalhesPermuta({
 
                     <ArrowRight
                       size={16}
-                      className="text-blue-500"
+                      className="text-teal-400"
                     />
 
 
                     <span className="
                       rounded-lg
-                      bg-blue-50
+                      bg-teal-400/[0.07]
                       px-3
                       py-1.5
                       font-medium
-                      text-blue-700
+                      text-teal-300
                     ">
 
                       {participante.destino}
@@ -1940,15 +1949,15 @@ function DetalhesPermuta({
         mt-5
         rounded-xl
         border
-        border-blue-100
-        bg-white
+        border-teal-300/10
+        bg-[#081b29]
         p-4
       ">
 
 
         <div className="
           font-semibold
-          text-gray-900
+          text-white
         ">
 
           Exemplo do funcionamento
@@ -1960,7 +1969,7 @@ function DetalhesPermuta({
           mt-2
           text-sm
           leading-relaxed
-          text-gray-600
+          text-slate-300
         ">
 
           Cada servidor solicita sua transferência para o local
@@ -2050,7 +2059,7 @@ function NumeroGrande({
         justify-center
         rounded-full
         border-4
-        border-white
+        border-[#0a1f2f]
         text-xl
         font-bold
         text-white

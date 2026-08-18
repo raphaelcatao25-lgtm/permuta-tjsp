@@ -1274,7 +1274,7 @@ export default function PropostasPage() {
               <h1 className="
                 text-3xl
                 font-bold
-                text-slate-900
+                text-white
               ">
 
                 Propostas
@@ -1284,7 +1284,7 @@ export default function PropostasPage() {
 
               <p className="
                 mt-2
-                text-slate-500
+                text-slate-400
               ">
 
                 Acompanhe as propostas de permuta enviadas e recebidas.
@@ -1312,15 +1312,15 @@ export default function PropostasPage() {
                     gap-2
                     rounded-xl
                     border
-                    border-slate-300
-                    bg-white
+                    border-teal-300/15
+                    bg-[#0d2232]
                     px-4
                     py-2.5
                     text-sm
                     font-semibold
-                    text-slate-700
+                    text-slate-300
                     transition
-                    hover:bg-slate-50
+                    hover:bg-[#081b29]
                   "
                 >
 
@@ -1349,11 +1349,11 @@ export default function PropostasPage() {
                 gap-3
                 rounded-xl
                 border
-                border-green-200
-                bg-green-50
+                border-emerald-300/20
+                bg-emerald-400/[0.08]
                 p-4
                 text-sm
-                text-green-800
+                text-emerald-200
               ">
 
                 <CheckCircle2
@@ -1404,11 +1404,11 @@ export default function PropostasPage() {
                 gap-3
                 rounded-xl
                 border
-                border-red-200
-                bg-red-50
+                border-red-400/20
+                bg-red-400/[0.08]
                 p-4
                 text-sm
-                text-red-800
+                text-red-200
               ">
 
                 <AlertCircle
@@ -1456,12 +1456,12 @@ export default function PropostasPage() {
               <div className="
                 rounded-2xl
                 border
-                border-slate-200
-                bg-white
+                border-teal-300/10
+                bg-[#0d2232]
                 p-8
                 text-center
                 text-sm
-                text-slate-500
+                text-slate-400
               ">
 
                 Carregando propostas...
@@ -1737,16 +1737,16 @@ function SecaoPropostas({
       overflow-hidden
       rounded-2xl
       border
-      border-slate-200
-      bg-white
-      shadow-sm
+      border-teal-300/10
+      bg-[#0d2232]
+      shadow-[0_16px_40px_rgba(0,0,0,0.16)]
     ">
 
 
       <div className="
         border-b
-        border-slate-100
-        bg-slate-50/70
+        border-teal-300/10
+        bg-[#0a1f2f]
         px-6
         py-5
       ">
@@ -1754,7 +1754,7 @@ function SecaoPropostas({
         <h2 className="
           text-2xl
           font-bold
-          text-slate-900
+          text-white
         ">
 
           {titulo}
@@ -1779,12 +1779,12 @@ function SecaoPropostas({
               rounded-xl
               border
               border-dashed
-              border-slate-300
-              bg-slate-50
+              border-teal-300/15
+              bg-[#081b29]
               p-7
               text-center
               text-sm
-              text-slate-500
+              text-slate-400
             ">
 
               {vazio}
@@ -2020,9 +2020,10 @@ function CardProposta({
     <article className="
       rounded-2xl
       border
-      border-slate-200
-      bg-white
+      border-teal-300/10
+      bg-[#081b29]
       p-5
+      shadow-[0_12px_30px_rgba(0,0,0,0.14)]
     ">
 
 
@@ -2042,7 +2043,7 @@ function CardProposta({
           <div className="
             text-lg
             font-bold
-            text-slate-900
+            text-white
           ">
 
             {
@@ -2065,7 +2066,7 @@ function CardProposta({
 
         <div className="
           text-sm
-          text-slate-500
+          text-slate-400
         ">
 
           {
@@ -2089,12 +2090,14 @@ function CardProposta({
           <div className="
             mt-5
             rounded-xl
-            bg-blue-50
+            border
+            border-teal-300/15
+            bg-teal-400/[0.06]
             px-4
             py-3
             text-sm
             leading-6
-            text-blue-800
+            text-slate-300
           ">
 
             Nesta permuta, cada servidor se movimenta para a comarca indicada abaixo. A permuta será confirmada somente quando os três participantes aceitarem.
@@ -2228,14 +2231,16 @@ function CardProposta({
                     items-center
                     gap-2
                     rounded-xl
-                    bg-green-600
+                    bg-emerald-600
                     px-4
                     py-2
                     text-sm
                     font-semibold
                     text-white
-                    transition
-                    hover:bg-green-700
+                    transition-all
+                    duration-200
+                    hover:-translate-y-[1px]
+                    hover:bg-emerald-500
                     disabled:cursor-not-allowed
                     disabled:opacity-50
                   "
@@ -2266,12 +2271,12 @@ function CardProposta({
                   items-center
                   gap-2
                   rounded-xl
-                  bg-green-50
+                  bg-emerald-400/[0.08]
                   px-4
                   py-2
                   text-sm
                   font-semibold
-                  text-green-700
+                  text-emerald-300
                 ">
 
                   <CheckCircle2
@@ -2306,15 +2311,17 @@ function CardProposta({
                     gap-2
                     rounded-xl
                     border
-                    border-red-200
-                    bg-red-50
+                    border-red-400/20
+                    bg-red-400/[0.08]
                     px-4
                     py-2
                     text-sm
                     font-semibold
-                    text-red-700
-                    transition
-                    hover:bg-red-100
+                    text-red-300
+                    transition-all
+                    duration-200
+                    hover:-translate-y-[1px]
+                    hover:bg-red-400/12
                     disabled:cursor-not-allowed
                     disabled:opacity-50
                   "
@@ -2360,8 +2367,8 @@ function CardProposta({
               mt-5
               rounded-xl
               border
-              border-green-200
-              bg-green-50
+              border-emerald-300/20
+              bg-emerald-400/[0.08]
               p-4
             ">
 
@@ -2377,7 +2384,7 @@ function CardProposta({
                     h-5
                     w-5
                     shrink-0
-                    text-green-700
+                    text-emerald-300
                   "
                 />
 
@@ -2387,7 +2394,7 @@ function CardProposta({
                   <p className="
                     text-sm
                     font-bold
-                    text-green-800
+                    text-emerald-200
                   ">
 
                     {
@@ -2403,7 +2410,7 @@ function CardProposta({
                     mt-1
                     text-sm
                     leading-6
-                    text-green-700
+                    text-emerald-300
                   ">
 
                     {
@@ -2439,14 +2446,14 @@ function CardProposta({
             <div className="
               mt-5
               border-t
-              border-slate-200
+              border-teal-300/10
               pt-5
             ">
 
               <p className="
                 text-sm
                 font-semibold
-                text-slate-800
+                text-slate-200
               ">
 
                 A permuta já foi resolvida?
@@ -2457,7 +2464,7 @@ function CardProposta({
               <p className="
                 mt-1
                 text-sm
-                text-slate-500
+                text-slate-400
               ">
 
                 Quando houver uma definição entre os participantes, encerre a permuta para liberar os perfis para novas oportunidades.
@@ -2479,17 +2486,17 @@ function CardProposta({
                   gap-2
                   rounded-xl
                   border
-                  border-slate-300
-                  bg-white
+                  border-teal-300/15
+                  bg-[#0d2232]
                   px-4
                   py-2.5
                   text-sm
                   font-semibold
-                  text-slate-700
+                  text-slate-300
                   transition
-                  hover:border-blue-300
-                  hover:bg-blue-50
-                  hover:text-blue-900
+                  hover:border-teal-300/20
+                  hover:bg-teal-400/[0.07]
+                  hover:text-teal-200
                 "
               >
 
@@ -2518,8 +2525,8 @@ function CardProposta({
             mt-5
             rounded-xl
             border
-            border-blue-200
-            bg-blue-50
+            border-teal-300/15
+            bg-teal-400/[0.07]
             p-4
           ">
 
@@ -2535,7 +2542,7 @@ function CardProposta({
                   h-5
                   w-5
                   shrink-0
-                  text-blue-700
+                  text-teal-300
                 "
               />
 
@@ -2545,7 +2552,7 @@ function CardProposta({
                 <p className="
                   text-sm
                   font-bold
-                  text-blue-900
+                  text-teal-200
                 ">
 
                   Permuta concluída com sucesso
@@ -2557,7 +2564,7 @@ function CardProposta({
                   mt-1
                   text-sm
                   leading-6
-                  text-blue-800
+                  text-slate-300
                 ">
 
                   Os participantes informaram que a permuta foi concluída. Este registro permanecerá no histórico e seu perfil está disponível para novas oportunidades.
@@ -2583,15 +2590,15 @@ function CardProposta({
             mt-5
             rounded-xl
             border
-            border-slate-200
-            bg-slate-50
+            border-teal-300/10
+            bg-[#081b29]
             p-4
           ">
 
             <p className="
               text-sm
               font-bold
-              text-slate-800
+              text-slate-200
             ">
 
               Permuta encerrada sem sucesso
@@ -2603,7 +2610,7 @@ function CardProposta({
               mt-1
               text-sm
               leading-6
-              text-slate-600
+              text-slate-400
             ">
 
               Os participantes não concluíram esta permuta. O registro foi mantido no histórico e seu perfil voltou a ficar disponível para novas oportunidades.
@@ -2624,10 +2631,10 @@ function CardProposta({
           <div className="
             mt-5
             rounded-xl
-            bg-slate-100
+            bg-[#0d2232]/[0.05]
             p-4
             text-sm
-            text-slate-600
+            text-slate-400
           ">
 
             Esta proposta foi cancelada por um dos participantes.
@@ -2647,15 +2654,15 @@ function CardProposta({
             mt-5
             rounded-xl
             border
-            border-amber-200
-            bg-amber-50
+            border-amber-300/20
+            bg-amber-400/[0.08]
             p-4
           ">
 
             <p className="
               text-sm
               font-semibold
-              text-amber-800
+              text-amber-200
             ">
 
               Esta proposta não está mais disponível.
@@ -2667,7 +2674,7 @@ function CardProposta({
               mt-1
               text-sm
               leading-6
-              text-amber-700
+              text-amber-300
             ">
 
               Ela foi encerrada automaticamente porque um dos participantes confirmou outra permuta. Quando existem várias propostas, a primeira que for confirmada permanece ativa e as demais são encerradas automaticamente.
@@ -2732,7 +2739,9 @@ function ModalCancelarProposta({
         max-w-md
         overflow-hidden
         rounded-2xl
-        bg-white
+        border
+        border-teal-300/10
+        bg-[#0d2232]
         shadow-2xl
       ">
 
@@ -2742,7 +2751,7 @@ function ModalCancelarProposta({
           justify-between
           gap-4
           border-b
-          border-slate-200
+          border-teal-300/10
           px-6
           py-5
         ">
@@ -2752,7 +2761,7 @@ function ModalCancelarProposta({
             <h2 className="
               text-xl
               font-bold
-              text-slate-900
+              text-white
             ">
 
               Confirmar cancelamento
@@ -2763,7 +2772,7 @@ function ModalCancelarProposta({
             <p className="
               mt-1
               text-sm
-              text-slate-500
+              text-slate-400
             ">
 
               Esta ação não poderá ser desfeita.
@@ -2795,8 +2804,8 @@ function ModalCancelarProposta({
               rounded-lg
               text-slate-400
               transition
-              hover:bg-slate-100
-              hover:text-slate-700
+              hover:bg-[#0d2232]/[0.05]
+              hover:text-slate-300
               disabled:opacity-50
             "
           >
@@ -2822,8 +2831,8 @@ function ModalCancelarProposta({
             items-center
             justify-center
             rounded-full
-            bg-red-50
-            text-red-600
+            bg-red-400/[0.08]
+            text-red-300
           ">
 
             <XCircle
@@ -2837,7 +2846,7 @@ function ModalCancelarProposta({
             mt-4
             text-lg
             font-bold
-            text-slate-900
+            text-white
           ">
 
             Tem certeza de que deseja cancelar esta proposta?
@@ -2849,7 +2858,7 @@ function ModalCancelarProposta({
             mt-2
             text-sm
             leading-6
-            text-slate-600
+            text-slate-400
           ">
 
             Você está cancelando uma {tipoPermuta}. Os demais participantes serão avisados do cancelamento. A proposta deixará de ficar ativa.
@@ -2880,15 +2889,15 @@ function ModalCancelarProposta({
               className="
                 rounded-xl
                 border
-                border-slate-300
-                bg-white
+                border-teal-300/15
+                bg-[#0d2232]
                 px-4
                 py-2.5
                 text-sm
                 font-semibold
-                text-slate-700
+                text-slate-300
                 transition
-                hover:bg-slate-50
+                hover:bg-[#081b29]
                 disabled:opacity-50
               "
             >
@@ -2922,7 +2931,7 @@ function ModalCancelarProposta({
                 font-semibold
                 text-white
                 transition
-                hover:bg-red-700
+                hover:bg-red-500
                 disabled:cursor-not-allowed
                 disabled:opacity-50
               "
@@ -2989,7 +2998,9 @@ function ModalLimparHistorico({
         max-w-md
         overflow-hidden
         rounded-2xl
-        bg-white
+        border
+        border-teal-300/10
+        bg-[#0d2232]
         shadow-2xl
       ">
 
@@ -2999,7 +3010,7 @@ function ModalLimparHistorico({
           justify-between
           gap-4
           border-b
-          border-slate-200
+          border-teal-300/10
           px-6
           py-5
         ">
@@ -3009,7 +3020,7 @@ function ModalLimparHistorico({
             <h2 className="
               text-xl
               font-bold
-              text-slate-900
+              text-white
             ">
 
               Limpar histórico
@@ -3020,7 +3031,7 @@ function ModalLimparHistorico({
             <p className="
               mt-1
               text-sm
-              text-slate-500
+              text-slate-400
             ">
 
               Confirme antes de continuar.
@@ -3052,8 +3063,8 @@ function ModalLimparHistorico({
               rounded-lg
               text-slate-400
               transition
-              hover:bg-slate-100
-              hover:text-slate-700
+              hover:bg-[#0d2232]/[0.05]
+              hover:text-slate-300
               disabled:opacity-50
             "
           >
@@ -3079,8 +3090,8 @@ function ModalLimparHistorico({
             items-center
             justify-center
             rounded-full
-            bg-slate-100
-            text-slate-700
+            bg-[#0d2232]/[0.05]
+            text-slate-300
           ">
 
             <Trash2
@@ -3094,7 +3105,7 @@ function ModalLimparHistorico({
             mt-4
             text-lg
             font-bold
-            text-slate-900
+            text-white
           ">
 
             Limpar histórico de propostas?
@@ -3106,7 +3117,7 @@ function ModalLimparHistorico({
             mt-2
             text-sm
             leading-6
-            text-slate-600
+            text-slate-400
           ">
 
             As propostas encerradas ou canceladas deixarão de aparecer nesta página. Propostas em andamento ou aguardando aceite não serão afetadas.
@@ -3118,7 +3129,7 @@ function ModalLimparHistorico({
             mt-3
             text-xs
             leading-5
-            text-slate-500
+            text-slate-400
           ">
 
             Esta ação apenas limpa a sua visualização. Os registros necessários para o funcionamento e as estatísticas da plataforma serão preservados.
@@ -3149,15 +3160,15 @@ function ModalLimparHistorico({
               className="
                 rounded-xl
                 border
-                border-slate-300
-                bg-white
+                border-teal-300/15
+                bg-[#0d2232]
                 px-4
                 py-2.5
                 text-sm
                 font-semibold
-                text-slate-700
+                text-slate-300
                 transition
-                hover:bg-slate-50
+                hover:bg-[#081b29]
                 disabled:opacity-50
               "
             >
@@ -3184,14 +3195,14 @@ function ModalLimparHistorico({
                 justify-center
                 gap-2
                 rounded-xl
-                bg-slate-900
+                bg-teal-600
                 px-4
                 py-2.5
                 text-sm
                 font-semibold
                 text-white
                 transition
-                hover:bg-slate-800
+                hover:bg-teal-500
                 disabled:cursor-not-allowed
                 disabled:opacity-50
               "
@@ -3270,7 +3281,9 @@ function ModalEncerrarPermuta({
         max-w-lg
         overflow-hidden
         rounded-2xl
-        bg-white
+        border
+        border-teal-300/10
+        bg-[#0d2232]
         shadow-2xl
       ">
 
@@ -3283,7 +3296,7 @@ function ModalEncerrarPermuta({
           justify-between
           gap-4
           border-b
-          border-slate-200
+          border-teal-300/10
           px-6
           py-5
         ">
@@ -3293,7 +3306,7 @@ function ModalEncerrarPermuta({
             <h2 className="
               text-xl
               font-bold
-              text-slate-900
+              text-white
             ">
 
               Encerrar permuta
@@ -3304,7 +3317,7 @@ function ModalEncerrarPermuta({
             <p className="
               mt-1
               text-sm
-              text-slate-500
+              text-slate-400
             ">
 
               {
@@ -3340,8 +3353,8 @@ function ModalEncerrarPermuta({
               rounded-lg
               text-slate-400
               transition
-              hover:bg-slate-100
-              hover:text-slate-700
+              hover:bg-[#0d2232]/[0.05]
+              hover:text-slate-300
               disabled:opacity-50
             "
           >
@@ -3369,8 +3382,8 @@ function ModalEncerrarPermuta({
             items-center
             justify-center
             rounded-full
-            bg-blue-50
-            text-blue-900
+            bg-teal-400/[0.07]
+            text-teal-200
           ">
 
             <CheckCircle2
@@ -3384,7 +3397,7 @@ function ModalEncerrarPermuta({
             mt-4
             text-xl
             font-bold
-            text-slate-900
+            text-white
           ">
 
             A permuta deu certo?
@@ -3396,7 +3409,7 @@ function ModalEncerrarPermuta({
             mt-2
             text-sm
             leading-6
-            text-slate-600
+            text-slate-400
           ">
 
             Esta resposta encerrará a permuta para todos os participantes e liberará os perfis para novas oportunidades.
@@ -3430,13 +3443,13 @@ function ModalEncerrarPermuta({
                 gap-3
                 rounded-xl
                 border
-                border-green-200
-                bg-green-50
+                border-emerald-300/20
+                bg-emerald-400/[0.08]
                 p-4
                 text-left
                 transition
                 hover:border-green-300
-                hover:bg-green-100
+                hover:bg-emerald-400/10
                 disabled:cursor-not-allowed
                 disabled:opacity-50
               "
@@ -3448,7 +3461,7 @@ function ModalEncerrarPermuta({
                   h-5
                   w-5
                   shrink-0
-                  text-green-700
+                  text-emerald-300
                 "
               />
 
@@ -3458,7 +3471,7 @@ function ModalEncerrarPermuta({
                 <p className="
                   text-sm
                   font-bold
-                  text-green-800
+                  text-emerald-200
                 ">
 
                   Sim, concluímos a troca
@@ -3470,7 +3483,7 @@ function ModalEncerrarPermuta({
                   mt-1
                   text-xs
                   leading-5
-                  text-green-700
+                  text-emerald-300
                 ">
 
                   A permuta será registrada como concluída com sucesso.
@@ -3502,13 +3515,13 @@ function ModalEncerrarPermuta({
                 gap-3
                 rounded-xl
                 border
-                border-red-200
-                bg-red-50
+                border-red-400/20
+                bg-red-400/[0.08]
                 p-4
                 text-left
                 transition
                 hover:border-red-300
-                hover:bg-red-100
+                hover:bg-red-400/10
                 disabled:cursor-not-allowed
                 disabled:opacity-50
               "
@@ -3520,7 +3533,7 @@ function ModalEncerrarPermuta({
                   h-5
                   w-5
                   shrink-0
-                  text-red-700
+                  text-red-300
                 "
               />
 
@@ -3530,7 +3543,7 @@ function ModalEncerrarPermuta({
                 <p className="
                   text-sm
                   font-bold
-                  text-red-800
+                  text-red-200
                 ">
 
                   Não, não deu certo
@@ -3542,7 +3555,7 @@ function ModalEncerrarPermuta({
                   mt-1
                   text-xs
                   leading-5
-                  text-red-700
+                  text-red-300
                 ">
 
                   A permuta será encerrada sem sucesso e os participantes serão liberados.
@@ -3572,15 +3585,15 @@ function ModalEncerrarPermuta({
               w-full
               rounded-xl
               border
-              border-slate-300
-              bg-white
+              border-teal-300/15
+              bg-[#0d2232]
               px-4
               py-2.5
               text-sm
               font-semibold
-              text-slate-700
+              text-slate-300
               transition
-              hover:bg-slate-50
+              hover:bg-[#081b29]
               disabled:opacity-50
             "
           >
@@ -3671,8 +3684,8 @@ function ResumoAceites({
       mt-5
       rounded-xl
       border
-      border-slate-200
-      bg-slate-50
+      border-teal-300/10
+      bg-[#081b29]
       p-4
     ">
 
@@ -3681,7 +3694,7 @@ function ResumoAceites({
         font-bold
         uppercase
         tracking-wide
-        text-slate-500
+        text-slate-400
       ">
 
         Situação dos aceites
@@ -3722,7 +3735,7 @@ function ResumoAceites({
                   <span className="
                     text-sm
                     font-medium
-                    text-slate-700
+                    text-slate-300
                   ">
 
                     {
@@ -3751,12 +3764,12 @@ function ResumoAceites({
                           items-center
                           gap-1.5
                           rounded-full
-                          bg-green-100
+                          bg-emerald-400/10
                           px-2.5
                           py-1
                           text-xs
                           font-semibold
-                          text-green-700
+                          text-emerald-300
                         ">
 
                           <CheckCircle2
@@ -3776,16 +3789,19 @@ function ResumoAceites({
                           items-center
                           gap-1.5
                           rounded-full
-                          bg-amber-100
+                          border
+                          border-amber-400/20
+                          bg-amber-400/10
                           px-2.5
                           py-1
                           text-xs
                           font-semibold
-                          text-amber-700
+                          text-amber-300
                         ">
 
                           <Clock3
                             size={13}
+                            strokeWidth={2}
                           />
 
                           Aguardando
@@ -3842,7 +3858,7 @@ function Movimento({
     <div className="
       rounded-xl
       border
-      border-slate-200
+      border-teal-300/10
       p-4
     ">
 
@@ -3862,7 +3878,7 @@ function Movimento({
           items-center
           gap-2
           font-semibold
-          text-slate-900
+          text-white
         ">
 
           {nome}
@@ -3907,8 +3923,8 @@ function Movimento({
                     items-center
                     justify-center
                     rounded-full
-                    bg-green-100
-                    text-green-700
+                    bg-emerald-400/10
+                    text-emerald-300
                   "
                 >
 
@@ -3932,13 +3948,16 @@ function Movimento({
                     items-center
                     justify-center
                     rounded-full
-                    bg-amber-100
-                    text-amber-700
+                    border
+                    border-amber-400/20
+                    bg-amber-400/10
+                    text-amber-300
                   "
                 >
 
                   <Clock3
                     size={15}
+                    strokeWidth={2}
                   />
 
                 </span>
@@ -3957,7 +3976,7 @@ function Movimento({
         items-center
         gap-2
         text-sm
-        text-slate-600
+        text-slate-400
       ">
 
         <span>
@@ -3975,7 +3994,7 @@ function Movimento({
 
         <span className="
           font-semibold
-          text-blue-700
+          text-teal-300
         ">
 
           {destino}
@@ -4013,7 +4032,7 @@ function ContatosConfirmados({
         font-bold
         uppercase
         tracking-wide
-        text-slate-500
+        text-slate-400
       ">
 
         Dados para contato
@@ -4030,11 +4049,11 @@ function ContatosConfirmados({
               mt-3
               rounded-xl
               border
-              border-slate-200
-              bg-slate-50
+              border-teal-300/10
+              bg-[#081b29]
               p-4
               text-sm
-              text-slate-500
+              text-slate-400
             ">
 
               Os contatos não puderam ser carregados neste momento.
@@ -4064,8 +4083,8 @@ function ContatosConfirmados({
                       className="
                         rounded-xl
                         border
-                        border-slate-200
-                        bg-slate-50
+                        border-teal-300/10
+                        bg-[#081b29]
                         p-4
                       "
                     >
@@ -4080,14 +4099,14 @@ function ContatosConfirmados({
                         <UserRound
                           size={18}
                           className="
-                            text-blue-700
+                            text-teal-300
                           "
                         />
 
 
                         <span className="
                           font-bold
-                          text-slate-900
+                          text-white
                         ">
 
                           {contato.nome}
@@ -4124,7 +4143,7 @@ function ContatosConfirmados({
 
                             <p className="
                               text-xs
-                              text-slate-500
+                              text-slate-400
                             ">
 
                               E-mail
@@ -4135,7 +4154,7 @@ function ContatosConfirmados({
                             <p className="
                               break-all
                               font-semibold
-                              text-slate-900
+                              text-white
                             ">
 
                               {contato.email}
@@ -4168,7 +4187,7 @@ function ContatosConfirmados({
 
                             <p className="
                               text-xs
-                              text-slate-500
+                              text-slate-400
                             ">
 
                               Telefone
@@ -4178,7 +4197,7 @@ function ContatosConfirmados({
 
                             <p className="
                               font-semibold
-                              text-slate-900
+                              text-white
                             ">
 
                               {
@@ -4240,12 +4259,12 @@ function Status({
         items-center
         gap-2
         rounded-full
-        bg-amber-50
+        bg-amber-400/[0.08]
         px-3
         py-1
         text-xs
         font-semibold
-        text-amber-700
+        text-amber-300
       ">
 
         <Clock3
@@ -4274,12 +4293,12 @@ function Status({
         items-center
         gap-2
         rounded-full
-        bg-green-50
+        bg-emerald-400/[0.08]
         px-3
         py-1
         text-xs
         font-semibold
-        text-green-700
+        text-emerald-300
       ">
 
         <CheckCircle2
@@ -4308,12 +4327,12 @@ function Status({
         items-center
         gap-2
         rounded-full
-        bg-blue-50
+        bg-teal-400/[0.07]
         px-3
         py-1
         text-xs
         font-semibold
-        text-blue-700
+        text-teal-300
       ">
 
         <CheckCircle2
@@ -4342,12 +4361,12 @@ function Status({
         items-center
         gap-2
         rounded-full
-        bg-slate-100
+        bg-[#0d2232]/[0.05]
         px-3
         py-1
         text-xs
         font-semibold
-        text-slate-600
+        text-slate-400
       ">
 
         <XCircle
@@ -4376,12 +4395,12 @@ function Status({
         items-center
         gap-2
         rounded-full
-        bg-amber-50
+        bg-amber-400/[0.08]
         px-3
         py-1
         text-xs
         font-semibold
-        text-amber-700
+        text-amber-300
       ">
 
         <XCircle
@@ -4405,12 +4424,12 @@ function Status({
       items-center
       gap-2
       rounded-full
-      bg-slate-100
+      bg-[#0d2232]/[0.05]
       px-3
       py-1
       text-xs
       font-semibold
-      text-slate-600
+      text-slate-400
     ">
 
       <XCircle

@@ -1,14 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
 
 import {
   CheckCircle2,
+  Heart,
   Quote,
   Star,
 } from "lucide-react";
 
-import { supabase } from "@/lib/supabase";
+import {
+  supabase,
+} from "@/lib/supabase";
 
 
 type IndicadoresPublicos = {
@@ -31,15 +37,35 @@ type DepoimentoPublico = {
 
 export default function PublicStats() {
 
-  const [indicadores, setIndicadores] =
-    useState<IndicadoresPublicos | null>(null);
+  const [
+    indicadores,
+    setIndicadores,
+  ] =
+    useState<IndicadoresPublicos | null>(
+      null
+    );
 
-  const [depoimentos, setDepoimentos] =
-    useState<DepoimentoPublico[]>([]);
 
-  const [carregando, setCarregando] =
+  const [
+    depoimentos,
+    setDepoimentos,
+  ] =
+    useState<DepoimentoPublico[]>(
+      []
+    );
+
+
+  const [
+    carregando,
+    setCarregando,
+  ] =
     useState(true);
 
+
+
+  /* ============================================================
+     CARREGAR DADOS
+  ============================================================ */
 
   useEffect(() => {
 
@@ -52,21 +78,22 @@ export default function PublicStats() {
 
         const [
           resultadoIndicadores,
-          resultadoDepoimentos
-        ] = await Promise.all([
+          resultadoDepoimentos,
+        ] =
+          await Promise.all([
 
-          supabase.rpc(
-            "indicadores_publicos"
-          ),
+            supabase.rpc(
+              "indicadores_publicos"
+            ),
 
-          supabase.rpc(
-            "depoimentos_publicos",
-            {
-              p_limite: 6
-            }
-          )
+            supabase.rpc(
+              "depoimentos_publicos",
+              {
+                p_limite: 6,
+              }
+            ),
 
-        ]);
+          ]);
 
 
         if (!ativo) {
@@ -74,14 +101,18 @@ export default function PublicStats() {
         }
 
 
-        if (resultadoIndicadores.error) {
+        if (
+          resultadoIndicadores.error
+        ) {
 
           console.error(
             "Erro ao carregar indicadores:",
             resultadoIndicadores.error
           );
 
-        } else {
+        }
+
+        else {
 
           const dados =
             Array.isArray(
@@ -137,12 +168,18 @@ export default function PublicStats() {
         }
 
 
-if (resultadoDepoimentos.error) {
-  console.warn(
-    "Não foi possível carregar os depoimentos públicos:",
-    resultadoDepoimentos.error.message
-  );
-} else {
+        if (
+          resultadoDepoimentos.error
+        ) {
+
+          console.warn(
+            "Não foi possível carregar os depoimentos públicos:",
+            resultadoDepoimentos.error.message
+          );
+
+        }
+
+        else {
 
           const dados =
             Array.isArray(
@@ -154,37 +191,43 @@ if (resultadoDepoimentos.error) {
 
           setDepoimentos(
 
-            dados.map((item) => ({
+            dados.map(
+              item => ({
 
-              comentario:
-                String(
-                  item.comentario ?? ""
-                ),
+                comentario:
+                  String(
+                    item.comentario ?? ""
+                  ),
 
-              nota:
-                Number(
-                  item.nota ?? 0
-                ),
+                nota:
+                  Number(
+                    item.nota ?? 0
+                  ),
 
-              created_at:
-                String(
-                  item.created_at ?? ""
-                ),
+                created_at:
+                  String(
+                    item.created_at ?? ""
+                  ),
 
-            }))
+              })
+            )
 
           );
 
         }
 
-      } catch (error) {
+      }
+
+      catch (error) {
 
         console.error(
           "Erro inesperado ao carregar dados públicos:",
           error
         );
 
-      } finally {
+      }
+
+      finally {
 
         if (ativo) {
           setCarregando(false);
@@ -204,6 +247,11 @@ if (resultadoDepoimentos.error) {
 
   }, []);
 
+
+
+  /* ============================================================
+     ESTADOS
+  ============================================================ */
 
   if (carregando) {
     return null;
@@ -232,502 +280,552 @@ if (resultadoDepoimentos.error) {
     indicadores.avaliacoes_recebidas > 0;
 
 
-  /*
-   * A seção de indicadores somente aparece
-   * quando existir algum resultado real da
-   * utilização da plataforma.
-   *
-   * O número de servidores já é mostrado
-   * no Hero.
-   */
-
   const mostrarIndicadores =
     mostrarPermutas ||
     mostrarTaxa ||
     mostrarAvaliacoes;
 
 
+
   return (
 
     <>
 
-      {/* =========================================
-          INDICADORES
-      ========================================= */}
+      {/* ========================================================
+          INDICADORES REAIS
+      ======================================================== */}
 
-      {mostrarIndicadores && (
+      {
+        mostrarIndicadores && (
 
-        <section
-          className="
-            border-y
-            border-slate-200
-            bg-slate-50
-          "
-        >
-
-          <div
+          <section
             className="
-              mx-auto
-              max-w-7xl
-              px-6
-              py-14
-              lg:py-16
+              relative
+              border-y
+              border-teal-300/10
+              bg-[#061725]/45
             "
           >
 
-            <div className="text-center">
-
-              <p
-                className="
-                  text-sm
-                  font-semibold
-                  uppercase
-                  tracking-wider
-                  text-blue-900
-                "
-              >
-                Números da plataforma
-              </p>
-
-
-              <h2
-                className="
-                  mt-2
-                  text-3xl
-                  font-bold
-                  text-slate-900
-                "
-              >
-                Resultados da comunidade
-              </h2>
-
-
-              <p
-                className="
-                  mx-auto
-                  mt-3
-                  max-w-2xl
-                  text-slate-600
-                "
-              >
-                Indicadores calculados a partir da
-                utilização real da plataforma.
-              </p>
-
-            </div>
-
-
             <div
               className="
-                mt-10
-                flex
-                flex-wrap
-                justify-center
-                gap-4
+                mx-auto
+                max-w-7xl
+                px-5
+                py-16
+                sm:px-6
+                lg:px-8
               "
             >
 
-              {/* PERMUTAS CONCLUÍDAS */}
-
-              {mostrarPermutas && (
-
-                <div
-                  className="
-                    w-full
-                    rounded-2xl
-                    border
-                    border-slate-200
-                    bg-white
-                    p-6
-                    shadow-sm
-                    sm:w-[280px]
-                  "
-                >
-
-                  <div
-                    className="
-                      flex
-                      h-11
-                      w-11
-                      items-center
-                      justify-center
-                      rounded-xl
-                      bg-green-50
-                      text-green-700
-                    "
-                  >
-
-                    <CheckCircle2 size={22} />
-
-                  </div>
-
-
-                  <p
-                    className="
-                      mt-5
-                      text-3xl
-                      font-bold
-                      text-slate-900
-                    "
-                  >
-
-                    {indicadores.permutas_concluidas.toLocaleString(
-                      "pt-BR"
-                    )}
-
-                  </p>
-
-
-                  <p
-                    className="
-                      mt-1
-                      text-sm
-                      font-semibold
-                      text-slate-600
-                    "
-                  >
-
-                    {indicadores.permutas_concluidas === 1
-                      ? "permuta concluída"
-                      : "permutas concluídas"}
-
-                  </p>
-
-                </div>
-
-              )}
-
-
-              {/* TAXA DE SUCESSO */}
-
-              {mostrarTaxa && (
-
-                <div
-                  className="
-                    w-full
-                    rounded-2xl
-                    border
-                    border-slate-200
-                    bg-white
-                    p-6
-                    shadow-sm
-                    sm:w-[280px]
-                  "
-                >
-
-                  <div
-                    className="
-                      flex
-                      h-11
-                      w-11
-                      items-center
-                      justify-center
-                      rounded-xl
-                      bg-blue-50
-                      text-blue-900
-                    "
-                  >
-
-                    <CheckCircle2 size={22} />
-
-                  </div>
-
-
-                  <p
-                    className="
-                      mt-5
-                      text-3xl
-                      font-bold
-                      text-slate-900
-                    "
-                  >
-
-                    {indicadores.taxa_sucesso.toLocaleString(
-                      "pt-BR",
-                      {
-                        maximumFractionDigits: 1
-                      }
-                    )}
-                    %
-
-                  </p>
-
-
-                  <p
-                    className="
-                      mt-1
-                      text-sm
-                      font-semibold
-                      text-slate-600
-                    "
-                  >
-                    taxa de sucesso
-                  </p>
-
-                </div>
-
-              )}
-
-
-              {/* AVALIAÇÕES */}
-
-              {mostrarAvaliacoes && (
-
-                <div
-                  className="
-                    w-full
-                    rounded-2xl
-                    border
-                    border-slate-200
-                    bg-white
-                    p-6
-                    shadow-sm
-                    sm:w-[280px]
-                  "
-                >
-
-                  <div
-                    className="
-                      flex
-                      h-11
-                      w-11
-                      items-center
-                      justify-center
-                      rounded-xl
-                      bg-amber-50
-                      text-amber-700
-                    "
-                  >
-
-                    <Star size={22} />
-
-                  </div>
-
-
-                  <p
-                    className="
-                      mt-5
-                      text-3xl
-                      font-bold
-                      text-slate-900
-                    "
-                  >
-
-                    {indicadores.nota_media.toLocaleString(
-                      "pt-BR",
-                      {
-                        minimumFractionDigits: 1,
-                        maximumFractionDigits: 1
-                      }
-                    )}
-
-                  </p>
-
-
-                  <p
-                    className="
-                      mt-1
-                      text-sm
-                      font-semibold
-                      text-slate-600
-                    "
-                  >
-                    nota média da plataforma
-                  </p>
-
-
-                  <p
-                    className="
-                      mt-2
-                      text-xs
-                      text-slate-500
-                    "
-                  >
-
-                    {indicadores.percentual_recomenda.toLocaleString(
-                      "pt-BR",
-                      {
-                        maximumFractionDigits: 1
-                      }
-                    )}
-                    % recomendariam
-
-                  </p>
-
-                </div>
-
-              )}
-
-            </div>
-
-          </div>
-
-        </section>
-
-      )}
-
-
-      {/* =========================================
-          DEPOIMENTOS
-      ========================================= */}
-
-      {depoimentos.length > 0 && (
-
-        <section className="bg-white">
-
-          <div
-            className="
-              mx-auto
-              max-w-7xl
-              px-6
-              py-16
-            "
-          >
-
-            <div className="text-center">
-
-              <p
+              <div
                 className="
-                  text-sm
-                  font-semibold
-                  uppercase
-                  tracking-wider
-                  text-blue-900
+                  text-center
                 "
               >
-                Experiências reais
-              </p>
+
+                <p
+                  className="
+                    text-sm
+                    font-bold
+                    uppercase
+                    tracking-[0.18em]
+                    text-teal-400
+                  "
+                >
+                  Números da plataforma
+                </p>
 
 
-              <h2
+                <h2
+                  className="
+                    mt-3
+                    text-3xl
+                    font-black
+                    tracking-tight
+                    text-white
+                    sm:text-4xl
+                  "
+                >
+                  Resultados da comunidade
+                </h2>
+
+
+                <p
+                  className="
+                    mx-auto
+                    mt-4
+                    max-w-2xl
+                    text-slate-400
+                  "
+                >
+                  Indicadores calculados exclusivamente
+                  a partir da utilização real da plataforma.
+                </p>
+
+              </div>
+
+
+              <div
                 className="
-                  mt-2
-                  text-3xl
-                  font-bold
-                  text-slate-900
+                  mt-10
+                  flex
+                  flex-wrap
+                  justify-center
+                  gap-4
                 "
               >
-                O que os servidores dizem
-              </h2>
 
+                {
+                  mostrarPermutas && (
 
-              <p
-                className="
-                  mx-auto
-                  mt-3
-                  max-w-2xl
-                  text-slate-600
-                "
-              >
-                Depoimentos publicados somente com
-                autorização do usuário e sem
-                identificação pessoal.
-              </p>
-
-            </div>
-
-
-            <div
-              className="
-                mt-10
-                grid
-                gap-5
-                md:grid-cols-2
-                xl:grid-cols-3
-              "
-            >
-
-              {depoimentos.map(
-                (depoimento, index) => (
-
-                  <article
-                    key={`${depoimento.created_at}-${index}`}
-                    className="
-                      rounded-2xl
-                      border
-                      border-slate-200
-                      bg-slate-50
-                      p-6
-                    "
-                  >
-
-                    <Quote
-                      size={26}
-                      className="text-blue-900"
+                    <StatsCard
+                      icon={
+                        <CheckCircle2
+                          size={22}
+                        />
+                      }
+                      valor={
+                        indicadores
+                          .permutas_concluidas
+                          .toLocaleString(
+                            "pt-BR"
+                          )
+                      }
+                      titulo={
+                        indicadores.permutas_concluidas === 1
+                          ? "permuta concluída"
+                          : "permutas concluídas"
+                      }
                     />
 
+                  )
+                }
 
-                    <div
-                      className="
-                        mt-4
-                        flex
-                        gap-1
-                      "
-                    >
 
-                      {Array.from({
-                        length: Math.max(
-                          0,
-                          Math.min(
-                            5,
-                            depoimento.nota
+                {
+                  mostrarTaxa && (
+
+                    <StatsCard
+                      icon={
+                        <CheckCircle2
+                          size={22}
+                        />
+                      }
+                      valor={
+                        `${
+                          indicadores
+                            .taxa_sucesso
+                            .toLocaleString(
+                              "pt-BR",
+                              {
+                                maximumFractionDigits: 1,
+                              }
+                            )
+                        }%`
+                      }
+                      titulo="taxa de sucesso"
+                    />
+
+                  )
+                }
+
+
+                {
+                  mostrarAvaliacoes && (
+
+                    <StatsCard
+                      icon={
+                        <Star
+                          size={22}
+                        />
+                      }
+                      valor={
+                        indicadores
+                          .nota_media
+                          .toLocaleString(
+                            "pt-BR",
+                            {
+                              minimumFractionDigits: 1,
+                              maximumFractionDigits: 1,
+                            }
                           )
-                        )
-                      }).map(
-                        (_, estrela) => (
+                      }
+                      titulo="nota média da plataforma"
+                      detalhe={
+                        `${
+                          indicadores
+                            .percentual_recomenda
+                            .toLocaleString(
+                              "pt-BR",
+                              {
+                                maximumFractionDigits: 1,
+                              }
+                            )
+                        }% recomendariam`
+                      }
+                    />
 
-                          <Star
-                            key={estrela}
-                            size={17}
-                            className="
-                              fill-amber-400
-                              text-amber-500
-                            "
-                          />
+                  )
+                }
 
-                        )
-                      )}
-
-                    </div>
-
-
-                    <p
-                      className="
-                        mt-4
-                        text-sm
-                        leading-7
-                        text-slate-700
-                      "
-                    >
-                      “{depoimento.comentario}”
-                    </p>
-
-
-                    <p
-                      className="
-                        mt-5
-                        text-xs
-                        font-semibold
-                        text-slate-400
-                      "
-                    >
-                      Depoimento anônimo
-                    </p>
-
-                  </article>
-
-                )
-              )}
+              </div>
 
             </div>
 
-          </div>
+          </section>
 
-        </section>
+        )
+      }
 
-      )}
+
+
+      {/* ========================================================
+          DEPOIMENTOS
+      ======================================================== */}
+
+      {
+        depoimentos.length > 0 && (
+
+          <section
+            className="
+              relative
+              py-20
+            "
+          >
+
+            <div
+              className="
+                mx-auto
+                max-w-7xl
+                px-5
+                sm:px-6
+                lg:px-8
+              "
+            >
+
+              <div
+                className="
+                  text-center
+                "
+              >
+
+                <div
+                  className="
+                    mx-auto
+                    flex
+                    h-11
+                    w-11
+                    items-center
+                    justify-center
+                    rounded-full
+                    border
+                    border-teal-300/15
+                    bg-teal-400/10
+                    text-teal-300
+                  "
+                >
+                  <Heart size={21} />
+                </div>
+
+
+                <p
+                  className="
+                    mt-5
+                    text-sm
+                    font-bold
+                    uppercase
+                    tracking-[0.18em]
+                    text-teal-400
+                  "
+                >
+                  Experiências reais
+                </p>
+
+
+                <h2
+                  className="
+                    mt-3
+                    text-3xl
+                    font-black
+                    tracking-tight
+                    text-white
+                    sm:text-4xl
+                  "
+                >
+                  O que os servidores dizem
+                </h2>
+
+
+                <p
+                  className="
+                    mx-auto
+                    mt-4
+                    max-w-2xl
+                    text-slate-400
+                  "
+                >
+                  Depoimentos publicados somente mediante
+                  autorização e sem identificação pessoal.
+                </p>
+
+              </div>
+
+
+              <div
+                className="
+                  mt-11
+                  grid
+                  gap-5
+                  md:grid-cols-2
+                  xl:grid-cols-3
+                "
+              >
+
+                {
+                  depoimentos.map(
+                    (
+                      depoimento,
+                      index
+                    ) => (
+
+                      <article
+                        key={
+                          `${depoimento.created_at}-${index}`
+                        }
+                        className="
+                          group
+                          relative
+                          overflow-hidden
+                          rounded-2xl
+                          border
+                          border-teal-300/10
+                          bg-gradient-to-br
+                          from-[#0d2637]/90
+                          to-[#081b29]/90
+                          p-6
+                          shadow-[0_18px_45px_rgba(0,0,0,0.22)]
+                          transition
+                          duration-300
+                          hover:-translate-y-1
+                          hover:border-teal-300/25
+                        "
+                      >
+
+                        <div
+                          className="
+                            absolute
+                            -right-12
+                            -top-12
+                            h-36
+                            w-36
+                            rounded-full
+                            bg-teal-400/[0.05]
+                            blur-2xl
+                          "
+                        />
+
+
+                        <Quote
+                          size={27}
+                          className="
+                            relative
+                            text-teal-400
+                          "
+                        />
+
+
+                        <div
+                          className="
+                            relative
+                            mt-4
+                            flex
+                            gap-1
+                          "
+                        >
+
+                          {
+                            Array.from({
+                              length:
+                                Math.max(
+                                  0,
+                                  Math.min(
+                                    5,
+                                    depoimento.nota
+                                  )
+                                ),
+                            }).map(
+                              (
+                                _,
+                                estrela
+                              ) => (
+
+                                <Star
+                                  key={estrela}
+                                  size={17}
+                                  className="
+                                    fill-amber-400
+                                    text-amber-400
+                                  "
+                                />
+
+                              )
+                            )
+                          }
+
+                        </div>
+
+
+                        <p
+                          className="
+                            relative
+                            mt-5
+                            text-sm
+                            leading-7
+                            text-slate-300
+                          "
+                        >
+                          “{depoimento.comentario}”
+                        </p>
+
+
+                        <p
+                          className="
+                            relative
+                            mt-6
+                            text-xs
+                            font-semibold
+                            uppercase
+                            tracking-wider
+                            text-slate-500
+                          "
+                        >
+                          Depoimento anônimo
+                        </p>
+
+                      </article>
+
+                    )
+                  )
+                }
+
+              </div>
+
+            </div>
+
+          </section>
+
+        )
+      }
 
     </>
+
+  );
+
+}
+
+
+
+/* ============================================================
+   CARD DOS INDICADORES
+============================================================ */
+
+function StatsCard({
+  icon,
+  valor,
+  titulo,
+  detalhe,
+}: {
+  icon: React.ReactNode;
+  valor: string;
+  titulo: string;
+  detalhe?: string;
+}) {
+
+  return (
+
+    <div
+      className="
+        group
+        w-full
+        rounded-2xl
+        border
+        border-teal-300/10
+        bg-gradient-to-br
+        from-[#0d2637]/95
+        to-[#081b29]/95
+        p-6
+        shadow-[0_18px_45px_rgba(0,0,0,0.2)]
+        transition
+        duration-300
+        hover:-translate-y-1
+        hover:border-teal-300/25
+        sm:w-[285px]
+      "
+    >
+
+      <div
+        className="
+          flex
+          h-11
+          w-11
+          items-center
+          justify-center
+          rounded-xl
+          border
+          border-teal-300/15
+          bg-teal-400/10
+          text-teal-300
+          transition
+          group-hover:bg-teal-400/15
+        "
+      >
+        {icon}
+      </div>
+
+
+      <p
+        className="
+          mt-5
+          text-3xl
+          font-black
+          tracking-tight
+          text-white
+        "
+      >
+        {valor}
+      </p>
+
+
+      <p
+        className="
+          mt-1
+          text-sm
+          font-semibold
+          text-slate-300
+        "
+      >
+        {titulo}
+      </p>
+
+
+      {
+        detalhe && (
+
+          <p
+            className="
+              mt-2
+              text-xs
+              text-slate-500
+            "
+          >
+            {detalhe}
+          </p>
+
+        )
+      }
+
+    </div>
 
   );
 

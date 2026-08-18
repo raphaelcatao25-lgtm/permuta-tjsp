@@ -522,7 +522,7 @@ export default function PermutasDiretas({
 
         <div className="
           font-medium
-          text-slate-600
+          text-slate-400
         ">
 
           Buscando permutas diretas...
@@ -560,14 +560,14 @@ export default function PermutasDiretas({
           className="
             mx-auto
             mb-3
-            text-slate-400
+            text-slate-500
           "
         />
 
 
         <h3 className="
           font-semibold
-          text-slate-900
+          text-white
         ">
 
           Nenhuma permuta direta encontrada
@@ -721,7 +721,7 @@ function PermutaDiretaCard({
         justify-between
         gap-4
         border-b
-        border-slate-100
+        border-teal-300/10
         p-5
       ">
 
@@ -745,7 +745,7 @@ function PermutaDiretaCard({
             <h3 className="
               text-xl
               font-bold
-              text-slate-900
+              text-white
             ">
 
               {titulo}
@@ -779,15 +779,19 @@ function PermutaDiretaCard({
             propondo
           }
           className="
-            rounded-full
-            bg-blue-600
+            rounded-xl
+            border
+            border-teal-300/20
+            bg-teal-600
             px-4
             py-2
             text-sm
             font-semibold
             text-white
-            transition
-            hover:bg-blue-700
+            transition-all
+            duration-200
+            hover:-translate-y-[1px]
+            hover:bg-teal-500
             disabled:cursor-not-allowed
             disabled:opacity-60
           "
@@ -854,8 +858,8 @@ function PermutaDiretaCard({
 
       <div className="
         border-t
-        border-slate-100
-        bg-slate-50/50
+        border-teal-300/10
+        bg-[#081b29]
         px-5
         py-4
       ">
@@ -867,13 +871,13 @@ function PermutaDiretaCard({
           justify-center
           gap-2
           text-sm
-          text-slate-600
+          text-slate-400
         ">
 
 
           <span className="
             font-semibold
-            text-slate-900
+            text-white
           ">
 
             {nomeUsuario}
@@ -888,7 +892,7 @@ function PermutaDiretaCard({
 
           <span className="
             font-semibold
-            text-blue-700
+            text-teal-300
           ">
 
             {permuta.comarca_origem}
@@ -899,14 +903,14 @@ function PermutaDiretaCard({
           <ArrowRight
             size={16}
             className="
-              text-blue-500
+              text-teal-400
             "
           />
 
 
           <span className="
             font-semibold
-            text-slate-900
+            text-white
           ">
 
             {permuta.candidato_nome}
@@ -921,7 +925,7 @@ function PermutaDiretaCard({
 
           <span className="
             font-semibold
-            text-blue-700
+            text-teal-300
           ">
 
             {permuta.comarca_destino}
@@ -970,9 +974,9 @@ function ServidorDiretoCard({
         ${
           destaque
 
-            ? "border-blue-300 bg-blue-50/30"
+            ? "border-teal-300/25 bg-teal-400/[0.08]"
 
-            : "border-slate-200 bg-white"
+            : "border-teal-300/10 bg-[#081b29]"
         }
       `}
     >
@@ -1005,7 +1009,7 @@ function ServidorDiretoCard({
           <div className="
             mt-1
             font-bold
-            text-slate-900
+            text-white
           ">
 
             {nome}
@@ -1020,7 +1024,7 @@ function ServidorDiretoCard({
 
             <span className="
               rounded-full
-              bg-blue-600
+              bg-teal-600
               px-2.5
               py-1
               text-xs
@@ -1059,7 +1063,7 @@ function ServidorDiretoCard({
           size={22}
           className="
             mx-auto
-            text-blue-500
+            text-teal-400
           "
         />
 
@@ -1116,7 +1120,7 @@ function LocalDireto({
           ${
             destino
 
-              ? "text-blue-600"
+              ? "text-teal-300"
 
               : "text-slate-500"
           }
@@ -1135,7 +1139,7 @@ function LocalDireto({
       <div className="
         font-semibold
         leading-snug
-        text-slate-900
+        text-white
       ">
 
         {nome}

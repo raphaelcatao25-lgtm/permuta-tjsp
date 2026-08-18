@@ -2,21 +2,24 @@
 
 import {
   useEffect,
-  useState
+  useState,
 } from "react";
 
 import {
-  Users
+  Users,
 } from "lucide-react";
 
 import {
-  supabase
+  supabase,
 } from "@/lib/supabase";
 
 
 export default function ServerCount() {
 
-  const [total, setTotal] =
+  const [
+    total,
+    setTotal,
+  ] =
     useState<number | null>(null);
 
 
@@ -29,10 +32,11 @@ export default function ServerCount() {
 
       const {
         data,
-        error
-      } = await supabase.rpc(
-        "contar_servidores"
-      );
+        error,
+      } =
+        await supabase.rpc(
+          "contar_servidores"
+        );
 
 
       if (!ativo) {
@@ -73,20 +77,27 @@ export default function ServerCount() {
 
     <div
       className="
-        mt-8
+        group
         flex
         w-fit
+        min-w-[315px]
         items-center
         gap-5
         rounded-2xl
         border
-        border-blue-200
+        border-teal-300/15
         bg-gradient-to-r
-        from-blue-50
-        to-white
+        from-[#0d2637]/95
+        to-[#081b29]/95
         px-6
         py-5
-        shadow-sm
+        shadow-[0_18px_45px_rgba(0,0,0,0.22)]
+        backdrop-blur-xl
+        transition
+        duration-300
+        hover:-translate-y-1
+        hover:border-teal-300/30
+        hover:shadow-[0_24px_55px_rgba(0,0,0,0.32)]
       "
     >
 
@@ -95,18 +106,25 @@ export default function ServerCount() {
           flex
           h-14
           w-14
+          shrink-0
           items-center
           justify-center
-          rounded-xl
-          bg-blue-900
-          text-white
-          shadow-sm
+          rounded-2xl
+          border
+          border-teal-300/20
+          bg-teal-400/10
+          text-teal-300
+          shadow-[0_0_28px_rgba(20,184,166,0.12)]
+          transition
+          duration-300
+          group-hover:scale-105
+          group-hover:bg-teal-400/15
         "
       >
 
         <Users
-          size={30}
-          strokeWidth={2}
+          size={29}
+          strokeWidth={1.9}
         />
 
       </div>
@@ -117,33 +135,38 @@ export default function ServerCount() {
         <p
           className="
             text-3xl
-            font-bold
+            font-black
             leading-none
-            text-blue-900
+            tracking-tight
+            text-teal-300
           "
         >
 
-          {total === null
-            ? "..."
-            : total.toLocaleString(
-                "pt-BR"
-              )}
+          {
+            total === null
+              ? "..."
+              : total.toLocaleString(
+                  "pt-BR"
+                )
+          }
 
         </p>
 
 
         <p
           className="
-            mt-1
+            mt-1.5
             text-sm
-            font-semibold
-            text-slate-700
+            font-bold
+            text-white
           "
         >
 
-          {total === 1
-            ? "servidor cadastrado"
-            : "servidores cadastrados"}
+          {
+            total === 1
+              ? "servidor cadastrado"
+              : "servidores cadastrados"
+          }
 
         </p>
 
@@ -152,6 +175,7 @@ export default function ServerCount() {
           className="
             mt-1
             text-xs
+            leading-5
             text-slate-500
           "
         >
