@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Suspense,
   useEffect,
   useMemo,
   useState,
@@ -68,7 +69,7 @@ const CARGOS = [
 
 
 
-export default function CadastroPage(){
+function CadastroPageContent(){
 
 
 const router = useRouter();
@@ -2341,4 +2342,22 @@ cadastroGoogle
 );
 
 
+}
+
+export default function CadastroPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-50 px-6 py-10">
+          <div className="mx-auto flex min-h-[50vh] max-w-3xl items-center justify-center">
+            <div className="rounded-2xl border border-slate-200 bg-white px-6 py-5 text-sm font-medium text-slate-600 shadow-sm">
+              Carregando cadastro...
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <CadastroPageContent />
+    </Suspense>
+  );
 }
