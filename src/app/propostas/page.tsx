@@ -728,6 +728,10 @@ export default function PropostasPage() {
 
     try {
 
+      /* ==================================================
+         REGISTRA O ACEITE
+      ================================================== */
+
       const funcao =
 
         solicitacao.tipo ===
@@ -753,9 +757,129 @@ export default function PropostasPage() {
 
 
       if (error) {
+
         throw error;
+
       }
 
+
+      /* ==================================================
+         TENTA ENVIAR O E-MAIL DE CONFIRMAÇÃO
+
+         O endpoint verifica no servidor se a proposta
+         realmente ficou CONFIRMADA.
+
+         Em ciclos de 3, se ainda faltar outro aceite,
+         nenhum e-mail de confirmação será enviado.
+
+         IMPORTANTE:
+         falha de e-mail nunca desfaz o aceite.
+      ================================================== */
+
+      try {
+
+        const {
+          data: sessao
+        } =
+          await supabase.auth.getSession();
+
+
+        const accessToken =
+          sessao.session
+            ?.access_token;
+
+
+        if (accessToken) {
+
+          const respostaEmail =
+            await fetch(
+              "/api/email/permuta-confirmada",
+              {
+                method:
+                  "POST",
+
+                headers: {
+                  "Content-Type":
+                    "application/json",
+
+                  "Authorization":
+                    `Bearer ${accessToken}`
+                },
+
+                body:
+                  JSON.stringify({
+                    solicitacaoId:
+                      solicitacao.id
+                  })
+              }
+            );
+
+
+          const resultadoEmail =
+            await respostaEmail
+              .json()
+              .catch(
+                () => null
+              );
+
+
+          if (
+            !respostaEmail.ok
+          ) {
+
+            console.error(
+              "Aceite registrado, mas ocorreu erro no envio dos e-mails:",
+              resultadoEmail
+            );
+
+          }
+
+          else if (
+            resultadoEmail
+              ?.confirmado ===
+            false
+          ) {
+
+            console.log(
+              "Aceite registrado. A permuta ainda aguarda outros participantes."
+            );
+
+          }
+
+          else {
+
+            console.log(
+              "Processamento dos e-mails de confirmação concluído:",
+              resultadoEmail
+            );
+
+          }
+
+        }
+
+        else {
+
+          console.warn(
+            "Aceite registrado, mas não foi possível obter a sessão para o envio do e-mail."
+          );
+
+        }
+
+      }
+
+      catch(erroEmail) {
+
+        console.error(
+          "Aceite registrado, mas houve falha no processamento do e-mail:",
+          erroEmail
+        );
+
+      }
+
+
+      /* ==================================================
+         ATUALIZA A PÁGINA
+      ================================================== */
 
       await carregarPropostas(
         false
