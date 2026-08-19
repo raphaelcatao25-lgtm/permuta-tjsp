@@ -3,13 +3,13 @@
 import Link from "next/link";
 
 import {
-  useRouter,
+  useRouter
 } from "next/navigation";
 
 import {
   FormEvent,
   useEffect,
-  useState,
+  useState
 } from "react";
 
 import {
@@ -17,25 +17,104 @@ import {
   EyeOff,
   LockKeyhole,
   Mail,
-  ShieldCheck,
+  ShieldCheck
 } from "lucide-react";
 
 import {
-  PublicLayout,
+  PublicLayout
 } from "@/components/layout/PublicLayout";
 
 import {
-  Button,
+  Button
 } from "@/components/ui/Button";
 
 import {
-  Card,
+  Card
 } from "@/components/ui/Card";
 
 import {
-  supabase,
+  supabase
 } from "@/lib/supabase";
 
+
+/* ======================================================
+   DESTINO APÓS LOGIN
+
+   Se houver:
+   /login?redirect=/propostas
+
+   retorna:
+   /propostas
+
+   Caso contrário:
+   /dashboard
+====================================================== */
+
+function obterDestinoAposLogin() {
+
+  if (
+    typeof window ===
+    "undefined"
+  ) {
+
+    return "/dashboard";
+
+  }
+
+
+  const parametros =
+    new URLSearchParams(
+      window.location.search
+    );
+
+
+  const redirect =
+    parametros.get(
+      "redirect"
+    );
+
+
+  if (!redirect) {
+
+    return "/dashboard";
+
+  }
+
+
+  /*
+    SEGURANÇA:
+
+    Permitimos apenas caminhos internos do próprio site.
+
+    Aceita:
+    /propostas
+    /perfil
+    /buscar-permutas
+
+    Bloqueia:
+    https://site-malicioso.com
+    //site-malicioso.com
+  */
+
+  if (
+    !redirect.startsWith("/") ||
+    redirect.startsWith("//") ||
+    redirect.startsWith("/login")
+  ) {
+
+    return "/dashboard";
+
+  }
+
+
+  return redirect;
+
+}
+
+
+/* ======================================================
+   PÁGINA
+====================================================== */
 
 export default function LoginPage() {
 
@@ -45,63 +124,78 @@ export default function LoginPage() {
 
   const [
     email,
-    setEmail,
+    setEmail
   ] =
     useState("");
 
 
   const [
     senha,
-    setSenha,
+    setSenha
   ] =
     useState("");
 
 
   const [
     mostrarSenha,
-    setMostrarSenha,
+    setMostrarSenha
   ] =
     useState(false);
 
 
   const [
     carregando,
-    setCarregando,
+    setCarregando
   ] =
     useState(false);
 
 
   const [
     carregandoGoogle,
-    setCarregandoGoogle,
+    setCarregandoGoogle
   ] =
     useState(false);
 
 
   const [
     verificandoSessao,
-    setVerificandoSessao,
+    setVerificandoSessao
   ] =
     useState(true);
 
 
   const [
     mensagemErro,
-    setMensagemErro,
+    setMensagemErro
   ] =
     useState("");
 
 
-  /*
-  ======================================================
-  VERIFICA SE JÁ EXISTE UMA SESSÃO
-  ======================================================
+  /* ======================================================
+     REDIRECIONA APÓS AUTENTICAÇÃO
+  ====================================================== */
 
-  Se o usuário já estiver autenticado, não mostra
-  novamente a tela de login.
+  function redirecionarAposLogin() {
 
-  Ele é enviado direto para o dashboard.
-  */
+    const destino =
+      obterDestinoAposLogin();
+
+
+    router.replace(
+      destino
+    );
+
+
+    router.refresh();
+
+  }
+
+
+  /* ======================================================
+     VERIFICA SE JÁ EXISTE UMA SESSÃO
+
+     Agora respeita ?redirect=
+  ====================================================== */
 
   useEffect(() => {
 
@@ -112,13 +206,15 @@ export default function LoginPage() {
     async function verificarSessao() {
 
       const {
-        data,
+        data
       } =
         await supabase.auth.getSession();
 
 
       if (!ativo) {
+
         return;
+
       }
 
 
@@ -126,9 +222,14 @@ export default function LoginPage() {
         data.session?.user
       ) {
 
+        const destino =
+          obterDestinoAposLogin();
+
+
         router.replace(
-          "/dashboard"
+          destino
         );
+
 
         router.refresh();
 
@@ -147,14 +248,12 @@ export default function LoginPage() {
     verificarSessao();
 
 
-    /*
-    ======================================================
-    ACOMPANHA ALTERAÇÕES NA AUTENTICAÇÃO
-    ======================================================
-    */
+    /* ==================================================
+       ACOMPANHA ALTERAÇÕES NA AUTENTICAÇÃO
+    ================================================== */
 
     const {
-      data: authListener,
+      data: authListener
     } =
       supabase.auth.onAuthStateChange(
         (
@@ -163,19 +262,27 @@ export default function LoginPage() {
         ) => {
 
           if (!ativo) {
+
             return;
+
           }
 
 
           if (
-            evento === "SIGNED_IN"
+            evento ===
+              "SIGNED_IN"
             &&
             sessao?.user
           ) {
 
+            const destino =
+              obterDestinoAposLogin();
+
+
             router.replace(
-              "/dashboard"
+              destino
             );
+
 
             router.refresh();
 
@@ -190,6 +297,7 @@ export default function LoginPage() {
       ativo =
         false;
 
+
       authListener
         .subscription
         .unsubscribe();
@@ -198,15 +306,13 @@ export default function LoginPage() {
 
 
   }, [
-    router,
+    router
   ]);
 
 
-  /*
-  ======================================================
-  VALIDAÇÃO
-  ======================================================
-  */
+  /* ======================================================
+     VALIDAÇÃO
+  ====================================================== */
 
   function validarFormulario() {
 
@@ -228,7 +334,9 @@ export default function LoginPage() {
 
 
     if (
-      !emailNormalizado.includes("@")
+      !emailNormalizado.includes(
+        "@"
+      )
     ) {
 
       setMensagemErro(
@@ -256,11 +364,9 @@ export default function LoginPage() {
   }
 
 
-  /*
-  ======================================================
-  TRADUZ ERROS DO SUPABASE
-  ======================================================
-  */
+  /* ======================================================
+     TRADUZ ERROS DO SUPABASE
+  ====================================================== */
 
   function traduzirErroLogin(
     mensagem: string
@@ -319,11 +425,9 @@ export default function LoginPage() {
   }
 
 
-  /*
-  ======================================================
-  LOGIN
-  ======================================================
-  */
+  /* ======================================================
+     LOGIN
+  ====================================================== */
 
   async function fazerLogin(
     evento: FormEvent<HTMLFormElement>
@@ -352,7 +456,7 @@ export default function LoginPage() {
 
 
       const {
-        error,
+        error
       } =
         await supabase.auth.signInWithPassword(
           {
@@ -362,7 +466,7 @@ export default function LoginPage() {
                 .toLowerCase(),
 
             password:
-              senha,
+              senha
           }
         );
 
@@ -381,9 +485,15 @@ export default function LoginPage() {
 
 
       /*
-      O listener onAuthStateChange acima detecta
-      SIGNED_IN e faz o redirecionamento.
+        Normalmente o onAuthStateChange acima receberá
+        SIGNED_IN e fará o redirecionamento.
+
+        Mantemos este redirecionamento também como
+        segurança caso o evento demore ou não seja
+        disparado imediatamente.
       */
+
+      redirecionarAposLogin();
 
     }
 
@@ -406,11 +516,9 @@ export default function LoginPage() {
   }
 
 
-  /*
-  ======================================================
-  LOGIN COM GOOGLE
-  ======================================================
-  */
+  /* ======================================================
+     LOGIN COM GOOGLE
+  ====================================================== */
 
   async function entrarComGoogle() {
 
@@ -424,17 +532,43 @@ export default function LoginPage() {
       );
 
 
+      const destino =
+        obterDestinoAposLogin();
+
+
+      const callback =
+        new URL(
+          "/login/google",
+          window.location.origin
+        );
+
+
+      /*
+        Preservamos o destino também durante o início
+        do login Google.
+
+        Depois verificaremos o callback /login/google
+        para garantir que ele utilize esse parâmetro.
+      */
+
+      callback.searchParams.set(
+        "redirect",
+        destino
+      );
+
+
       const {
-        error,
+        error
       } =
         await supabase.auth.signInWithOAuth(
           {
-            provider: "google",
+            provider:
+              "google",
 
             options: {
               redirectTo:
-                `${window.location.origin}/login/google`,
-            },
+                callback.toString()
+            }
           }
         );
 
@@ -445,17 +579,12 @@ export default function LoginPage() {
           "Não foi possível iniciar o login com Google. Tente novamente."
         );
 
+
         setCarregandoGoogle(
           false
         );
 
       }
-
-
-      /*
-      O navegador será redirecionado para o Google.
-      Por isso não precisamos navegar manualmente aqui.
-      */
 
     }
 
@@ -464,6 +593,7 @@ export default function LoginPage() {
       setMensagemErro(
         "Ocorreu um erro inesperado ao iniciar o login com Google."
       );
+
 
       setCarregandoGoogle(
         false
@@ -474,11 +604,9 @@ export default function LoginPage() {
   }
 
 
-  /*
-  ======================================================
-  ENQUANTO CONFERE A SESSÃO
-  ======================================================
-  */
+  /* ======================================================
+     ENQUANTO CONFERE A SESSÃO
+  ====================================================== */
 
   if (
     verificandoSessao
@@ -505,7 +633,9 @@ export default function LoginPage() {
               text-text-secondary
             "
           >
+
             Verificando acesso...
+
           </div>
 
         </Card>
@@ -517,11 +647,9 @@ export default function LoginPage() {
   }
 
 
-  /*
-  ======================================================
-  TELA DE LOGIN
-  ======================================================
-  */
+  /* ======================================================
+     TELA DE LOGIN
+  ====================================================== */
 
   return (
 
@@ -535,6 +663,7 @@ export default function LoginPage() {
         padding="lg"
         shadow="lg"
       >
+
 
         {/* =================================================
             ÍCONE
@@ -703,7 +832,9 @@ export default function LoginPage() {
               text-slate-500
             "
           >
+
             ou
+
           </span>
 
 
@@ -750,7 +881,9 @@ export default function LoginPage() {
                   text-white
                 "
               >
+
                 E-mail
+
               </label>
 
 
@@ -876,7 +1009,9 @@ export default function LoginPage() {
                     text-white
                   "
                 >
+
                   Senha
+
                 </label>
 
 
@@ -886,7 +1021,9 @@ export default function LoginPage() {
                     text-slate-500
                   "
                 >
+
                   Mínimo de 8 caracteres
+
                 </span>
 
               </div>
@@ -1072,6 +1209,7 @@ export default function LoginPage() {
 
               </div>
 
+
               {/* ESQUECI MINHA SENHA */}
 
               <div
@@ -1081,10 +1219,12 @@ export default function LoginPage() {
                   justify-end
                 "
               >
+
                 <Link
                   href="/esqueci-senha"
 
                   className="
+                    rounded-md
                     text-sm
                     font-medium
                     !text-teal-300
@@ -1098,11 +1238,13 @@ export default function LoginPage() {
                     focus-visible:outline-none
                     focus-visible:ring-2
                     focus-visible:ring-teal-400/30
-                    rounded-md
                   "
                 >
+
                   Esqueci minha senha
+
                 </Link>
+
               </div>
 
             </div>
@@ -1136,7 +1278,9 @@ export default function LoginPage() {
                       text-red-300
                     "
                   >
+
                     {mensagemErro}
+
                   </p>
 
                 </div>
@@ -1158,7 +1302,9 @@ export default function LoginPage() {
 
               loadingText="Entrando..."
             >
+
               Entrar
+
             </Button>
 
           </div>
@@ -1197,7 +1343,9 @@ export default function LoginPage() {
               text-slate-500
             "
           >
+
             Primeiro acesso
+
           </span>
 
 
@@ -1233,7 +1381,9 @@ export default function LoginPage() {
               text-slate-300
             "
           >
+
             Ainda não possui uma conta?
+
           </span>
 
 
@@ -1272,7 +1422,9 @@ export default function LoginPage() {
               focus-visible:ring-teal-400/15
             "
           >
+
             Criar cadastro
+
           </Link>
 
         </div>
@@ -1353,7 +1505,9 @@ export default function LoginPage() {
                   text-white
                 "
               >
+
                 Seus dados estão protegidos
+
               </p>
 
 
@@ -1365,8 +1519,10 @@ export default function LoginPage() {
                   text-slate-400
                 "
               >
+
                 Seus dados de contato somente serão compartilhados
                 conforme as regras de aceite das propostas de permuta.
+
               </p>
 
             </div>
@@ -1391,8 +1547,10 @@ export default function LoginPage() {
           text-slate-500
         "
       >
+
         Esta plataforma é independente e não representa um canal oficial
         do Tribunal de Justiça de São Paulo.
+
       </p>
 
     </PublicLayout>
