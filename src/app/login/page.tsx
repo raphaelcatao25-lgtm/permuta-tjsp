@@ -1072,6 +1072,39 @@ export default function LoginPage() {
 
               </div>
 
+              {/* ESQUECI MINHA SENHA */}
+
+              <div
+                className="
+                  mt-3
+                  flex
+                  justify-end
+                "
+              >
+                <Link
+                  href="/esqueci-senha"
+
+                  className="
+                    text-sm
+                    font-medium
+                    !text-teal-300
+                    transition-colors
+                    duration-200
+
+                    hover:!text-teal-200
+                    hover:underline
+                    hover:underline-offset-4
+
+                    focus-visible:outline-none
+                    focus-visible:ring-2
+                    focus-visible:ring-teal-400/30
+                    rounded-md
+                  "
+                >
+                  Esqueci minha senha
+                </Link>
+              </div>
+
             </div>
 
 
