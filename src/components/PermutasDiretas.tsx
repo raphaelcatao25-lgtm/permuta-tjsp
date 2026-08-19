@@ -417,6 +417,10 @@ export default function PermutasDiretas({
       );
 
 
+      /* ==================================================
+         CRIA A PROPOSTA
+      ================================================== */
+
       const {
         data,
         error
@@ -445,12 +449,134 @@ export default function PermutasDiretas({
       );
 
 
-      /*
-      ========================================
-      DEPOIS DE CRIAR A PROPOSTA
-      VAI PARA A PÁGINA PROPOSTAS
-      ========================================
-      */
+      /* ==================================================
+         ENVIA O E-MAIL TRANSACIONAL
+
+         A proposta JÁ FOI CRIADA.
+
+         Portanto, qualquer falha de e-mail não pode
+         impedir nem desfazer a solicitação de permuta.
+      ================================================== */
+
+      try {
+
+        const {
+          data: sessao
+        } =
+          await supabase.auth.getSession();
+
+
+        const accessToken =
+          sessao.session
+            ?.access_token;
+
+
+        if (accessToken) {
+
+          const respostaEmail =
+            await fetch(
+              "/api/email/nova-proposta",
+              {
+                method:
+                  "POST",
+
+                headers: {
+                  "Content-Type":
+                    "application/json",
+
+                  "Authorization":
+                    `Bearer ${accessToken}`
+                },
+
+                body:
+                  JSON.stringify({
+                    candidatoId
+                  })
+              }
+            );
+
+
+          if (
+            !respostaEmail.ok
+          ) {
+
+            const resultado =
+              await respostaEmail
+                .json()
+                .catch(
+                  () => null
+                );
+
+
+            console.error(
+              "A proposta foi criada, mas o e-mail não pôde ser enviado:",
+              resultado
+            );
+
+          }
+
+          else {
+
+            const resultado =
+              await respostaEmail
+                .json();
+
+
+            if (
+              resultado?.alreadySent
+            ) {
+
+              console.log(
+                "E-mail da proposta já havia sido enviado."
+              );
+
+            }
+
+            else {
+
+              console.log(
+                "E-mail de nova proposta enviado com sucesso."
+              );
+
+            }
+
+          }
+
+        }
+
+        else {
+
+          console.warn(
+            "Proposta criada, mas não foi possível obter a sessão para o envio do e-mail."
+          );
+
+        }
+
+      }
+
+      catch (erroEmail) {
+
+        /*
+        MUITO IMPORTANTE:
+
+        O e-mail é complementar.
+
+        Uma falha da Brevo/API nunca deve fazer o
+        usuário pensar que a proposta não foi criada.
+        */
+
+        console.error(
+          "Proposta criada, mas houve falha no envio do e-mail:",
+          erroEmail
+        );
+
+      }
+
+
+      /* ==================================================
+         DEPOIS DE CRIAR A PROPOSTA
+         VAI PARA A PÁGINA PROPOSTAS
+      ================================================== */
 
       router.push(
         "/propostas"
@@ -471,13 +597,15 @@ export default function PermutasDiretas({
 
 
       if (
-        typeof erro === "object"
+        typeof erro ===
+          "object"
         &&
         erro !== null
         &&
         "message" in erro
         &&
-        typeof erro.message === "string"
+        typeof erro.message ===
+          "string"
       ) {
 
         mensagem =
