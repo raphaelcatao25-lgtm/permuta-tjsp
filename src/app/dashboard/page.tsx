@@ -74,7 +74,7 @@ type ItemProgresso = {
   id: string;
   rotulo: string;
   concluido: boolean;
-  peso: number;
+  opcional?: boolean;
 };
 
 
@@ -1041,8 +1041,7 @@ export default function DashboardPage() {
           concluido:
             Boolean(
               perfil?.nome?.trim()
-            ),
-          peso: 15
+            )
         },
 
         {
@@ -1052,8 +1051,7 @@ export default function DashboardPage() {
           concluido:
             Boolean(
               perfil?.email?.trim()
-            ),
-          peso: 15
+            )
         },
 
         {
@@ -1062,8 +1060,7 @@ export default function DashboardPage() {
           concluido:
             Boolean(
               perfil?.cargo?.trim()
-            ),
-          peso: 20
+            )
         },
 
         {
@@ -1073,8 +1070,7 @@ export default function DashboardPage() {
           concluido:
             Boolean(
               perfil?.comarca_atual_id
-            ),
-          peso: 25
+            )
         },
 
         {
@@ -1083,8 +1079,7 @@ export default function DashboardPage() {
           rotulo:
             "Ao menos uma comarca desejada",
           concluido:
-            destinos.length > 0,
-          peso: 20
+            destinos.length > 0
         },
 
         {
@@ -1095,7 +1090,7 @@ export default function DashboardPage() {
             Boolean(
               perfil?.telefone?.trim()
             ),
-          peso: 5
+          opcional: true
         }
 
       ],
@@ -1107,35 +1102,13 @@ export default function DashboardPage() {
     );
 
 
-  const percentualPerfil =
-    useMemo(
-      () =>
-
-        itensProgresso.reduce(
-          (
-            total,
-            item
-          ) =>
-
-            item.concluido
-              ? total + item.peso
-              : total,
-
-          0
-        ),
-
-      [
-        itensProgresso
-      ]
-    );
-
-
-  const itensPendentes =
+  const itensObrigatoriosPendentes =
     useMemo(
       () =>
 
         itensProgresso.filter(
           item =>
+            !item.opcional &&
             !item.concluido
         ),
 
@@ -1146,7 +1119,13 @@ export default function DashboardPage() {
 
 
   const perfilCompleto =
-    percentualPerfil === 100;
+    itensObrigatoriosPendentes.length === 0;
+
+
+  const telefoneInformado =
+    Boolean(
+      perfil?.telefone?.trim()
+    );
 
 
   const totalOportunidades =
@@ -1864,16 +1843,42 @@ export default function DashboardPage() {
                       </p>
 
 
-                      <p className="
+                      <div className="
                         mt-4
-                        text-3xl
-                        font-bold
-                        text-blue-900
+                        flex
+                        items-center
+                        gap-2
                       ">
 
-                        {percentualPerfil}%
+                        <CheckCircle2
+                          className={`
+                            h-6
+                            w-6
+                            ${
+                              perfilCompleto
+                                ? "text-emerald-400"
+                                : "text-amber-400"
+                            }
+                          `}
+                          strokeWidth={2}
+                        />
 
-                      </p>
+
+                        <p className="
+                          text-xl
+                          font-bold
+                          text-slate-100
+                        ">
+
+                          {
+                            perfilCompleto
+                              ? "Completo"
+                              : "Complete seu perfil"
+                          }
+
+                        </p>
+
+                      </div>
 
                     </div>
 
@@ -1902,44 +1907,26 @@ export default function DashboardPage() {
                   </div>
 
 
-                  <div className="
-                    mt-4
-                    h-2
-                    overflow-hidden
-                    rounded-full
-                    bg-slate-200
-                  ">
-
-                    <div
-                      className="
-                        h-full
-                        rounded-full
-                        bg-blue-900
-                      "
-                      style={{
-                        width:
-                          `${percentualPerfil}%`
-                      }}
-                    />
-
-                  </div>
-
-
                   <p className="
-                    mt-3
+                    mt-4
                     text-sm
+                    leading-6
                     text-slate-500
                   ">
 
                     {
                       perfilCompleto
 
-                      ? "Seu perfil está completo."
+                      ? telefoneInformado
 
-                      : `${itensPendentes.length} ${
-                          itensPendentes.length === 1
-                            ? "item pendente"
-                            : "itens pendentes"
+                        ? "Todos os dados necessários estão preenchidos."
+
+                        : "Dados necessários preenchidos. Telefone ou WhatsApp é opcional."
+
+                      : `${itensObrigatoriosPendentes.length} ${
+                          itensObrigatoriosPendentes.length === 1
+                            ? "informação necessária ainda precisa ser preenchida"
+                            : "informações necessárias ainda precisam ser preenchidas"
                         }.`
                     }
 
@@ -2346,7 +2333,7 @@ export default function DashboardPage() {
                       text-slate-900
                     ">
 
-                      Progresso do perfil
+                      Dados do perfil
 
                     </h2>
 
@@ -2357,7 +2344,7 @@ export default function DashboardPage() {
                       text-slate-500
                     ">
 
-                      Complete as informações usadas para encontrar oportunidades compatíveis.
+                      Confira as informações usadas para encontrar oportunidades compatíveis. O telefone ou WhatsApp é opcional.
 
                     </p>
 
@@ -2438,13 +2425,36 @@ export default function DashboardPage() {
                             </div>
 
 
-                            <span className="
-                              text-xs
-                              font-bold
-                              text-slate-400
-                            ">
+                            <span
+                              className={`
+                                rounded-full
+                                px-2.5
+                                py-1
+                                text-xs
+                                font-bold
 
-                              {item.peso}%
+                                ${
+                                  item.opcional
+                                    ? item.concluido
+                                      ? "bg-cyan-400/10 text-cyan-300"
+                                      : "bg-slate-700/60 text-slate-300"
+
+                                    : item.concluido
+                                      ? "bg-emerald-400/10 text-emerald-300"
+                                      : "bg-amber-400/10 text-amber-300"
+                                }
+                              `}
+                            >
+
+                              {
+                                item.opcional
+                                  ? item.concluido
+                                    ? "Informado"
+                                    : "Opcional"
+                                  : item.concluido
+                                    ? "Concluído"
+                                    : "Pendente"
+                              }
 
                             </span>
 
@@ -2940,7 +2950,7 @@ export default function DashboardPage() {
 
                             ? "Informado"
 
-                            : "Pendente"
+                            : "Opcional"
                           }
 
                         </span>
