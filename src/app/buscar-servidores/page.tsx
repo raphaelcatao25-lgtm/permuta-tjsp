@@ -3,12 +3,11 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState
 } from "react";
 
 import {
-  ArrowDown,
-  ArrowUp,
   CheckCircle2,
   ChevronDown,
   CirclePlus,
@@ -134,6 +133,33 @@ type LigacaoValidacao = {
 
   ligacao_compativel: boolean;
   motivo: string;
+};
+
+
+type ItemOrdemOrganizada = {
+  ordem: number;
+  usuario_id: string;
+  nome: string;
+  comarca_atual_id: number;
+  unidade_atual_id: string | null;
+};
+
+
+type OrganizacaoPermuta = {
+  valido: boolean;
+  fechou_ciclo: boolean;
+  quantidade_participantes: number;
+  tipo?: string;
+  ordem?: ItemOrdemOrganizada[];
+  ordem_parcial?: ItemOrdemOrganizada[];
+  mensagem: string;
+  acertos?: number;
+  quebra_apos_usuario_id?: string;
+  quebra_apos_nome?: string;
+  proxima_origem_comarca_id?: number | null;
+  proxima_origem_nome?: string | null;
+  destino_para_fechamento_id?: number | null;
+  destino_para_fechamento_nome?: string | null;
 };
 
 
@@ -318,6 +344,20 @@ export default function BuscarServidoresPage() {
 
 
   const [
+    organizacao,
+    setOrganizacao
+  ] = useState<OrganizacaoPermuta | null>(
+    null
+  );
+
+
+  const [
+    organizando,
+    setOrganizando
+  ] = useState(false);
+
+
+  const [
     modalEnvioAberto,
     setModalEnvioAberto
   ] = useState(false);
@@ -327,7 +367,7 @@ export default function BuscarServidoresPage() {
     mensagemProposta,
     setMensagemProposta
   ] = useState(
-    "Olá! Encontrei uma possibilidade de permuta compatível pelo Permuta TJSP. Caso tenha interesse, aceite a proposta para que possamos visualizar os dados de contato e conversar sobre a permuta."
+    "Olá! Encontrei uma possibilidade de permuta compatível pelo Permuta TJSP. Confira a movimentação proposta e, caso tenha interesse, registre seu aceite. Meus dados de contato estão disponíveis nesta proposta para que você possa falar comigo."
   );
 
 
@@ -774,6 +814,9 @@ export default function BuscarServidoresPage() {
 
 
   const montagemValida =
+    Boolean(
+      organizacao?.fechou_ciclo
+    ) &&
     validacao.length ===
       quantidadeParticipantes &&
     validacao.length >= 2 &&
@@ -784,13 +827,276 @@ export default function BuscarServidoresPage() {
 
 
   /* ======================================================
-     LIMPAR VALIDAÇÃO AO ALTERAR A MONTAGEM
+     ORGANIZAÇÃO AUTOMÁTICA DA PERMUTA
+
+     Sempre que a seleção muda, o banco procura a melhor
+     ordem possível. Se o ciclo fechar, a ordem é aplicada
+     automaticamente e validamos cada ligação.
   ====================================================== */
 
   useEffect(() => {
-    setValidacao([]);
-    setMensagemSucesso("");
-  }, [selecionados]);
+
+    if (!perfil) {
+      return;
+    }
+
+
+    if (selecionados.length < 1) {
+      setOrganizacao(null);
+      setValidacao([]);
+      return;
+    }
+
+
+    let ativo = true;
+
+
+    async function organizarAutomaticamente() {
+
+      setOrganizando(true);
+      setValidando(true);
+      setErro("");
+      setMensagemSucesso("");
+
+
+      try {
+
+        const participantes = [
+          perfil!.id,
+          ...selecionados.map(
+            item =>
+              item.perfil_id
+          )
+        ];
+
+
+        const {
+          data,
+          error
+        } = await supabase.rpc(
+          "organizar_permuta_manual",
+          {
+            p_usuario_id:
+              perfil!.id,
+
+            p_participantes:
+              participantes
+          }
+        );
+
+
+        if (error) {
+          throw error;
+        }
+
+
+        if (!ativo) {
+          return;
+        }
+
+
+        const resultado =
+          data as OrganizacaoPermuta;
+
+
+        setOrganizacao(
+          resultado
+        );
+
+
+        const ordemRecebida =
+          resultado.fechou_ciclo
+            ? resultado.ordem
+            : null;
+
+
+        if (
+          Array.isArray(ordemRecebida) &&
+          ordemRecebida.length >= 2
+        ) {
+
+          const idsOrdenados =
+            ordemRecebida
+              .filter(
+                item =>
+                  item.usuario_id !==
+                  perfil!.id
+              )
+              .map(
+                item =>
+                  item.usuario_id
+              );
+
+
+          const mapaSelecionados =
+            new Map(
+              selecionados.map(
+                item => [
+                  item.perfil_id,
+                  item
+                ]
+              )
+            );
+
+
+          const novaOrdem =
+            idsOrdenados
+              .map(
+                id =>
+                  mapaSelecionados.get(id)
+              )
+              .filter(
+                (
+                  item
+                ): item is ServidorResultado =>
+                  Boolean(item)
+              );
+
+
+          const ordemAtual =
+            selecionados.map(
+              item =>
+                item.perfil_id
+            );
+
+
+          const mudouOrdem =
+            novaOrdem.length ===
+              selecionados.length &&
+            novaOrdem.some(
+              (item, indice) =>
+                item.perfil_id !==
+                ordemAtual[indice]
+            );
+
+
+          if (mudouOrdem) {
+
+            setSelecionados(
+              novaOrdem
+            );
+
+            return;
+
+          }
+
+        }
+
+
+        if (resultado.fechou_ciclo) {
+
+          const participantesOrdenados = [
+            perfil!.id,
+            ...(
+              resultado.ordem ?? []
+            )
+              .filter(
+                item =>
+                  item.usuario_id !==
+                  perfil!.id
+              )
+              .map(
+                item =>
+                  item.usuario_id
+              )
+          ];
+
+
+          const {
+            data: dadosValidacao,
+            error: erroValidacao
+          } = await supabase.rpc(
+            "validar_permuta_manual",
+            {
+              p_usuario_id:
+                perfil!.id,
+
+              p_participantes:
+                participantesOrdenados
+            }
+          );
+
+
+          if (erroValidacao) {
+            throw erroValidacao;
+          }
+
+
+          if (!ativo) {
+            return;
+          }
+
+
+          const linhas =
+            (dadosValidacao ?? []) as LigacaoValidacao[];
+
+
+          setValidacao(
+            linhas
+          );
+
+
+          setMensagemSucesso(
+            resultado.mensagem
+          );
+
+        }
+
+        else {
+
+          setValidacao([]);
+
+        }
+
+      }
+
+      catch(error) {
+
+        if (!ativo) {
+          return;
+        }
+
+
+        console.error(
+          "Erro ao organizar permuta:",
+          error
+        );
+
+
+        setOrganizacao(null);
+        setValidacao([]);
+
+        setErro(
+          extrairMensagemErro(
+            error
+          )
+        );
+
+      }
+
+      finally {
+
+        if (ativo) {
+          setOrganizando(false);
+          setValidando(false);
+        }
+
+      }
+
+    }
+
+
+    organizarAutomaticamente();
+
+
+    return () => {
+      ativo = false;
+    };
+
+  }, [
+    perfil,
+    selecionados
+  ]);
 
 
   /* ======================================================
@@ -1080,119 +1386,114 @@ export default function BuscarServidoresPage() {
   }
 
 
-  function moverServidor(
-    indice: number,
-    direcao: "cima" | "baixo"
-  ) {
-
-    setSelecionados(
-      atuais => {
-
-        const destino =
-          direcao === "cima"
-            ? indice - 1
-            : indice + 1;
-
-
-        if (
-          destino < 0 ||
-          destino >= atuais.length
-        ) {
-          return atuais;
-        }
-
-
-        const copia =
-          [...atuais];
-
-
-        [
-          copia[indice],
-          copia[destino]
-        ] = [
-          copia[destino],
-          copia[indice]
-        ];
-
-
-        return copia;
-      }
-    );
-  }
-
-
   function limparMontagem() {
     setSelecionados([]);
+    setOrganizacao(null);
     setValidacao([]);
     setErro("");
     setMensagemSucesso("");
   }
 
 
-  async function verificarPermuta() {
+  async function buscarServidoresParaCompletarCiclo() {
 
-    if (!perfil) {
+    if (!perfil || !organizacao) {
       return;
     }
 
 
-    if (selecionados.length < 1) {
+    const origemId =
+      organizacao.proxima_origem_comarca_id ??
+      null;
+
+    const destinoId =
+      organizacao.destino_para_fechamento_id ??
+      null;
+
+
+    if (!origemId) {
 
       setErro(
-        "Adicione pelo menos um servidor para verificar uma permuta direta ou em cadeia."
+        "O sistema ainda não conseguiu determinar uma comarca de origem para o próximo participante."
       );
 
       return;
     }
 
 
-    if (perfil.em_match) {
-
-      setErro(
-        "Você já possui uma permuta confirmada em andamento."
-      );
-
-      return;
-    }
+    const comarcaOrigem =
+      comarcas.find(
+        item =>
+          item.id === origemId
+      ) ?? null;
 
 
-    if (perfil.busca_pausada) {
+    const comarcaDestino =
+      destinoId
+        ? (
+          comarcas.find(
+            item =>
+              item.id === destinoId
+          ) ?? null
+        )
+        : null;
 
-      setErro(
-        "Sua busca está pausada. Reative sua participação em Meu Perfil antes de montar uma proposta."
-      );
 
-      return;
-    }
+    setComarcaAtualSelecionada(
+      comarcaOrigem
+    );
+
+    setBuscaComarcaAtual(
+      comarcaOrigem?.nome ?? ""
+    );
+
+    setComarcaDestinoSelecionada(
+      comarcaDestino
+    );
+
+    setBuscaComarcaDestino(
+      comarcaDestino?.nome ?? ""
+    );
 
 
-    setValidando(true);
+    setBuscando(true);
     setErro("");
     setMensagemSucesso("");
 
 
     try {
 
-      const participantes = [
-        perfil.id,
-        ...selecionados.map(
-          item =>
-            item.perfil_id
-        )
-      ];
-
-
       const {
         data,
         error
       } = await supabase.rpc(
-        "validar_permuta_manual",
+        "buscar_servidores_manual_v2",
         {
           p_usuario_id:
             perfil.id,
 
-          p_participantes:
-            participantes
+          p_nome:
+            null,
+
+          p_comarca_atual_id:
+            origemId,
+
+          p_comarca_destino_id:
+            destinoId,
+
+          p_circunscricao_id:
+            null,
+
+          p_raj_id:
+            null,
+
+          p_ordenacao:
+            "AZ",
+
+          p_limite:
+            ampliarResultados
+              ? 500
+              : 100
         }
       );
 
@@ -1202,31 +1503,21 @@ export default function BuscarServidoresPage() {
       }
 
 
-      const linhas =
-        (data ?? []) as LigacaoValidacao[];
-
-
-      setValidacao(
-        linhas
+      setResultados(
+        (data ?? []) as ServidorResultado[]
       );
 
+      setPesquisou(true);
 
-      const todasCompativeis =
-        linhas.length ===
-          participantes.length &&
-        linhas.every(
-          item =>
-            item.ligacao_compativel
+
+      if (
+        (data ?? []).length === 0
+      ) {
+
+        setErro(
+          "Nenhum servidor cadastrado atende exatamente ao próximo passo sugerido. Você pode ampliar ou ajustar os filtros."
         );
 
-
-      if (todasCompativeis) {
-
-        setMensagemSucesso(
-          participantes.length === 2
-            ? "Permuta direta válida. As preferências dos dois servidores fecham a troca."
-            : `Ciclo de ${participantes.length} válido. Todas as movimentações são compatíveis.`
-        );
       }
 
     }
@@ -1234,11 +1525,12 @@ export default function BuscarServidoresPage() {
     catch(error) {
 
       console.error(
-        "Erro ao validar permuta:",
+        "Erro ao buscar servidores para completar o ciclo:",
         error
       );
 
-      setValidacao([]);
+      setResultados([]);
+      setPesquisou(true);
 
       setErro(
         extrairMensagemErro(
@@ -1249,7 +1541,7 @@ export default function BuscarServidoresPage() {
     }
 
     finally {
-      setValidando(false);
+      setBuscando(false);
     }
 
   }
@@ -1409,13 +1701,13 @@ export default function BuscarServidoresPage() {
               <MiniEtapa
                 numero="2"
                 titulo="Monte"
-                texto="Adicione os participantes e ajuste a ordem da movimentação."
+                texto="Adicione os participantes em qualquer ordem. O sistema organiza automaticamente."
               />
 
               <MiniEtapa
                 numero="3"
                 titulo="Verifique"
-                texto="O sistema confere cada ligação antes de permitir a proposta."
+                texto="Se ainda não fechar, o sistema informa qual perfil procurar para completar o ciclo."
               />
 
             </div>
@@ -1655,6 +1947,9 @@ export default function BuscarServidoresPage() {
                     }
                     onSelecionar={selecionarComarcaAtual}
                     onLimpar={limparComarcaAtual}
+                    onFechar={() =>
+                      setAbrirComarcaAtual(false)
+                    }
                   />
 
 
@@ -1677,6 +1972,9 @@ export default function BuscarServidoresPage() {
                     }
                     onSelecionar={selecionarComarcaDestino}
                     onLimpar={limparComarcaDestino}
+                    onFechar={() =>
+                      setAbrirComarcaDestino(false)
+                    }
                   />
 
 
@@ -1934,23 +2232,6 @@ export default function BuscarServidoresPage() {
                           nome={servidor.nome}
                           cargo={servidor.cargo}
                           comarca={servidor.comarca_atual_nome}
-                          podeSubir={indice > 0}
-                          podeDescer={
-                            indice <
-                            selecionados.length - 1
-                          }
-                          onSubir={() =>
-                            moverServidor(
-                              indice,
-                              "cima"
-                            )
-                          }
-                          onDescer={() =>
-                            moverServidor(
-                              indice,
-                              "baixo"
-                            )
-                          }
                           onRemover={() =>
                             removerServidor(
                               servidor.perfil_id
@@ -1982,52 +2263,114 @@ export default function BuscarServidoresPage() {
                     <div className="flex items-start gap-3">
                       <Info className="mt-0.5 h-4 w-4 shrink-0 text-teal-300" />
                       <p className="text-xs leading-5 text-slate-400">
-                        A ordem importa. Cada participante precisa desejar uma origem compatível com o servidor seguinte; o último precisa fechar a movimentação com você.
+                        Adicione os servidores sem se preocupar com a ordem. O sistema testa automaticamente as combinações possíveis e organiza a cadeia para você.
                       </p>
                     </div>
 
                   </div>
 
 
-                  <button
-                    type="button"
-                    onClick={verificarPermuta}
-                    disabled={
-                      selecionados.length < 1 ||
-                      validando ||
-                      Boolean(
-                        perfil?.em_match
-                      ) ||
-                      Boolean(
-                        perfil?.busca_pausada
-                      )
-                    }
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-teal-300/20 bg-teal-600 px-4 py-3 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-[1px] hover:bg-teal-500 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <CheckCircle2 size={18} />
-                    {validando ? "Verificando..." : "Verificar permuta"}
-                  </button>
+                  {
+                    organizando && (
+                      <div className="rounded-xl border border-teal-300/15 bg-teal-400/[0.06] p-4">
+                        <p className="text-sm font-semibold text-teal-200">
+                          Organizando participantes...
+                        </p>
+                        <p className="mt-1 text-xs leading-5 text-slate-400">
+                          O sistema está testando automaticamente as ordens possíveis para encontrar a melhor formação.
+                        </p>
+                      </div>
+                    )
+                  }
 
 
                   {
+                    !organizando &&
+                    organizacao &&
+                    !organizacao.fechou_ciclo && (
+                      <div className="space-y-3 rounded-xl border border-amber-300/20 bg-amber-400/[0.07] p-4">
+
+                        <div>
+                          <p className="text-sm font-bold text-amber-200">
+                            O ciclo ainda não fecha
+                          </p>
+
+                          <p className="mt-1 text-xs leading-5 text-slate-300">
+                            {organizacao.mensagem}
+                          </p>
+                        </div>
+
+
+                        {
+                          organizacao.proxima_origem_nome && (
+                            <div className="rounded-lg border border-amber-300/15 bg-[#081b29] p-3">
+                              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                Próximo servidor sugerido
+                              </p>
+
+                              <p className="mt-2 text-sm text-white">
+                                Atual em{" "}
+                                <strong className="text-amber-200">
+                                  {organizacao.proxima_origem_nome}
+                                </strong>
+                              </p>
+
+                              {
+                                organizacao.destino_para_fechamento_nome && (
+                                  <p className="mt-1 text-xs text-slate-400">
+                                    Para fechar diretamente o ciclo, deve desejar{" "}
+                                    <strong className="text-slate-200">
+                                      {organizacao.destino_para_fechamento_nome}
+                                    </strong>.
+                                  </p>
+                                )
+                              }
+                            </div>
+                          )
+                        }
+
+
+                        {
+                          organizacao.proxima_origem_comarca_id && (
+                            <button
+                              type="button"
+                              onClick={buscarServidoresParaCompletarCiclo}
+                              disabled={buscando}
+                              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-amber-300/20 bg-amber-500/15 px-4 py-3 text-sm font-semibold text-amber-100 transition hover:bg-amber-500/20 disabled:opacity-50"
+                            >
+                              <Search size={17} />
+                              {buscando
+                                ? "Buscando..."
+                                : "Buscar servidores para este passo"}
+                            </button>
+                          )
+                        }
+
+                      </div>
+                    )
+                  }
+
+
+                  {
+                    !organizando &&
+                    organizacao?.fechou_ciclo &&
                     validacao.length > 0 && (
                       <div className="space-y-3 border-t border-teal-300/10 pt-4">
 
                         <div className="flex items-center justify-between gap-3">
                           <h3 className="text-sm font-bold text-white">
-                            Validação das movimentações
+                            Ciclo organizado automaticamente
                           </h3>
 
-                          <span
-                            className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${
-                              montagemValida
-                                ? "border-emerald-300/20 bg-emerald-400/10 text-emerald-300"
-                                : "border-red-300/20 bg-red-400/10 text-red-300"
-                            }`}
-                          >
-                            {montagemValida ? "Válida" : "Não fecha"}
+                          <span className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-2.5 py-1 text-xs font-semibold text-emerald-300">
+                            Compatível
                           </span>
                         </div>
+
+
+                        <p className="text-xs leading-5 text-slate-400">
+                          {organizacao.mensagem}
+                        </p>
 
 
                         {
@@ -2042,34 +2385,35 @@ export default function BuscarServidoresPage() {
                         }
 
 
-                        {
-                          montagemValida && (
-                            <div className="rounded-xl border border-emerald-300/15 bg-emerald-400/[0.07] p-4">
-                              <p className="text-sm font-semibold text-emerald-300">
-                                {quantidadeParticipantes === 2
-                                  ? "Permuta direta compatível"
-                                  : `Ciclo de ${quantidadeParticipantes} compatível`}
-                              </p>
-                              <p className="mt-1 text-xs leading-5 text-slate-400">
-                                Todas as ligações foram validadas. Você já pode enviar a proposta aos participantes.
-                              </p>
+                        <div className="rounded-xl border border-emerald-300/15 bg-emerald-400/[0.07] p-4">
+                          <p className="text-sm font-semibold text-emerald-300">
+                            {quantidadeParticipantes === 2
+                              ? "Permuta direta compatível"
+                              : `Ciclo de ${quantidadeParticipantes} compatível`}
+                          </p>
 
-                              <button
-                                type="button"
-                                onClick={abrirEnvioProposta}
-                                disabled={enviandoProposta}
-                                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-300/20 bg-emerald-500 px-4 py-3 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-[1px] hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
-                              >
-                                <Send size={17} />
-                                Enviar proposta
-                              </button>
-                            </div>
-                          )
-                        }
+                          <p className="mt-1 text-xs leading-5 text-slate-400">
+                            A ordem já foi definida automaticamente. Você pode enviar a proposta.
+                          </p>
+
+                          <button
+                            type="button"
+                            onClick={abrirEnvioProposta}
+                            disabled={
+                              enviandoProposta ||
+                              !montagemValida
+                            }
+                            className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-300/20 bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            <CheckCircle2 size={18} />
+                            Enviar proposta
+                          </button>
+                        </div>
 
                       </div>
                     )
                   }
+
 
                 </div>
 
@@ -2157,7 +2501,7 @@ function ModalEnviarProposta({
             <div className="flex items-start gap-3">
               <Info className="mt-0.5 h-4 w-4 shrink-0 text-teal-300" />
               <p className="text-xs leading-5 text-slate-400">
-                Os dados de contato serão disponibilizados conforme as regras da proposta após os aceites.
+                Seus dados de contato autorizados ficam disponíveis aos participantes que receberem a proposta. Os contatos dos demais participantes continuam protegidos até a confirmação.
               </p>
             </div>
           </div>
@@ -2399,7 +2743,8 @@ function AutocompleteComarca({
   onFocus,
   onChange,
   onSelecionar,
-  onLimpar
+  onLimpar,
+  onFechar
 }: {
   label: string;
   placeholder: string;
@@ -2411,10 +2756,62 @@ function AutocompleteComarca({
   onChange: (valor: string) => void;
   onSelecionar: (comarca: Comarca) => void;
   onLimpar: () => void;
+  onFechar: () => void;
 }) {
 
+  const containerRef =
+    useRef<HTMLDivElement | null>(
+      null
+    );
+
+
+  useEffect(() => {
+
+    function verificarCliqueFora(
+      event: MouseEvent
+    ) {
+
+      const alvo =
+        event.target as Node;
+
+
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(
+          alvo
+        )
+      ) {
+
+        onFechar();
+
+      }
+
+    }
+
+
+    document.addEventListener(
+      "mousedown",
+      verificarCliqueFora
+    );
+
+
+    return () => {
+
+      document.removeEventListener(
+        "mousedown",
+        verificarCliqueFora
+      );
+
+    };
+
+  }, [onFechar]);
+
+
   return (
-    <div className="relative z-20">
+    <div
+      ref={containerRef}
+      className="relative z-20"
+    >
 
       <label className="mb-2 block text-sm font-semibold text-slate-300">
         {label}
@@ -2690,10 +3087,6 @@ function ParticipanteMontagem({
   cargo,
   comarca,
   fixo = false,
-  podeSubir = false,
-  podeDescer = false,
-  onSubir,
-  onDescer,
   onRemover
 }: {
   ordem: number;
@@ -2701,10 +3094,6 @@ function ParticipanteMontagem({
   cargo: string | null;
   comarca: string;
   fixo?: boolean;
-  podeSubir?: boolean;
-  podeDescer?: boolean;
-  onSubir?: () => void;
-  onDescer?: () => void;
   onRemover?: () => void;
 }) {
 
@@ -2740,41 +3129,15 @@ function ParticipanteMontagem({
 
             {
               !fixo && (
-                <div className="flex shrink-0 items-center gap-1">
-
-                  <button
-                    type="button"
-                    disabled={!podeSubir}
-                    onClick={onSubir}
-                    className="rounded-md p-1.5 text-slate-400 transition hover:bg-white/[0.05] hover:text-teal-300 disabled:cursor-not-allowed disabled:opacity-25"
-                    aria-label="Mover para cima"
-                    title="Mover para cima"
-                  >
-                    <ArrowUp size={15} />
-                  </button>
-
-                  <button
-                    type="button"
-                    disabled={!podeDescer}
-                    onClick={onDescer}
-                    className="rounded-md p-1.5 text-slate-400 transition hover:bg-white/[0.05] hover:text-teal-300 disabled:cursor-not-allowed disabled:opacity-25"
-                    aria-label="Mover para baixo"
-                    title="Mover para baixo"
-                  >
-                    <ArrowDown size={15} />
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={onRemover}
-                    className="rounded-md p-1.5 text-slate-400 transition hover:bg-red-400/10 hover:text-red-300"
-                    aria-label="Remover participante"
-                    title="Remover participante"
-                  >
-                    <X size={15} />
-                  </button>
-
-                </div>
+                <button
+                  type="button"
+                  onClick={onRemover}
+                  className="shrink-0 rounded-md p-1.5 text-slate-400 transition hover:bg-red-400/10 hover:text-red-300"
+                  aria-label="Remover participante"
+                  title="Remover participante"
+                >
+                  <X size={15} />
+                </button>
               )
             }
 

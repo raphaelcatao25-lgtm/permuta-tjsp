@@ -51,15 +51,7 @@ const CARGOS = [
 
   "Escrevente Técnico Judiciário",
 
-  "Oficial de Justiça",
-
-  "Assistente Judiciário",
-
-  "Analista Judiciário",
-
-  "Agente Administrativo Judiciário",
-
-  "Outro",
+  "Psicólogo",
 
 ];
 
@@ -80,6 +72,10 @@ type Perfil = {
   telefone:string | null;
 
   mostrar_telefone:boolean;
+
+  teams:string | null;
+
+  mostrar_teams:boolean;
 
   comarca_atual_id:number;
 
@@ -138,6 +134,9 @@ useState("");
 
 const [mostrarTelefone,setMostrarTelefone] =
 useState(false);
+
+const [teams,setTeams] = useState("");
+const [mostrarTeams,setMostrarTeams] = useState(false);
 
 
 
@@ -441,6 +440,10 @@ telefone,
 
 mostrar_telefone,
 
+teams,
+
+mostrar_teams,
+
 comarca_atual_id,
 
 em_match,
@@ -497,6 +500,9 @@ perfilAtual.telefone ?? ""
 setMostrarTelefone(
 perfilAtual.mostrar_telefone
 );
+
+setTeams(perfilAtual.teams ?? "");
+setMostrarTeams(Boolean(perfilAtual.mostrar_teams));
 
 setEmMatch(
 Boolean(
@@ -850,7 +856,11 @@ cargo,
 
 telefone,
 
+teams:teams.trim() || null,
+
 mostrar_telefone:mostrarTelefone,
+
+mostrar_teams:mostrarTeams,
 
 updated_at:new Date().toISOString()
 
@@ -1799,6 +1809,20 @@ return (
 
               </label>
 
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-300">Microsoft Teams</label>
+              <input
+                value={teams}
+                onChange={(e)=>setTeams(e.target.value)}
+                className="w-full rounded-xl border border-teal-300/15 bg-[#081b29] px-4 py-3 text-white outline-none transition placeholder:text-slate-600 hover:border-teal-300/25 focus:border-teal-400 focus:ring-4 focus:ring-teal-400/10"
+                placeholder="E-mail ou identificação utilizada no Teams"
+              />
+              <label className="mt-3 flex w-fit items-center gap-2 text-sm text-slate-300">
+                <input type="checkbox" checked={mostrarTeams} onChange={(e)=>setMostrarTeams(e.target.checked)} className="accent-teal-500"/>
+                Mostrar Teams
+              </label>
             </div>
 
           </div>

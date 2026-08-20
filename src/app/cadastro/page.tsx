@@ -53,15 +53,7 @@ const CARGOS = [
 
   "Escrevente Técnico Judiciário",
 
-  "Oficial de Justiça",
-
-  "Assistente Judiciário",
-
-  "Analista Judiciário",
-
-  "Agente Administrativo Judiciário",
-
-  "Outro",
+  "Psicólogo",
 
 ];
 
@@ -136,6 +128,13 @@ useState("");
 
 
 const [mostrarTelefone,setMostrarTelefone] =
+useState(false);
+
+
+const [teams,setTeams] =
+useState("");
+
+const [mostrarTeams,setMostrarTeams] =
 useState(false);
 
 
@@ -1035,7 +1034,13 @@ cargo,
 telefone,
 
 
+teams:teams.trim() || null,
+
+
 mostrar_telefone:mostrarTelefone,
+
+
+mostrar_teams:mostrarTeams,
 
 
 mostrar_email:true,
@@ -2022,6 +2027,21 @@ Permitir exibição do telefone
 </label>
 
 
+</div>
+
+
+<div>
+<label className="mb-2 block text-sm font-medium">Microsoft Teams</label>
+<input
+value={teams}
+onChange={(e)=>setTeams(e.target.value)}
+className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900"
+placeholder="E-mail ou identificação utilizada no Teams"
+/>
+<label className="mt-3 flex items-center gap-2 text-sm">
+<input type="checkbox" checked={mostrarTeams} onChange={(e)=>setMostrarTeams(e.target.checked)}/>
+Permitir exibição do Teams
+</label>
 </div>
 
 
