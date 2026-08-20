@@ -50,11 +50,15 @@ ComarcaInfoCard
 
 
 const CARGOS = [
-
+  "Assistente Social Judiciário",
+  "Oficial de Justiça",
+  "Psicólogo Judiciário",
   "Escrevente Técnico Judiciário",
-
-  "Psicólogo",
-
+  "Agente de Fiscalização Judiciário",
+  "Agente Administrativo Judiciário",
+  "Agente de Segurança Judiciário",
+  "Agente de Serviços Judiciário",
+  "Agente Operacional Judiciário",
 ];
 
 

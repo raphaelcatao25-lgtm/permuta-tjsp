@@ -48,11 +48,15 @@ import {
 
 
 const CARGOS = [
-
+  "Assistente Social Judiciário",
+  "Oficial de Justiça",
+  "Psicólogo Judiciário",
   "Escrevente Técnico Judiciário",
-
-  "Psicólogo",
-
+  "Agente de Fiscalização Judiciário",
+  "Agente Administrativo Judiciário",
+  "Agente de Segurança Judiciário",
+  "Agente de Serviços Judiciário",
+  "Agente Operacional Judiciário",
 ];
 
 
@@ -1717,9 +1721,7 @@ return (
                 Cargo
               </label>
 
-              <select
-                value={cargo}
-                onChange={(e)=>setCargo(e.target.value)}
+              <div
                 className="
                   w-full
                   rounded-xl
@@ -1729,33 +1731,14 @@ return (
                   px-4
                   py-3
                   text-white
-                  outline-none
-                  transition
-                  hover:border-teal-300/25
-                  focus:border-teal-400
-                  focus:ring-4
-                  focus:ring-teal-400/10
                 "
               >
+                {cargo || "Cargo não informado"}
+              </div>
 
-                <option value="">
-                  Selecione
-                </option>
-
-                {
-                  CARGOS.map((item)=>(
-
-                    <option
-                      key={item}
-                      value={item}
-                    >
-                      {item}
-                    </option>
-
-                  ))
-                }
-
-              </select>
+              <p className="mt-2 text-xs leading-5 text-slate-500">
+                O cargo é definido no cadastro e não pode ser alterado diretamente no perfil, pois faz parte das regras de compatibilidade da permuta.
+              </p>
 
             </div>
 
