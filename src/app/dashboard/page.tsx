@@ -81,7 +81,18 @@ type ItemProgresso = {
 type SolicitacaoResumo = {
   id: string;
   status: string;
+  solicitante_id: string | null;
+  participante_1: string | null;
+  participante_2: string | null;
+  participante_3: string | null;
+  participante_1_aceite: boolean | null;
+  participante_2_aceite: boolean | null;
+  participante_3_aceite: boolean | null;
+  tipo: string | null;
 };
+
+
+type PermutaManualResumo = Record<string, unknown>;
 
 
 type AvaliacaoPendente = {
@@ -182,6 +193,18 @@ export default function DashboardPage() {
   const [
     propostasConfirmadas,
     setPropostasConfirmadas
+  ] = useState(0);
+
+
+  const [
+    oportunidadesRecebidasDiretas,
+    setOportunidadesRecebidasDiretas
+  ] = useState(0);
+
+
+  const [
+    oportunidadesRecebidasCadeia,
+    setOportunidadesRecebidasCadeia
   ] = useState(0);
 
 
@@ -596,9 +619,18 @@ export default function DashboardPage() {
           .from(
             "solicitacoes_permuta"
           )
-          .select(
-            "id, status"
-          )
+          .select(`
+            id,
+            status,
+            solicitante_id,
+            participante_1,
+            participante_2,
+            participante_3,
+            participante_1_aceite,
+            participante_2_aceite,
+            participante_3_aceite,
+            tipo
+          `)
           .or(
             `participante_1.eq.${usuarioId},participante_2.eq.${usuarioId},participante_3.eq.${usuarioId}`
           )
@@ -616,6 +648,34 @@ export default function DashboardPage() {
           console.error(
             "Erro ao carregar propostas:",
             erroSolicitacoes
+          );
+
+        }
+
+
+        /*
+        ========================================
+        PERMUTAS MANUAIS / BUSCAR SERVIDORES
+        ========================================
+        */
+
+        const {
+          data: permutasManuais,
+          error: erroPermutasManuais
+        } = await supabase.rpc(
+          "buscar_permutas_manuais_usuario",
+          {
+            p_usuario_id:
+              usuarioId
+          }
+        );
+
+
+        if (erroPermutasManuais) {
+
+          console.error(
+            "Erro ao carregar permutas manuais:",
+            erroPermutasManuais
           );
 
         }
@@ -774,6 +834,175 @@ export default function DashboardPage() {
               "confirmado"
           ).length
 
+        );
+
+
+        /*
+        ========================================
+        OPORTUNIDADES RECEBIDAS
+        Mostra apenas propostas que ainda
+        dependem da resposta deste usuário.
+        ========================================
+        */
+
+        const solicitacoesRecebidasPendentes =
+          listaSolicitacoes.filter(
+            proposta => {
+
+              if (
+                proposta.status !==
+                  "aguardando_aceite" ||
+                proposta.solicitante_id ===
+                  usuarioId
+              ) {
+                return false;
+              }
+
+
+              if (
+                proposta.participante_1 ===
+                usuarioId
+              ) {
+                return !Boolean(
+                  proposta.participante_1_aceite
+                );
+              }
+
+
+              if (
+                proposta.participante_2 ===
+                usuarioId
+              ) {
+                return !Boolean(
+                  proposta.participante_2_aceite
+                );
+              }
+
+
+              if (
+                proposta.participante_3 ===
+                usuarioId
+              ) {
+                return !Boolean(
+                  proposta.participante_3_aceite
+                );
+              }
+
+
+              return false;
+
+            }
+          );
+
+
+        let recebidasDiretas =
+          solicitacoesRecebidasPendentes.filter(
+            proposta =>
+              proposta.tipo === "direta" ||
+              proposta.tipo === "direta_1x1" ||
+              proposta.tipo === "match_direto"
+          ).length;
+
+
+        let recebidasCadeia =
+          solicitacoesRecebidasPendentes.length -
+          recebidasDiretas;
+
+
+        const listaManuais =
+          (
+            Array.isArray(permutasManuais)
+              ? permutasManuais
+              : []
+          ) as PermutaManualResumo[];
+
+
+        listaManuais.forEach(
+          item => {
+
+            const criadoPor =
+              String(
+                item.criado_por ??
+                item.solicitante_id ??
+                ""
+              );
+
+
+            if (criadoPor === usuarioId) {
+              return;
+            }
+
+
+            const status =
+              String(
+                item.status ?? ""
+              ).toLowerCase();
+
+
+            if (
+              status !== "aguardando_aceite" &&
+              status !== "aguardando" &&
+              status !== "pendente"
+            ) {
+              return;
+            }
+
+
+            const meuStatus =
+              String(
+                item.meu_status_aceite ??
+                item.status_aceite ??
+                item.usuario_status_aceite ??
+                "aguardando"
+              ).toLowerCase();
+
+
+            if (
+              meuStatus === "aceito" ||
+              meuStatus === "aceita" ||
+              meuStatus === "confirmado" ||
+              meuStatus === "recusado"
+            ) {
+              return;
+            }
+
+
+            const tipo =
+              String(
+                item.tipo ?? ""
+              ).toLowerCase();
+
+
+            const quantidade =
+              Number(
+                item.quantidade_participantes ??
+                item.quantidade ??
+                0
+              );
+
+
+            if (
+              tipo.includes("direta") ||
+              quantidade === 2
+            ) {
+              recebidasDiretas += 1;
+            }
+
+            else {
+              recebidasCadeia += 1;
+            }
+
+          }
+        );
+
+
+        setOportunidadesRecebidasDiretas(
+          recebidasDiretas
+        );
+
+
+        setOportunidadesRecebidasCadeia(
+          recebidasCadeia
         );
 
 
@@ -1132,6 +1361,11 @@ export default function DashboardPage() {
     oportunidadesDiretas
     +
     oportunidadesCiclos;
+
+
+  const totalOportunidadesRecebidas =
+    oportunidadesRecebidasDiretas +
+    oportunidadesRecebidasCadeia;
 
 
   const emPermuta =
@@ -1623,6 +1857,148 @@ export default function DashboardPage() {
                 </div>
 
               </section>
+
+
+              {/* =================================================
+                  OPORTUNIDADES RECEBIDAS
+              ================================================= */}
+
+              {
+                totalOportunidadesRecebidas > 0 && (
+
+                  <section className="
+                    overflow-hidden
+                    rounded-2xl
+                    border
+                    border-blue-200
+                    bg-gradient-to-r
+                    from-blue-950
+                    via-blue-900
+                    to-slate-900
+                    shadow-[0_16px_40px_rgba(15,23,42,0.16)]
+                  ">
+
+                    <div className="
+                      flex
+                      flex-col
+                      gap-5
+                      p-6
+                      sm:flex-row
+                      sm:items-center
+                      sm:justify-between
+                    ">
+
+                      <div className="
+                        flex
+                        items-start
+                        gap-4
+                      ">
+
+                        <div className="
+                          flex
+                          h-12
+                          w-12
+                          shrink-0
+                          items-center
+                          justify-center
+                          rounded-xl
+                          border
+                          border-white/15
+                          bg-white/10
+                          text-blue-100
+                        ">
+                          <Bell
+                            className="h-6 w-6"
+                            strokeWidth={1.8}
+                          />
+                        </div>
+
+
+                        <div>
+
+                          <p className="
+                            text-sm
+                            font-semibold
+                            text-blue-200
+                          ">
+                            Nova oportunidade
+                          </p>
+
+
+                          <h2 className="
+                            mt-1
+                            text-xl
+                            font-bold
+                            text-white
+                          ">
+                            {
+                              totalOportunidadesRecebidas === 1
+                                ? oportunidadesRecebidasDiretas === 1
+                                  ? "Você recebeu uma oportunidade de permuta direta!"
+                                  : "Você recebeu uma oportunidade de permuta em cadeia!"
+                                : `Você tem ${totalOportunidadesRecebidas} oportunidades de permuta aguardando sua resposta`
+                            }
+                          </h2>
+
+
+                          <p className="
+                            mt-2
+                            max-w-2xl
+                            text-sm
+                            leading-6
+                            text-blue-100/85
+                          ">
+                            {
+                              totalOportunidadesRecebidas === 1
+                                ? "Outro servidor encontrou uma possibilidade de permuta com você. Veja os detalhes antes de aceitar ou recusar."
+                                : `${oportunidadesRecebidasDiretas} ${oportunidadesRecebidasDiretas === 1 ? "direta" : "diretas"} e ${oportunidadesRecebidasCadeia} ${oportunidadesRecebidasCadeia === 1 ? "em cadeia" : "em cadeia"} aguardam sua análise.`
+                            }
+                          </p>
+
+                        </div>
+
+                      </div>
+
+
+                      <Link
+                        href="/propostas"
+                        className="
+                          inline-flex
+                          min-h-11
+                          shrink-0
+                          items-center
+                          justify-center
+                          gap-2
+                          rounded-xl
+                          bg-white
+                          px-5
+                          py-3
+                          text-sm
+                          font-semibold
+                          !text-blue-950
+                          transition
+                          hover:bg-blue-50
+                          hover:!text-blue-950
+                        "
+                      >
+                        {
+                          totalOportunidadesRecebidas === 1
+                            ? "Ver proposta"
+                            : "Ver propostas"
+                        }
+
+                        <ArrowRight
+                          className="h-4 w-4"
+                          strokeWidth={2}
+                        />
+                      </Link>
+
+                    </div>
+
+                  </section>
+
+                )
+              }
 
 
               {/* =================================================
