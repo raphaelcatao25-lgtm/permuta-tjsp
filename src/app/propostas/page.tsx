@@ -772,8 +772,47 @@ export default function PropostasPage() {
       }
 
 
-      const listaPermutasManuais =
+      const listaPermutasManuaisCompleta =
         (dadosPermutasManuais ?? []) as PermutaManualResumo[];
+
+
+      const {
+        data: ciclosManuaisOcultos,
+        error: erroCiclosManuaisOcultos
+      } = await supabase
+        .from(
+          "ciclos_manuais_ocultos_usuario"
+        )
+        .select(
+          "ciclo_id"
+        )
+        .eq(
+          "usuario_id",
+          usuarioId
+        );
+
+
+      if (erroCiclosManuaisOcultos) {
+        throw erroCiclosManuaisOcultos;
+      }
+
+
+      const idsCiclosManuaisOcultos =
+        new Set(
+          (ciclosManuaisOcultos ?? []).map(
+            item =>
+              item.ciclo_id
+          )
+        );
+
+
+      const listaPermutasManuais =
+        listaPermutasManuaisCompleta.filter(
+          item =>
+            !idsCiclosManuaisOcultos.has(
+              item.ciclo_id
+            )
+        );
 
 
       setPermutasManuais(
@@ -1377,6 +1416,15 @@ export default function PropostasPage() {
       ]);
 
 
+    const statusManuaisEncerrados =
+      new Set([
+        "concluido",
+        "encerrado_sem_sucesso",
+        "cancelado",
+        "cancelado_indisponibilidade"
+      ]);
+
+
     const encerradas =
       solicitacoes.filter(
         item =>
@@ -1386,8 +1434,18 @@ export default function PropostasPage() {
       );
 
 
+    const manuaisEncerradas =
+      permutasManuais.filter(
+        item =>
+          statusManuaisEncerrados.has(
+            item.status
+          )
+      );
+
+
     if (
-      encerradas.length === 0
+      encerradas.length === 0 &&
+      manuaisEncerradas.length === 0
     ) {
 
       setMostrarLimparHistorico(
@@ -1413,35 +1471,75 @@ export default function PropostasPage() {
 
     try {
 
-      const registros =
-        encerradas.map(
-          item => ({
-            usuario_id:
-              usuarioId,
+      if (encerradas.length > 0) {
 
-            solicitacao_id:
-              item.id
-          })
-        );
+        const registros =
+          encerradas.map(
+            item => ({
+              usuario_id:
+                usuarioId,
 
-
-      const {
-        error
-      } = await supabase
-        .from(
-          "propostas_ocultas_usuario"
-        )
-        .upsert(
-          registros,
-          {
-            onConflict:
-              "usuario_id,solicitacao_id"
-          }
-        );
+              solicitacao_id:
+                item.id
+            })
+          );
 
 
-      if (error) {
-        throw error;
+        const {
+          error
+        } = await supabase
+          .from(
+            "propostas_ocultas_usuario"
+          )
+          .upsert(
+            registros,
+            {
+              onConflict:
+                "usuario_id,solicitacao_id"
+            }
+          );
+
+
+        if (error) {
+          throw error;
+        }
+
+      }
+
+
+      if (manuaisEncerradas.length > 0) {
+
+        const registrosManuais =
+          manuaisEncerradas.map(
+            item => ({
+              usuario_id:
+                usuarioId,
+
+              ciclo_id:
+                item.ciclo_id
+            })
+          );
+
+
+        const {
+          error: erroManuais
+        } = await supabase
+          .from(
+            "ciclos_manuais_ocultos_usuario"
+          )
+          .upsert(
+            registrosManuais,
+            {
+              onConflict:
+                "usuario_id,ciclo_id"
+            }
+          );
+
+
+        if (erroManuais) {
+          throw erroManuais;
+        }
+
       }
 
 
@@ -1450,6 +1548,17 @@ export default function PropostasPage() {
           anteriores.filter(
             item =>
               !statusEncerrados.has(
+                item.status
+              )
+          )
+      );
+
+
+      setPermutasManuais(
+        anteriores =>
+          anteriores.filter(
+            item =>
+              !statusManuaisEncerrados.has(
                 item.status
               )
           )
@@ -1956,6 +2065,18 @@ export default function PropostasPage() {
 
   const possuiHistorico =
     solicitacoes.some(
+      item =>
+        [
+          "concluido",
+          "encerrado_sem_sucesso",
+          "cancelado",
+          "cancelado_indisponibilidade"
+        ].includes(
+          item.status
+        )
+    )
+    ||
+    permutasManuais.some(
       item =>
         [
           "concluido",
