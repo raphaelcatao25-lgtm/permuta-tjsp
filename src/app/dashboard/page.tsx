@@ -1970,15 +1970,24 @@ export default function DashboardPage() {
                           justify-center
                           gap-2
                           rounded-xl
-                          bg-white
+                          border
+                          border-cyan-300/30
+                          bg-cyan-400
                           px-5
                           py-3
                           text-sm
-                          font-semibold
-                          !text-blue-950
+                          font-bold
+                          !text-slate-950
+                          shadow-lg
+                          shadow-cyan-950/20
                           transition
-                          hover:bg-blue-50
-                          hover:!text-blue-950
+                          hover:bg-cyan-300
+                          hover:!text-slate-950
+                          focus:outline-none
+                          focus:ring-2
+                          focus:ring-cyan-300
+                          focus:ring-offset-2
+                          focus:ring-offset-blue-950
                         "
                       >
                         {
