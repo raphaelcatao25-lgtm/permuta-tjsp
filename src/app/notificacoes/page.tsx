@@ -10,6 +10,7 @@ import Link from "next/link";
 import {
   AlertCircle,
   Bell,
+  CheckCheck,
   CheckCircle2,
   ExternalLink,
   Mail,
@@ -43,6 +44,7 @@ interface Notificacao {
   titulo: string;
   mensagem: string;
   solicitacao_id: string | null;
+  ciclo_manual_id: string | null;
   lida: boolean;
   created_at: string;
 }
@@ -113,6 +115,24 @@ export default function NotificacoesPage() {
   const [
     excluindo,
     setExcluindo
+  ] = useState(false);
+
+
+  const [
+    marcandoTodas,
+    setMarcandoTodas
+  ] = useState(false);
+
+
+  const [
+    excluindoTodas,
+    setExcluindoTodas
+  ] = useState(false);
+
+
+  const [
+    confirmarExcluirTodas,
+    setConfirmarExcluirTodas
   ] = useState(false);
 
 
@@ -253,6 +273,7 @@ export default function NotificacoesPage() {
           titulo,
           mensagem,
           solicitacao_id,
+          ciclo_manual_id,
           lida,
           created_at
         `)
@@ -625,6 +646,162 @@ export default function NotificacoesPage() {
 
 
   /* ======================================================
+     MARCAR TODAS COMO LIDAS
+  ====================================================== */
+
+  async function marcarTodasComoLidas() {
+
+    if (!usuarioId || naoLidas === 0) {
+      return;
+    }
+
+
+    setMarcandoTodas(true);
+    setMensagemErro("");
+
+
+    try {
+
+      const {
+        error
+      } = await supabase
+        .from("notificacoes")
+        .update({
+          lida: true,
+          updated_at:
+            new Date().toISOString()
+        })
+        .eq(
+          "usuario_id",
+          usuarioId
+        )
+        .eq(
+          "lida",
+          false
+        );
+
+
+      if (error) {
+        throw error;
+      }
+
+
+      setNotificacoes(
+        anteriores =>
+          anteriores.map(
+            notificacao => ({
+              ...notificacao,
+              lida: true
+            })
+          )
+      );
+
+
+      window.dispatchEvent(
+        new Event(
+          "atualizar-notificacoes"
+        )
+      );
+
+    }
+
+    catch(error) {
+
+      console.error(
+        "Erro ao marcar todas as notificações como lidas:",
+        error
+      );
+
+
+      setMensagemErro(
+        extrairMensagemErro(
+          error
+        )
+      );
+
+    }
+
+    finally {
+
+      setMarcandoTodas(false);
+
+    }
+
+  }
+
+
+  /* ======================================================
+     EXCLUIR TODAS AS NOTIFICAÇÕES
+  ====================================================== */
+
+  async function excluirTodasNotificacoes() {
+
+    if (!usuarioId || notificacoes.length === 0) {
+      return;
+    }
+
+
+    setExcluindoTodas(true);
+    setMensagemErro("");
+
+
+    try {
+
+      const {
+        error
+      } = await supabase
+        .from("notificacoes")
+        .delete()
+        .eq(
+          "usuario_id",
+          usuarioId
+        );
+
+
+      if (error) {
+        throw error;
+      }
+
+
+      setNotificacoes([]);
+      setContatos({});
+      setConfirmarExcluirTodas(false);
+
+
+      window.dispatchEvent(
+        new Event(
+          "atualizar-notificacoes"
+        )
+      );
+
+    }
+
+    catch(error) {
+
+      console.error(
+        "Erro ao excluir todas as notificações:",
+        error
+      );
+
+
+      setMensagemErro(
+        extrairMensagemErro(
+          error
+        )
+      );
+
+    }
+
+    finally {
+
+      setExcluindoTodas(false);
+
+    }
+
+  }
+
+
+  /* ======================================================
      ABRIR CONFIRMAÇÃO DE EXCLUSÃO
   ====================================================== */
 
@@ -832,33 +1009,127 @@ export default function NotificacoesPage() {
               </div>
 
 
-              {
-                naoLidas > 0 && (
+              <div className="
+                flex
+                flex-wrap
+                items-center
+                justify-end
+                gap-2
+              ">
 
-                  <div className="
-                    rounded-full
-                    bg-blue-100
-                    px-4
-                    py-2
-                    text-sm
-                    font-semibold
-                    text-blue-800
-                  ">
+                {
+                  naoLidas > 0 && (
 
-                    {
-                      naoLidas
-                    }{" "}
+                    <button
+                      type="button"
+                      onClick={marcarTodasComoLidas}
+                      disabled={
+                        marcandoTodas ||
+                        excluindoTodas
+                      }
+                      className="
+                        inline-flex
+                        items-center
+                        gap-2
+                        rounded-xl
+                        border
+                        border-blue-200
+                        bg-white
+                        px-4
+                        py-2.5
+                        text-sm
+                        font-semibold
+                        text-blue-800
+                        transition
+                        hover:bg-blue-50
+                        disabled:cursor-not-allowed
+                        disabled:opacity-50
+                      "
+                    >
 
-                    {
-                      naoLidas === 1
-                        ? "não lida"
-                        : "não lidas"
-                    }
+                      <CheckCheck size={17} />
 
-                  </div>
+                      {
+                        marcandoTodas
+                          ? "Marcando..."
+                          : "Marcar todas como lidas"
+                      }
 
-                )
-              }
+                    </button>
+
+                  )
+                }
+
+
+                {
+                  notificacoes.length > 0 && (
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setConfirmarExcluirTodas(
+                          true
+                        )
+                      }
+                      disabled={
+                        excluindoTodas ||
+                        marcandoTodas
+                      }
+                      className="
+                        inline-flex
+                        items-center
+                        gap-2
+                        rounded-xl
+                        border
+                        border-red-200
+                        bg-white
+                        px-4
+                        py-2.5
+                        text-sm
+                        font-semibold
+                        text-red-600
+                        transition
+                        hover:bg-red-50
+                        disabled:cursor-not-allowed
+                        disabled:opacity-50
+                      "
+                    >
+
+                      <Trash2 size={17} />
+                      Excluir todas
+
+                    </button>
+
+                  )
+                }
+
+
+                {
+                  naoLidas > 0 && (
+
+                    <div className="
+                      rounded-full
+                      bg-blue-100
+                      px-4
+                      py-2
+                      text-sm
+                      font-semibold
+                      text-blue-800
+                    ">
+
+                      {naoLidas}{" "}
+                      {
+                        naoLidas === 1
+                          ? "não lida"
+                          : "não lidas"
+                      }
+
+                    </div>
+
+                  )
+                }
+
+              </div>
 
             </div>
 
@@ -1073,6 +1344,33 @@ export default function NotificacoesPage() {
 
               onConfirmar={
                 excluirNotificacao
+              }
+            />
+
+          )
+        }
+
+
+        {
+          confirmarExcluirTodas && (
+
+            <ModalExcluirTodasNotificacoes
+              quantidade={
+                notificacoes.length
+              }
+
+              processando={
+                excluindoTodas
+              }
+
+              onFechar={() =>
+                setConfirmarExcluirTodas(
+                  false
+                )
+              }
+
+              onConfirmar={
+                excluirTodasNotificacoes
               }
             />
 
@@ -1365,7 +1663,10 @@ function NotificacaoCard({
 
 
           {
-            notificacao.solicitacao_id && (
+            (
+              notificacao.solicitacao_id ||
+              notificacao.ciclo_manual_id
+            ) && (
 
               <Link
                 href="/propostas"
@@ -1815,6 +2116,220 @@ function ModalExcluirNotificacao({
 
       </div>
 
+
+    </div>
+
+  );
+
+}
+
+
+/* ======================================================
+   MODAL EXCLUIR TODAS
+====================================================== */
+
+function ModalExcluirTodasNotificacoes({
+  quantidade,
+  processando,
+  onFechar,
+  onConfirmar
+}: {
+  quantidade: number;
+  processando: boolean;
+  onFechar: () => void;
+  onConfirmar: () => void;
+}) {
+
+  return (
+
+    <div className="
+      fixed
+      inset-0
+      z-[110]
+      flex
+      items-center
+      justify-center
+      bg-slate-950/50
+      px-4
+      py-8
+      backdrop-blur-sm
+    ">
+
+      <div className="
+        w-full
+        max-w-md
+        overflow-hidden
+        rounded-2xl
+        bg-white
+        shadow-2xl
+      ">
+
+        <div className="
+          flex
+          items-start
+          justify-between
+          gap-4
+          border-b
+          border-slate-200
+          px-6
+          py-5
+        ">
+
+          <div>
+
+            <h2 className="
+              text-xl
+              font-bold
+              text-slate-900
+            ">
+              Excluir todas as notificações
+            </h2>
+
+            <p className="
+              mt-1
+              text-sm
+              text-slate-500
+            ">
+              Esta ação remove todo o seu histórico de notificações.
+            </p>
+
+          </div>
+
+
+          <button
+            type="button"
+            disabled={processando}
+            onClick={onFechar}
+            aria-label="Fechar"
+            className="
+              flex
+              h-9
+              w-9
+              items-center
+              justify-center
+              rounded-lg
+              text-slate-400
+              transition
+              hover:bg-slate-100
+              hover:text-slate-700
+              disabled:opacity-50
+            "
+          >
+            <X size={20} />
+          </button>
+
+        </div>
+
+
+        <div className="
+          px-6
+          py-6
+        ">
+
+          <div className="
+            flex
+            h-12
+            w-12
+            items-center
+            justify-center
+            rounded-full
+            bg-red-50
+            text-red-600
+          ">
+            <Trash2 size={23} />
+          </div>
+
+
+          <h3 className="
+            mt-4
+            text-lg
+            font-bold
+            text-slate-900
+          ">
+            Excluir {quantidade}{" "}
+            {quantidade === 1
+              ? "notificação"
+              : "notificações"}?
+          </h3>
+
+
+          <p className="
+            mt-2
+            text-sm
+            leading-6
+            text-slate-600
+          ">
+            As notificações serão removidas permanentemente da sua caixa de mensagens. Isso não cancela nem altera propostas ou permutas relacionadas.
+          </p>
+
+
+          <div className="
+            mt-6
+            flex
+            flex-col-reverse
+            gap-3
+            sm:flex-row
+            sm:justify-end
+          ">
+
+            <button
+              type="button"
+              disabled={processando}
+              onClick={onFechar}
+              className="
+                rounded-xl
+                border
+                border-slate-300
+                bg-white
+                px-4
+                py-2.5
+                text-sm
+                font-semibold
+                text-slate-700
+                transition
+                hover:bg-slate-50
+                disabled:opacity-50
+              "
+            >
+              Cancelar
+            </button>
+
+
+            <button
+              type="button"
+              disabled={processando}
+              onClick={onConfirmar}
+              className="
+                inline-flex
+                items-center
+                justify-center
+                gap-2
+                rounded-xl
+                bg-red-600
+                px-4
+                py-2.5
+                text-sm
+                font-semibold
+                text-white
+                transition
+                hover:bg-red-700
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+              "
+            >
+              <Trash2 size={16} />
+              {
+                processando
+                  ? "Excluindo..."
+                  : "Excluir todas"
+              }
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
 
     </div>
 
