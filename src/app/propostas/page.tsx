@@ -89,6 +89,47 @@ interface ContatoPermuta {
 }
 
 
+interface PermutaManualResumo {
+  ciclo_id: string;
+  criado_por: string;
+  tipo: string;
+  quantidade_participantes: number;
+  status: string;
+  mensagem: string | null;
+  created_at: string;
+  minha_ordem: number;
+  meu_status_aceite: string;
+  meu_respondido_em: string | null;
+  enviada_por_mim: boolean;
+}
+
+
+interface PermutaManualDetalhe {
+  ciclo_id: string;
+  tipo: string;
+  status: string;
+  quantidade_participantes: number;
+  criado_por: string;
+  mensagem: string | null;
+  created_at: string;
+  ordem: number;
+  participante_id: string;
+  participante_nome: string;
+  participante_cargo: string | null;
+  origem_comarca_id: number | null;
+  origem_comarca_nome: string | null;
+  destino_comarca_id: number | null;
+  destino_comarca_nome: string | null;
+  status_aceite: string;
+  respondido_em: string | null;
+  eh_criador: boolean;
+  pode_ver_contato: boolean;
+  email: string | null;
+  telefone: string | null;
+  teams: string | null;
+}
+
+
 /* ======================================================
    PÁGINA
 ====================================================== */
@@ -133,6 +174,40 @@ export default function PropostasPage() {
   ] = useState<
     Record<string, ContatoPermuta[]>
   >({});
+
+
+  const [
+    permutasManuais,
+    setPermutasManuais
+  ] = useState<PermutaManualResumo[]>([]);
+
+
+  const [
+    detalhesManuais,
+    setDetalhesManuais
+  ] = useState<
+    Record<string, PermutaManualDetalhe[]>
+  >({});
+
+
+  const [
+    processandoManual,
+    setProcessandoManual
+  ] = useState<string | null>(null);
+
+
+  const [
+    permutaManualEncerramento,
+    setPermutaManualEncerramento
+  ] = useState<PermutaManualResumo | null>(
+    null
+  );
+
+
+  const [
+    processandoEncerramentoManual,
+    setProcessandoEncerramentoManual
+  ] = useState(false);
 
 
   const [
@@ -287,6 +362,10 @@ export default function PropostasPage() {
           );
 
           setContatos({});
+
+          setPermutasManuais([]);
+
+          setDetalhesManuais({});
 
           setCarregando(false);
 
@@ -667,6 +746,91 @@ export default function PropostasPage() {
 
       setContatos(
         contatosCarregados
+      );
+
+
+      /*
+      ========================================
+      PERMUTAS MONTADAS PELO SERVIDOR
+      ========================================
+      */
+
+      const {
+        data: dadosPermutasManuais,
+        error: erroPermutasManuais
+      } = await supabase.rpc(
+        "buscar_permutas_manuais_usuario",
+        {
+          p_usuario_id:
+            usuarioId
+        }
+      );
+
+
+      if (erroPermutasManuais) {
+        throw erroPermutasManuais;
+      }
+
+
+      const listaPermutasManuais =
+        (dadosPermutasManuais ?? []) as PermutaManualResumo[];
+
+
+      setPermutasManuais(
+        listaPermutasManuais
+      );
+
+
+      const detalhesCarregados:
+        Record<
+          string,
+          PermutaManualDetalhe[]
+        > = {};
+
+
+      await Promise.all(
+        listaPermutasManuais.map(
+          async permuta => {
+
+            const {
+              data: dadosDetalhes,
+              error: erroDetalhes
+            } = await supabase.rpc(
+              "buscar_detalhes_permuta_manual",
+              {
+                p_ciclo_id:
+                  permuta.ciclo_id,
+
+                p_usuario_id:
+                  usuarioId
+              }
+            );
+
+
+            if (erroDetalhes) {
+
+              console.error(
+                "Erro ao carregar detalhes da permuta montada:",
+                erroDetalhes
+              );
+
+              return;
+
+            }
+
+
+            detalhesCarregados[
+              permuta.ciclo_id
+            ] =
+              (dadosDetalhes ?? []) as PermutaManualDetalhe[];
+
+          }
+        )
+      );
+
+
+      setDetalhesManuais(
+        detalhesCarregados
       );
 
     }
@@ -1331,6 +1495,332 @@ export default function PropostasPage() {
 
 
   /* ======================================================
+     ACEITAR PERMUTA MONTADA
+  ====================================================== */
+
+  async function aceitarPermutaManual(
+    permuta: PermutaManualResumo
+  ) {
+
+    if (!usuarioId) {
+      return;
+    }
+
+
+    setProcessandoManual(
+      permuta.ciclo_id
+    );
+
+    setMensagemErro("");
+    setMensagemSucesso("");
+
+
+    try {
+
+      const {
+        error
+      } = await supabase.rpc(
+        "aceitar_permuta_manual",
+        {
+          p_ciclo_id:
+            permuta.ciclo_id,
+
+          p_usuario_id:
+            usuarioId
+        }
+      );
+
+
+      if (error) {
+        throw error;
+      }
+
+
+      await carregarPropostas(
+        false
+      );
+
+
+      setMensagemSucesso(
+        "Seu aceite na permuta montada foi registrado com sucesso."
+      );
+
+
+      window.dispatchEvent(
+        new Event(
+          "atualizar-notificacoes"
+        )
+      );
+
+    }
+
+    catch(error) {
+
+      console.error(
+        "Erro ao aceitar permuta montada:",
+        error
+      );
+
+
+      setMensagemErro(
+        extrairMensagemErro(
+          error
+        )
+      );
+
+    }
+
+    finally {
+
+      setProcessandoManual(
+        null
+      );
+
+    }
+
+  }
+
+
+  /* ======================================================
+     RECUSAR PERMUTA MONTADA
+  ====================================================== */
+
+  async function recusarPermutaManual(
+    permuta: PermutaManualResumo
+  ) {
+
+    if (!usuarioId) {
+      return;
+    }
+
+
+    const confirmou =
+      window.confirm(
+        permuta.tipo === "direta"
+          ? "Deseja realmente recusar esta proposta de permuta direta?"
+          : "Deseja realmente recusar esta proposta de permuta em cadeia? Ao recusar, o ciclo inteiro será encerrado."
+      );
+
+
+    if (!confirmou) {
+      return;
+    }
+
+
+    setProcessandoManual(
+      permuta.ciclo_id
+    );
+
+    setMensagemErro("");
+    setMensagemSucesso("");
+
+
+    try {
+
+      const {
+        error
+      } = await supabase.rpc(
+        "recusar_permuta_manual",
+        {
+          p_ciclo_id:
+            permuta.ciclo_id,
+
+          p_usuario_id:
+            usuarioId
+        }
+      );
+
+
+      if (error) {
+        throw error;
+      }
+
+
+      await carregarPropostas(
+        false
+      );
+
+
+      setMensagemSucesso(
+        "A proposta de permuta montada foi recusada."
+      );
+
+
+      window.dispatchEvent(
+        new Event(
+          "atualizar-notificacoes"
+        )
+      );
+
+    }
+
+    catch(error) {
+
+      console.error(
+        "Erro ao recusar permuta montada:",
+        error
+      );
+
+
+      setMensagemErro(
+        extrairMensagemErro(
+          error
+        )
+      );
+
+    }
+
+    finally {
+
+      setProcessandoManual(
+        null
+      );
+
+    }
+
+  }
+
+
+  /* ======================================================
+     ABRIR ENCERRAMENTO DA PERMUTA MONTADA
+  ====================================================== */
+
+  function abrirEncerramentoManual(
+    permuta: PermutaManualResumo
+  ) {
+
+    setMensagemErro("");
+    setMensagemSucesso("");
+
+    setPermutaManualEncerramento(
+      permuta
+    );
+
+  }
+
+
+  /* ======================================================
+     ENCERRAR PERMUTA MONTADA
+  ====================================================== */
+
+  async function encerrarPermutaManual(
+    resultado: "sucesso" | "sem_sucesso"
+  ) {
+
+    if (
+      !permutaManualEncerramento ||
+      !usuarioId
+    ) {
+      return;
+    }
+
+
+    setProcessandoEncerramentoManual(
+      true
+    );
+
+    setMensagemErro("");
+    setMensagemSucesso("");
+
+
+    try {
+
+      const {
+        error
+      } = await supabase.rpc(
+        "encerrar_permuta_manual",
+        {
+          p_ciclo_id:
+            permutaManualEncerramento.ciclo_id,
+
+          p_usuario_id:
+            usuarioId,
+
+          p_resultado:
+            resultado
+        }
+      );
+
+
+      if (error) {
+        throw error;
+      }
+
+
+      setPermutaManualEncerramento(
+        null
+      );
+
+
+      await carregarPropostas(
+        false
+      );
+
+
+      if (resultado === "sucesso") {
+
+        setMensagemSucesso(
+          "Permuta concluída com sucesso. Os participantes foram liberados para novas oportunidades."
+        );
+
+      }
+
+      else {
+
+        setMensagemSucesso(
+          "Permuta encerrada sem sucesso. Os participantes foram liberados para novas oportunidades."
+        );
+
+      }
+
+
+      window.dispatchEvent(
+        new Event(
+          "atualizar-notificacoes"
+        )
+      );
+
+
+      if (resultado === "sucesso") {
+
+        router.push(
+          "/dashboard"
+        );
+
+        router.refresh();
+
+      }
+
+    }
+
+    catch(error) {
+
+      console.error(
+        "Erro ao encerrar permuta montada:",
+        error
+      );
+
+
+      setMensagemErro(
+        extrairMensagemErro(
+          error
+        )
+      );
+
+    }
+
+    finally {
+
+      setProcessandoEncerramentoManual(
+        false
+      );
+
+    }
+
+  }
+
+
+  /* ======================================================
      SEPARAÇÃO
   ====================================================== */
 
@@ -1347,6 +1837,20 @@ export default function PropostasPage() {
       item =>
         item.solicitante_id ===
         usuarioId
+    );
+
+
+  const permutasManuaisRecebidas =
+    permutasManuais.filter(
+      item =>
+        !item.enviada_por_mim
+    );
+
+
+  const permutasManuaisEnviadas =
+    permutasManuais.filter(
+      item =>
+        item.enviada_por_mim
     );
 
 
@@ -1643,6 +2147,41 @@ export default function PropostasPage() {
                 />
 
 
+                <SecaoPermutasManuais
+                  titulo="Permutas montadas recebidas"
+
+                  vazio="Você ainda não recebeu nenhuma permuta montada por outro servidor."
+
+                  permutas={
+                    permutasManuaisRecebidas
+                  }
+
+                  detalhes={
+                    detalhesManuais
+                  }
+
+                  usuarioId={
+                    usuarioId
+                  }
+
+                  processando={
+                    processandoManual
+                  }
+
+                  onAceitar={
+                    aceitarPermutaManual
+                  }
+
+                  onRecusar={
+                    recusarPermutaManual
+                  }
+
+                  onEncerrar={
+                    abrirEncerramentoManual
+                  }
+                />
+
+
                 <SecaoPropostas
                   titulo="Propostas enviadas"
 
@@ -1684,6 +2223,41 @@ export default function PropostasPage() {
 
                   onEncerrar={
                     abrirEncerramento
+                  }
+                />
+
+
+                <SecaoPermutasManuais
+                  titulo="Permutas montadas enviadas"
+
+                  vazio="Você ainda não montou nenhuma proposta manual."
+
+                  permutas={
+                    permutasManuaisEnviadas
+                  }
+
+                  detalhes={
+                    detalhesManuais
+                  }
+
+                  usuarioId={
+                    usuarioId
+                  }
+
+                  processando={
+                    processandoManual
+                  }
+
+                  onAceitar={
+                    aceitarPermutaManual
+                  }
+
+                  onRecusar={
+                    recusarPermutaManual
+                  }
+
+                  onEncerrar={
+                    abrirEncerramentoManual
                   }
                 />
 
@@ -1788,6 +2362,41 @@ export default function PropostasPage() {
               onSemSucesso={() =>
                 encerrarPermuta(
                   false
+                )
+              }
+            />
+
+          )
+        }
+
+
+        {
+          permutaManualEncerramento && (
+
+            <ModalEncerrarPermutaManual
+              permuta={
+                permutaManualEncerramento
+              }
+
+              processando={
+                processandoEncerramentoManual
+              }
+
+              onFechar={() =>
+                setPermutaManualEncerramento(
+                  null
+                )
+              }
+
+              onSucesso={() =>
+                encerrarPermutaManual(
+                  "sucesso"
+                )
+              }
+
+              onSemSucesso={() =>
+                encerrarPermutaManual(
+                  "sem_sucesso"
                 )
               }
             />
@@ -2812,6 +3421,932 @@ function CardProposta({
 
 
     </article>
+
+  );
+
+}
+
+
+/* ======================================================
+   SEÇÃO DE PERMUTAS MONTADAS
+====================================================== */
+
+function SecaoPermutasManuais({
+  titulo,
+  vazio,
+  permutas,
+  detalhes,
+  usuarioId,
+  processando,
+  onAceitar,
+  onRecusar,
+  onEncerrar
+}: {
+  titulo: string;
+  vazio: string;
+  permutas: PermutaManualResumo[];
+  detalhes: Record<string, PermutaManualDetalhe[]>;
+  usuarioId: string;
+  processando: string | null;
+  onAceitar: (permuta: PermutaManualResumo) => void;
+  onRecusar: (permuta: PermutaManualResumo) => void;
+  onEncerrar: (permuta: PermutaManualResumo) => void;
+}) {
+
+  return (
+
+    <section className="
+      overflow-hidden
+      rounded-2xl
+      border
+      border-cyan-300/10
+      bg-[#0d2232]
+      shadow-[0_16px_40px_rgba(0,0,0,0.16)]
+    ">
+
+      <div className="
+        border-b
+        border-cyan-300/10
+        bg-[#0a1f2f]
+        px-6
+        py-5
+      ">
+
+        <div className="
+          flex
+          flex-wrap
+          items-center
+          justify-between
+          gap-3
+        ">
+
+          <div>
+
+            <h2 className="
+              text-2xl
+              font-bold
+              text-white
+            ">
+              {titulo}
+            </h2>
+
+            <p className="
+              mt-1
+              text-sm
+              text-slate-400
+            ">
+              Permutas diretas ou em cadeia montadas manualmente pelos servidores.
+            </p>
+
+          </div>
+
+          <span className="
+            rounded-full
+            border
+            border-cyan-300/15
+            bg-cyan-400/[0.07]
+            px-3
+            py-1.5
+            text-xs
+            font-semibold
+            text-cyan-200
+          ">
+            Nova ferramenta
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <div className="
+        space-y-4
+        p-6
+      ">
+
+        {
+          permutas.length === 0
+
+            ? (
+
+              <div className="
+                rounded-xl
+                border
+                border-dashed
+                border-cyan-300/15
+                bg-[#081b29]
+                p-7
+                text-center
+                text-sm
+                text-slate-400
+              ">
+                {vazio}
+              </div>
+
+            )
+
+            : (
+
+              permutas.map(
+                permuta => (
+
+                  <CardPermutaManual
+                    key={permuta.ciclo_id}
+                    permuta={permuta}
+                    participantes={detalhes[permuta.ciclo_id] ?? []}
+                    usuarioId={usuarioId}
+                    processando={processando === permuta.ciclo_id}
+                    onAceitar={() => onAceitar(permuta)}
+                    onRecusar={() => onRecusar(permuta)}
+                    onEncerrar={() => onEncerrar(permuta)}
+                  />
+
+                )
+              )
+
+            )
+        }
+
+      </div>
+
+    </section>
+
+  );
+
+}
+
+
+/* ======================================================
+   CARD DE PERMUTA MONTADA
+====================================================== */
+
+function CardPermutaManual({
+  permuta,
+  participantes,
+  usuarioId,
+  processando,
+  onAceitar,
+  onRecusar,
+  onEncerrar
+}: {
+  permuta: PermutaManualResumo;
+  participantes: PermutaManualDetalhe[];
+  usuarioId: string;
+  processando: boolean;
+  onAceitar: () => void;
+  onRecusar: () => void;
+  onEncerrar: () => void;
+}) {
+
+  const direta =
+    permuta.quantidade_participantes === 2;
+
+  const pendente =
+    permuta.status === "aguardando_aceite";
+
+  const confirmado =
+    permuta.status === "confirmado";
+
+  const recusado =
+    permuta.status === "recusado";
+
+  const cancelado =
+    permuta.status === "cancelado" ||
+    permuta.status === "cancelado_indisponibilidade";
+
+  const concluido =
+    permuta.status === "concluido";
+
+  const semSucesso =
+    permuta.status === "encerrado_sem_sucesso";
+
+  const meuParticipante =
+    participantes.find(
+      item =>
+        item.participante_id === usuarioId
+    );
+
+  const jaAceitou =
+    meuParticipante?.status_aceite === "aceito";
+
+  const souCriador =
+    permuta.criado_por === usuarioId;
+
+  const aceites =
+    participantes.filter(
+      item =>
+        item.status_aceite === "aceito"
+    ).length;
+
+  const titulo =
+    direta
+      ? "Permuta direta montada"
+      : `Ciclo de ${permuta.quantidade_participantes} participantes`;
+
+  const contatoCriador =
+    participantes.find(
+      item =>
+        item.eh_criador
+    );
+
+
+  return (
+
+    <article className="
+      rounded-2xl
+      border
+      border-cyan-300/10
+      bg-[#081b29]
+      p-5
+      shadow-[0_12px_30px_rgba(0,0,0,0.14)]
+    ">
+
+      <div className="
+        flex
+        flex-wrap
+        items-start
+        justify-between
+        gap-4
+      ">
+
+        <div>
+
+          <div className="
+            flex
+            flex-wrap
+            items-center
+            gap-2
+          ">
+
+            <h3 className="
+              text-lg
+              font-bold
+              text-white
+            ">
+              {titulo}
+            </h3>
+
+            <span className="
+              rounded-full
+              border
+              border-cyan-300/15
+              bg-cyan-400/[0.07]
+              px-2.5
+              py-1
+              text-xs
+              font-semibold
+              text-cyan-200
+            ">
+              Montada por servidor
+            </span>
+
+          </div>
+
+          <div className="mt-2">
+            <Status status={permuta.status} />
+          </div>
+
+        </div>
+
+        <span className="
+          text-sm
+          text-slate-400
+        ">
+          {new Date(permuta.created_at).toLocaleDateString("pt-BR")}
+        </span>
+
+      </div>
+
+
+      <div className="
+        mt-5
+        rounded-xl
+        border
+        border-cyan-300/10
+        bg-cyan-400/[0.04]
+        p-4
+      ">
+
+        <p className="
+          text-sm
+          font-semibold
+          text-cyan-100
+        ">
+          Como funciona esta proposta
+        </p>
+
+        <p className="
+          mt-1
+          text-sm
+          leading-6
+          text-slate-400
+        ">
+          {direta
+            ? "Os dois participantes precisam aceitar para confirmar a permuta."
+            : `Os ${permuta.quantidade_participantes} participantes precisam aceitar. Se um deles recusar, o ciclo inteiro é encerrado.`}
+        </p>
+
+      </div>
+
+
+      {permuta.mensagem && (
+
+        <div className="
+          mt-4
+          rounded-xl
+          border
+          border-teal-300/10
+          bg-[#0d2232]
+          p-4
+        ">
+
+          <p className="
+            text-xs
+            font-semibold
+            uppercase
+            tracking-wide
+            text-slate-500
+          ">
+            Mensagem do proponente
+          </p>
+
+          <p className="
+            mt-2
+            whitespace-pre-wrap
+            text-sm
+            leading-6
+            text-slate-300
+          ">
+            {permuta.mensagem}
+          </p>
+
+        </div>
+
+      )}
+
+
+      <div className="
+        mt-5
+        space-y-3
+      ">
+
+        {participantes.map(
+          participante => (
+
+            <div
+              key={participante.participante_id}
+              className="
+                rounded-xl
+                border
+                border-teal-300/10
+                bg-[#0d2232]
+                p-4
+              "
+            >
+
+              <div className="
+                flex
+                flex-col
+                gap-3
+                md:flex-row
+                md:items-center
+                md:justify-between
+              ">
+
+                <div className="
+                  flex
+                  min-w-0
+                  items-start
+                  gap-3
+                ">
+
+                  <div className="
+                    flex
+                    h-9
+                    w-9
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-full
+                    bg-teal-400/[0.08]
+                    text-teal-300
+                  ">
+                    <UserRound size={17} />
+                  </div>
+
+                  <div className="min-w-0">
+
+                    <p className="
+                      font-semibold
+                      text-white
+                    ">
+                      {participante.ordem}. {participante.participante_nome}
+                      {participante.participante_id === usuarioId ? " (você)" : ""}
+                    </p>
+
+                    <p className="
+                      mt-1
+                      text-xs
+                      text-slate-500
+                    ">
+                      {participante.participante_cargo || "Cargo não informado"}
+                    </p>
+
+                  </div>
+
+                </div>
+
+
+                <div className="
+                  inline-flex
+                  items-center
+                  gap-2
+                  text-xs
+                  font-semibold
+                ">
+
+                  {participante.status_aceite === "aceito" ? (
+                    <span className="text-emerald-300">✓ Aceitou</span>
+                  ) : participante.status_aceite === "recusado" ? (
+                    <span className="text-red-300">✕ Recusou</span>
+                  ) : (
+                    <span className="text-amber-300">⏳ Aguardando</span>
+                  )}
+
+                </div>
+
+              </div>
+
+
+              <div className="
+                mt-3
+                flex
+                flex-wrap
+                items-center
+                gap-2
+                text-sm
+                text-slate-300
+              ">
+
+                <span>
+                  {participante.origem_comarca_nome || "Origem não informada"}
+                </span>
+
+                <ArrowRight
+                  size={15}
+                  className="text-cyan-300"
+                />
+
+                <span className="font-semibold text-cyan-200">
+                  {participante.destino_comarca_nome || "Destino não informado"}
+                </span>
+
+              </div>
+
+            </div>
+
+          )
+        )}
+
+      </div>
+
+
+      {pendente && (
+
+        <div className="
+          mt-5
+          flex
+          flex-wrap
+          items-center
+          gap-3
+        ">
+
+          {!souCriador && !jaAceitou && (
+
+            <>
+
+              <button
+                type="button"
+                disabled={processando}
+                onClick={onAceitar}
+                className="
+                  inline-flex
+                  items-center
+                  gap-2
+                  rounded-xl
+                  bg-emerald-600
+                  px-4
+                  py-2.5
+                  text-sm
+                  font-semibold
+                  text-white
+                  transition
+                  hover:bg-emerald-500
+                  disabled:opacity-50
+                "
+              >
+                <CheckCircle2 size={17} />
+                {processando ? "Processando..." : "Aceitar proposta"}
+              </button>
+
+              <button
+                type="button"
+                disabled={processando}
+                onClick={onRecusar}
+                className="
+                  inline-flex
+                  items-center
+                  gap-2
+                  rounded-xl
+                  border
+                  border-red-400/20
+                  bg-red-400/[0.08]
+                  px-4
+                  py-2.5
+                  text-sm
+                  font-semibold
+                  text-red-300
+                  transition
+                  hover:bg-red-400/12
+                  disabled:opacity-50
+                "
+              >
+                <XCircle size={17} />
+                Recusar proposta
+              </button>
+
+            </>
+
+          )}
+
+
+          {jaAceitou && (
+            <span className="
+              inline-flex
+              items-center
+              gap-2
+              rounded-xl
+              bg-emerald-400/[0.08]
+              px-4
+              py-2.5
+              text-sm
+              font-semibold
+              text-emerald-300
+            ">
+              <CheckCircle2 size={17} />
+              Você já aceitou
+            </span>
+          )}
+
+
+          <span className="
+            text-sm
+            text-slate-400
+          ">
+            {aceites} de {permuta.quantidade_participantes} aceitaram
+          </span>
+
+        </div>
+
+      )}
+
+
+      {pendente && contatoCriador && (
+
+        <ContatoCriadorManual
+          participante={contatoCriador}
+        />
+
+      )}
+
+
+      {confirmado && (
+
+        <div className="
+          mt-5
+          rounded-xl
+          border
+          border-emerald-300/20
+          bg-emerald-400/[0.08]
+          p-4
+        ">
+
+          <p className="
+            font-semibold
+            text-emerald-200
+          ">
+            Permuta confirmada
+          </p>
+
+          <p className="
+            mt-1
+            text-sm
+            leading-6
+            text-emerald-300
+          ">
+            Todos os participantes aceitaram. Os contatos autorizados estão disponíveis abaixo.
+          </p>
+
+          <div className="
+            mt-4
+            grid
+            gap-3
+            md:grid-cols-2
+          ">
+
+            {participantes.map(
+              participante => (
+                <ContatoParticipanteManual
+                  key={participante.participante_id}
+                  participante={participante}
+                />
+              )
+            )}
+
+          </div>
+
+          <div className="
+            mt-5
+            border-t
+            border-emerald-300/15
+            pt-4
+          ">
+
+            <p className="
+              text-sm
+              font-semibold
+              text-slate-200
+            ">
+              A permuta já foi resolvida?
+            </p>
+
+            <p className="
+              mt-1
+              text-sm
+              leading-6
+              text-slate-400
+            ">
+              Quando houver uma definição entre os participantes, encerre a permuta para liberar todos os perfis.
+            </p>
+
+            <button
+              type="button"
+              disabled={processando}
+              onClick={onEncerrar}
+              className="
+                mt-4
+                inline-flex
+                items-center
+                gap-2
+                rounded-xl
+                border
+                border-emerald-300/20
+                bg-emerald-400/[0.08]
+                px-4
+                py-2.5
+                text-sm
+                font-semibold
+                text-emerald-200
+                transition
+                hover:bg-emerald-400/[0.13]
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+              "
+            >
+              <CheckCircle2 size={17} />
+              Encerrar permuta
+            </button>
+
+          </div>
+
+        </div>
+
+      )}
+
+
+      {concluido && (
+        <div className="
+          mt-5
+          rounded-xl
+          border
+          border-teal-300/15
+          bg-teal-400/[0.07]
+          p-4
+        ">
+          <p className="
+            font-semibold
+            text-teal-200
+          ">
+            Permuta concluída com sucesso
+          </p>
+
+          <p className="
+            mt-1
+            text-sm
+            leading-6
+            text-slate-300
+          ">
+            A permuta foi concluída e os participantes estão novamente disponíveis para novas oportunidades.
+          </p>
+        </div>
+      )}
+
+
+      {semSucesso && (
+        <div className="
+          mt-5
+          rounded-xl
+          border
+          border-slate-600/30
+          bg-white/[0.03]
+          p-4
+        ">
+          <p className="
+            font-semibold
+            text-slate-200
+          ">
+            Permuta encerrada sem sucesso
+          </p>
+
+          <p className="
+            mt-1
+            text-sm
+            leading-6
+            text-slate-400
+          ">
+            A permuta não foi concluída. Os participantes estão novamente disponíveis para novas oportunidades.
+          </p>
+        </div>
+      )}
+
+
+      {recusado && (
+        <div className="
+          mt-5
+          rounded-xl
+          border
+          border-red-400/15
+          bg-red-400/[0.06]
+          p-4
+          text-sm
+          text-red-200
+        ">
+          Esta proposta foi encerrada porque um dos participantes recusou.
+        </div>
+      )}
+
+
+      {cancelado && (
+        <div className="
+          mt-5
+          rounded-xl
+          border
+          border-amber-300/15
+          bg-amber-400/[0.06]
+          p-4
+          text-sm
+          text-amber-200
+        ">
+          Esta proposta não está mais disponível.
+        </div>
+      )}
+
+    </article>
+
+  );
+
+}
+
+
+function ContatoCriadorManual({
+  participante
+}: {
+  participante: PermutaManualDetalhe;
+}) {
+
+  const possuiContato =
+    Boolean(
+      participante.email ||
+      participante.telefone ||
+      participante.teams
+    );
+
+
+  return (
+
+    <div className="
+      mt-5
+      rounded-xl
+      border
+      border-cyan-300/15
+      bg-cyan-400/[0.05]
+      p-4
+    ">
+
+      <p className="
+        text-sm
+        font-bold
+        text-cyan-100
+      ">
+        Contato de quem montou a proposta
+      </p>
+
+      <p className="
+        mt-1
+        text-xs
+        text-slate-400
+      ">
+        {participante.participante_nome}
+      </p>
+
+      {possuiContato ? (
+        <div className="mt-3 space-y-2 text-sm text-slate-300">
+          {participante.email && (
+            <p className="flex items-center gap-2">
+              <Mail size={15} />
+              {participante.email}
+            </p>
+          )}
+          {participante.telefone && (
+            <p className="flex items-center gap-2">
+              <Phone size={15} />
+              {participante.telefone}
+            </p>
+          )}
+          {participante.teams && (
+            <p>
+              <strong>Teams:</strong> {participante.teams}
+            </p>
+          )}
+        </div>
+      ) : (
+        <p className="mt-3 text-sm text-slate-400">
+          O proponente ainda não autorizou a exibição de um contato.
+        </p>
+      )}
+
+    </div>
+
+  );
+
+}
+
+
+function ContatoParticipanteManual({
+  participante
+}: {
+  participante: PermutaManualDetalhe;
+}) {
+
+  const possuiContato =
+    Boolean(
+      participante.email ||
+      participante.telefone ||
+      participante.teams
+    );
+
+
+  return (
+
+    <div className="
+      rounded-xl
+      border
+      border-emerald-300/10
+      bg-[#081b29]
+      p-4
+    ">
+
+      <p className="font-semibold text-white">
+        {participante.participante_nome}
+      </p>
+
+      {possuiContato ? (
+        <div className="mt-3 space-y-2 text-sm text-slate-300">
+          {participante.email && (
+            <p className="flex items-center gap-2">
+              <Mail size={15} />
+              {participante.email}
+            </p>
+          )}
+          {participante.telefone && (
+            <p className="flex items-center gap-2">
+              <Phone size={15} />
+              {participante.telefone}
+            </p>
+          )}
+          {participante.teams && (
+            <p>
+              <strong>Teams:</strong> {participante.teams}
+            </p>
+          )}
+        </div>
+      ) : (
+        <p className="mt-2 text-xs text-slate-500">
+          Nenhum contato autorizado para exibição.
+        </p>
+      )}
+
+    </div>
 
   );
 
@@ -4561,6 +6096,257 @@ function Status({
       />
 
       Cancelada
+
+    </div>
+
+  );
+
+}
+
+
+
+/* ======================================================
+   MODAL ENCERRAR PERMUTA MONTADA
+====================================================== */
+
+function ModalEncerrarPermutaManual({
+  permuta,
+  processando,
+  onFechar,
+  onSucesso,
+  onSemSucesso
+}: {
+  permuta: PermutaManualResumo;
+  processando: boolean;
+  onFechar: () => void;
+  onSucesso: () => void;
+  onSemSucesso: () => void;
+}) {
+
+  const descricao =
+    permuta.quantidade_participantes === 2
+      ? "permuta direta"
+      : `ciclo de ${permuta.quantidade_participantes} participantes`;
+
+
+  return (
+
+    <div className="
+      fixed
+      inset-0
+      z-[110]
+      flex
+      items-center
+      justify-center
+      bg-slate-950/70
+      px-4
+      py-8
+      backdrop-blur-sm
+    ">
+
+      <div className="
+        w-full
+        max-w-lg
+        overflow-hidden
+        rounded-2xl
+        border
+        border-teal-300/10
+        bg-[#0d2232]
+        shadow-2xl
+      ">
+
+        <div className="
+          flex
+          items-start
+          justify-between
+          gap-4
+          border-b
+          border-teal-300/10
+          px-6
+          py-5
+        ">
+
+          <div>
+
+            <h2 className="
+              text-xl
+              font-bold
+              text-white
+            ">
+              Encerrar permuta
+            </h2>
+
+            <p className="
+              mt-1
+              text-sm
+              text-slate-400
+            ">
+              Informe o resultado desta {descricao}.
+            </p>
+
+          </div>
+
+          <button
+            type="button"
+            aria-label="Fechar"
+            disabled={processando}
+            onClick={onFechar}
+            className="
+              flex
+              h-9
+              w-9
+              items-center
+              justify-center
+              rounded-lg
+              text-slate-400
+              transition
+              hover:bg-white/5
+              hover:text-white
+              disabled:opacity-50
+            "
+          >
+            <X size={20} />
+          </button>
+
+        </div>
+
+
+        <div className="
+          space-y-4
+          px-6
+          py-6
+        ">
+
+          <p className="
+            text-sm
+            leading-6
+            text-slate-300
+          ">
+            O encerramento libera todos os participantes para novas oportunidades. Se a permuta tiver sido concluída, cada participante poderá avaliar a experiência no Permuta TJSP.
+          </p>
+
+
+          <button
+            type="button"
+            disabled={processando}
+            onClick={onSucesso}
+            className="
+              flex
+              w-full
+              items-start
+              gap-3
+              rounded-xl
+              border
+              border-emerald-300/20
+              bg-emerald-400/[0.08]
+              p-4
+              text-left
+              transition
+              hover:bg-emerald-400/[0.13]
+              disabled:opacity-50
+            "
+          >
+
+            <CheckCircle2
+              className="
+                mt-0.5
+                h-5
+                w-5
+                shrink-0
+                text-emerald-300
+              "
+            />
+
+            <span>
+              <span className="
+                block
+                font-semibold
+                text-emerald-200
+              ">
+                Sim, a permuta deu certo
+              </span>
+
+              <span className="
+                mt-1
+                block
+                text-sm
+                leading-5
+                text-emerald-300/90
+              ">
+                Registra a conclusão com sucesso e libera os participantes.
+              </span>
+            </span>
+
+          </button>
+
+
+          <button
+            type="button"
+            disabled={processando}
+            onClick={onSemSucesso}
+            className="
+              flex
+              w-full
+              items-start
+              gap-3
+              rounded-xl
+              border
+              border-red-400/20
+              bg-red-400/[0.07]
+              p-4
+              text-left
+              transition
+              hover:bg-red-400/[0.11]
+              disabled:opacity-50
+            "
+          >
+
+            <XCircle
+              className="
+                mt-0.5
+                h-5
+                w-5
+                shrink-0
+                text-red-300
+              "
+            />
+
+            <span>
+              <span className="
+                block
+                font-semibold
+                text-red-200
+              ">
+                Não, a permuta não deu certo
+              </span>
+
+              <span className="
+                mt-1
+                block
+                text-sm
+                leading-5
+                text-red-300/90
+              ">
+                Registra o encerramento sem sucesso e libera os participantes.
+              </span>
+            </span>
+
+          </button>
+
+
+          {processando && (
+            <p className="
+              text-center
+              text-sm
+              text-slate-400
+            ">
+              Processando encerramento...
+            </p>
+          )}
+
+        </div>
+
+      </div>
 
     </div>
 
