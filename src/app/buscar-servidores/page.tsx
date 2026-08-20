@@ -212,16 +212,32 @@ export default function BuscarServidoresPage() {
 
 
   const [
-    rajSelecionada,
-    setRajSelecionada
+    rajAtualSelecionada,
+    setRajAtualSelecionada
   ] = useState<number | null>(
     null
   );
 
 
   const [
-    circunscricaoSelecionada,
-    setCircunscricaoSelecionada
+    circunscricaoAtualSelecionada,
+    setCircunscricaoAtualSelecionada
+  ] = useState<number | null>(
+    null
+  );
+
+
+  const [
+    rajDestinoSelecionada,
+    setRajDestinoSelecionada
+  ] = useState<number | null>(
+    null
+  );
+
+
+  const [
+    circunscricaoDestinoSelecionada,
+    setCircunscricaoDestinoSelecionada
   ] = useState<number | null>(
     null
   );
@@ -265,14 +281,6 @@ export default function BuscarServidoresPage() {
     abrirComarcaDestino,
     setAbrirComarcaDestino
   ] = useState(false);
-
-
-  const [
-    ordenacao,
-    setOrdenacao
-  ] = useState<"AZ" | "ZA">(
-    "AZ"
-  );
 
 
   const [
@@ -679,112 +687,111 @@ export default function BuscarServidoresPage() {
     );
 
 
-  const circunscricoesFiltradas =
+  const circunscricoesAtuaisFiltradas =
     useMemo(
       () => {
 
-        if (!rajSelecionada) {
+        if (!rajAtualSelecionada) {
           return circunscricoes;
         }
 
-
         return circunscricoes.filter(
-          item =>
-            item.raj_id ===
-            rajSelecionada
+          item => item.raj_id === rajAtualSelecionada
         );
-
       },
-      [
-        circunscricoes,
-        rajSelecionada
-      ]
+      [circunscricoes, rajAtualSelecionada]
     );
 
 
-  const comarcasPermitidasPelosFiltros =
+  const circunscricoesDestinoFiltradas =
     useMemo(
       () => {
 
-        let lista =
-          [...comarcas];
-
-
-        if (circunscricaoSelecionada) {
-
-          lista = lista.filter(
-            comarca =>
-              comarca.circunscricao_id ===
-              circunscricaoSelecionada
-          );
-
-          return lista;
+        if (!rajDestinoSelecionada) {
+          return circunscricoes;
         }
 
-
-        if (rajSelecionada) {
-
-          const idsCircunscricoes =
-            new Set(
-              circunscricoes
-                .filter(
-                  item =>
-                    item.raj_id ===
-                    rajSelecionada
-                )
-                .map(
-                  item =>
-                    item.id
-                )
-            );
-
-
-          lista = lista.filter(
-            comarca =>
-              idsCircunscricoes.has(
-                comarca.circunscricao_id
-              )
-          );
-        }
-
-
-        return lista;
-
+        return circunscricoes.filter(
+          item => item.raj_id === rajDestinoSelecionada
+        );
       },
-      [
-        comarcas,
-        circunscricoes,
-        rajSelecionada,
-        circunscricaoSelecionada
-      ]
+      [circunscricoes, rajDestinoSelecionada]
+    );
+
+
+  const comarcasAtuaisPermitidas =
+    useMemo(
+      () => {
+
+        if (circunscricaoAtualSelecionada) {
+          return comarcas.filter(
+            comarca => comarca.circunscricao_id === circunscricaoAtualSelecionada
+          );
+        }
+
+        if (rajAtualSelecionada) {
+          const ids = new Set(
+            circunscricoes
+              .filter(item => item.raj_id === rajAtualSelecionada)
+              .map(item => item.id)
+          );
+
+          return comarcas.filter(
+            comarca => ids.has(comarca.circunscricao_id)
+          );
+        }
+
+        return comarcas;
+      },
+      [comarcas, circunscricoes, rajAtualSelecionada, circunscricaoAtualSelecionada]
+    );
+
+
+  const comarcasDestinoPermitidas =
+    useMemo(
+      () => {
+
+        if (circunscricaoDestinoSelecionada) {
+          return comarcas.filter(
+            comarca => comarca.circunscricao_id === circunscricaoDestinoSelecionada
+          );
+        }
+
+        if (rajDestinoSelecionada) {
+          const ids = new Set(
+            circunscricoes
+              .filter(item => item.raj_id === rajDestinoSelecionada)
+              .map(item => item.id)
+          );
+
+          return comarcas.filter(
+            comarca => ids.has(comarca.circunscricao_id)
+          );
+        }
+
+        return comarcas;
+      },
+      [comarcas, circunscricoes, rajDestinoSelecionada, circunscricaoDestinoSelecionada]
     );
 
 
   const opcoesComarcaAtual =
     useMemo(
-      () =>
-        filtrarComarcas(
-          comarcasPermitidasPelosFiltros,
-          buscaComarcaAtual
-        ),
-      [
-        comarcasPermitidasPelosFiltros,
+      () => filtrarComarcas(
+        comarcasAtuaisPermitidas,
         buscaComarcaAtual
-      ]
+      ),
+      [comarcasAtuaisPermitidas, buscaComarcaAtual]
     );
 
 
   const opcoesComarcaDestino =
     useMemo(
-      () =>
-        filtrarComarcas(
-          comarcas,
-          buscaComarcaDestino
-        ),
-      [
-        comarcas,
+      () => filtrarComarcas(
+        comarcasDestinoPermitidas,
         buscaComarcaDestino
-      ]
+      ),
+      [comarcasDestinoPermitidas, buscaComarcaDestino]
     );
 
 
@@ -1103,95 +1110,59 @@ export default function BuscarServidoresPage() {
      SELEÇÃO DE FILTROS
   ====================================================== */
 
-  function alterarRaj(
-    valor: string
-  ) {
-
-    const novoValor =
-      valor
-        ? Number(valor)
-        : null;
-
-
-    setRajSelecionada(
-      novoValor
-    );
-
-    setCircunscricaoSelecionada(
-      null
-    );
-
+  function alterarRajAtual(valor: string) {
+    const novoValor = valor ? Number(valor) : null;
+    setRajAtualSelecionada(novoValor);
+    setCircunscricaoAtualSelecionada(null);
     limparComarcaAtual();
   }
 
 
-  function alterarCircunscricao(
-    valor: string
-  ) {
-
-    const novoValor =
-      valor
-        ? Number(valor)
-        : null;
-
-
-    setCircunscricaoSelecionada(
-      novoValor
-    );
-
+  function alterarCircunscricaoAtual(valor: string) {
+    const novoValor = valor ? Number(valor) : null;
+    setCircunscricaoAtualSelecionada(novoValor);
     limparComarcaAtual();
   }
 
 
-  function selecionarComarcaAtual(
-    comarca: Comarca
-  ) {
+  function alterarRajDestino(valor: string) {
+    const novoValor = valor ? Number(valor) : null;
+    setRajDestinoSelecionada(novoValor);
+    setCircunscricaoDestinoSelecionada(null);
+    limparComarcaDestino();
+  }
 
-    setComarcaAtualSelecionada(
-      comarca
-    );
 
-    setBuscaComarcaAtual(
-      comarca.nome
-    );
+  function alterarCircunscricaoDestino(valor: string) {
+    const novoValor = valor ? Number(valor) : null;
+    setCircunscricaoDestinoSelecionada(novoValor);
+    limparComarcaDestino();
+  }
 
+
+  function selecionarComarcaAtual(comarca: Comarca) {
+    setComarcaAtualSelecionada(comarca);
+    setBuscaComarcaAtual(comarca.nome);
     setAbrirComarcaAtual(false);
   }
 
 
   function limparComarcaAtual() {
-
-    setComarcaAtualSelecionada(
-      null
-    );
-
+    setComarcaAtualSelecionada(null);
     setBuscaComarcaAtual("");
     setAbrirComarcaAtual(false);
   }
 
 
-  function selecionarComarcaDestino(
-    comarca: Comarca
-  ) {
-
-    setComarcaDestinoSelecionada(
-      comarca
-    );
-
-    setBuscaComarcaDestino(
-      comarca.nome
-    );
-
+  function selecionarComarcaDestino(comarca: Comarca) {
+    setComarcaDestinoSelecionada(comarca);
+    setBuscaComarcaDestino(comarca.nome);
     setAbrirComarcaDestino(false);
   }
 
 
   function limparComarcaDestino() {
-
-    setComarcaDestinoSelecionada(
-      null
-    );
-
+    setComarcaDestinoSelecionada(null);
     setBuscaComarcaDestino("");
     setAbrirComarcaDestino(false);
   }
@@ -1215,41 +1186,18 @@ export default function BuscarServidoresPage() {
 
     try {
 
-      const {
-        data,
-        error
-      } = await supabase.rpc(
-        "buscar_servidores_manual_v2",
+      const { data, error } = await supabase.rpc(
+        "buscar_servidores_manual_v3",
         {
-          p_usuario_id:
-            perfil.id,
-
-          p_nome:
-            nomeServidor.trim()
-              ? nomeServidor.trim()
-              : null,
-
-          p_comarca_atual_id:
-            comarcaAtualSelecionada
-              ?.id ?? null,
-
-          p_comarca_destino_id:
-            comarcaDestinoSelecionada
-              ?.id ?? null,
-
-          p_circunscricao_id:
-            circunscricaoSelecionada,
-
-          p_raj_id:
-            rajSelecionada,
-
-          p_ordenacao:
-            ordenacao,
-
-          p_limite:
-            ampliarResultados
-              ? 500
-              : 100
+          p_usuario_id: perfil.id,
+          p_nome: nomeServidor.trim() ? nomeServidor.trim() : null,
+          p_raj_atual_id: rajAtualSelecionada,
+          p_circunscricao_atual_id: circunscricaoAtualSelecionada,
+          p_comarca_atual_id: comarcaAtualSelecionada?.id ?? null,
+          p_raj_destino_id: rajDestinoSelecionada,
+          p_circunscricao_destino_id: circunscricaoDestinoSelecionada,
+          p_comarca_destino_id: comarcaDestinoSelecionada?.id ?? null,
+          p_limite: ampliarResultados ? 500 : 100
         }
       );
 
@@ -1259,9 +1207,11 @@ export default function BuscarServidoresPage() {
       }
 
 
-      setResultados(
-        (data ?? []) as ServidorResultado[]
-      );
+      const listaComDestino = ((data ?? []) as ServidorResultado[])
+        .filter(servidor => Array.isArray(servidor.destinos) && servidor.destinos.length > 0);
+
+
+      setResultados(listaComDestino);
 
       setPesquisou(true);
 
@@ -1295,13 +1245,14 @@ export default function BuscarServidoresPage() {
   function limparFiltros() {
 
     setNomeServidor("");
-    setRajSelecionada(null);
-    setCircunscricaoSelecionada(null);
+    setRajAtualSelecionada(null);
+    setCircunscricaoAtualSelecionada(null);
+    setRajDestinoSelecionada(null);
+    setCircunscricaoDestinoSelecionada(null);
 
     limparComarcaAtual();
     limparComarcaDestino();
 
-    setOrdenacao("AZ");
     setAmpliarResultados(false);
 
     setResultados([]);
@@ -1456,6 +1407,20 @@ export default function BuscarServidoresPage() {
     );
 
 
+    if (comarcaOrigem) {
+      const circOrigem = circunscricoes.find(item => item.id === comarcaOrigem.circunscricao_id) ?? null;
+      setCircunscricaoAtualSelecionada(circOrigem?.id ?? null);
+      setRajAtualSelecionada(circOrigem?.raj_id ?? null);
+    }
+
+
+    if (comarcaDestino) {
+      const circDestino = circunscricoes.find(item => item.id === comarcaDestino.circunscricao_id) ?? null;
+      setCircunscricaoDestinoSelecionada(circDestino?.id ?? null);
+      setRajDestinoSelecionada(circDestino?.raj_id ?? null);
+    }
+
+
     setBuscando(true);
     setErro("");
     setMensagemSucesso("");
@@ -1463,37 +1428,18 @@ export default function BuscarServidoresPage() {
 
     try {
 
-      const {
-        data,
-        error
-      } = await supabase.rpc(
-        "buscar_servidores_manual_v2",
+      const { data, error } = await supabase.rpc(
+        "buscar_servidores_manual_v3",
         {
-          p_usuario_id:
-            perfil.id,
-
-          p_nome:
-            null,
-
-          p_comarca_atual_id:
-            origemId,
-
-          p_comarca_destino_id:
-            destinoId,
-
-          p_circunscricao_id:
-            null,
-
-          p_raj_id:
-            null,
-
-          p_ordenacao:
-            "AZ",
-
-          p_limite:
-            ampliarResultados
-              ? 500
-              : 100
+          p_usuario_id: perfil.id,
+          p_nome: null,
+          p_raj_atual_id: null,
+          p_circunscricao_atual_id: null,
+          p_comarca_atual_id: origemId,
+          p_raj_destino_id: null,
+          p_circunscricao_destino_id: null,
+          p_comarca_destino_id: destinoId,
+          p_limite: ampliarResultados ? 500 : 100
         }
       );
 
@@ -1503,15 +1449,17 @@ export default function BuscarServidoresPage() {
       }
 
 
-      setResultados(
-        (data ?? []) as ServidorResultado[]
-      );
+      const listaComDestino = ((data ?? []) as ServidorResultado[])
+        .filter(servidor => Array.isArray(servidor.destinos) && servidor.destinos.length > 0);
+
+
+      setResultados(listaComDestino);
 
       setPesquisou(true);
 
 
       if (
-        (data ?? []).length === 0
+        listaComDestino.length === 0
       ) {
 
         setErro(
@@ -1695,7 +1643,7 @@ export default function BuscarServidoresPage() {
               <MiniEtapa
                 numero="1"
                 titulo="Pesquise"
-                texto="Use nome, RAJ, circunscrição e comarca para localizar servidores."
+                texto="Filtre separadamente onde o servidor está e para onde ele deseja ir."
               />
 
               <MiniEtapa
@@ -1858,124 +1806,94 @@ export default function BuscarServidoresPage() {
 
                 <div className="grid gap-5 p-6 md:grid-cols-2">
 
-                  <CampoTexto
-                    label="Nome do servidor"
-                    placeholder="Digite parte do nome"
-                    valor={nomeServidor}
-                    onChange={setNomeServidor}
-                  />
+                  <div className="md:col-span-2">
+                    <CampoTexto
+                      label="Nome do servidor"
+                      placeholder="Digite parte do nome"
+                      valor={nomeServidor}
+                      onChange={setNomeServidor}
+                    />
+                  </div>
 
 
-                  <CampoSelect
-                    label="RAJ"
-                    valor={
-                      rajSelecionada
-                        ?.toString() ?? ""
-                    }
-                    onChange={alterarRaj}
-                    opcoes={
-                      rajs.map(
-                        raj => ({
-                          valor: raj.id.toString(),
-                          rotulo: raj.nome
-                        })
-                      )
-                    }
-                    placeholder="Todas as RAJs"
-                  />
+                  <div className="md:col-span-2 rounded-xl border border-teal-300/10 bg-[#081b29] p-5">
+                    <div className="mb-5">
+                      <p className="text-sm font-bold text-white">Onde o servidor está atualmente</p>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">Filtre pela lotação atual do servidor.</p>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <CampoSelect
+                        label="RAJ atual"
+                        valor={rajAtualSelecionada?.toString() ?? ""}
+                        onChange={alterarRajAtual}
+                        opcoes={rajs.map(raj => ({ valor: raj.id.toString(), rotulo: raj.nome }))}
+                        placeholder="Todas as RAJs"
+                      />
+
+                      <CampoSelect
+                        label="Circunscrição atual"
+                        valor={circunscricaoAtualSelecionada?.toString() ?? ""}
+                        onChange={alterarCircunscricaoAtual}
+                        opcoes={circunscricoesAtuaisFiltradas.map(item => ({ valor: item.id.toString(), rotulo: item.nome }))}
+                        placeholder="Todas as circunscrições"
+                      />
+
+                      <AutocompleteComarca
+                        label="Comarca atual"
+                        placeholder="Digite a comarca atual"
+                        valor={buscaComarcaAtual}
+                        aberta={abrirComarcaAtual}
+                        selecionada={comarcaAtualSelecionada}
+                        opcoes={opcoesComarcaAtual}
+                        onFocus={() => setAbrirComarcaAtual(true)}
+                        onChange={valor => { setBuscaComarcaAtual(valor); setComarcaAtualSelecionada(null); setAbrirComarcaAtual(true); }}
+                        onSelecionar={selecionarComarcaAtual}
+                        onLimpar={limparComarcaAtual}
+                        onFechar={() => setAbrirComarcaAtual(false)}
+                      />
+                    </div>
+                  </div>
 
 
-                  <CampoSelect
-                    label="Circunscrição"
-                    valor={
-                      circunscricaoSelecionada
-                        ?.toString() ?? ""
-                    }
-                    onChange={alterarCircunscricao}
-                    opcoes={
-                      circunscricoesFiltradas.map(
-                        item => ({
-                          valor: item.id.toString(),
-                          rotulo: item.nome
-                        })
-                      )
-                    }
-                    placeholder="Todas as circunscrições"
-                  />
+                  <div className="md:col-span-2 rounded-xl border border-cyan-300/10 bg-[#081b29] p-5">
+                    <div className="mb-5">
+                      <p className="text-sm font-bold text-white">Para onde o servidor deseja ir</p>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">Filtre pelas preferências de destino cadastradas pelo servidor.</p>
+                    </div>
 
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <CampoSelect
+                        label="RAJ desejada"
+                        valor={rajDestinoSelecionada?.toString() ?? ""}
+                        onChange={alterarRajDestino}
+                        opcoes={rajs.map(raj => ({ valor: raj.id.toString(), rotulo: raj.nome }))}
+                        placeholder="Todas as RAJs"
+                      />
 
-                  <CampoSelect
-                    label="Ordenação"
-                    valor={ordenacao}
-                    onChange={
-                      valor =>
-                        setOrdenacao(
-                          valor === "ZA"
-                            ? "ZA"
-                            : "AZ"
-                        )
-                    }
-                    opcoes={[
-                      {
-                        valor: "AZ",
-                        rotulo: "Nome: A–Z"
-                      },
-                      {
-                        valor: "ZA",
-                        rotulo: "Nome: Z–A"
-                      }
-                    ]}
-                  />
+                      <CampoSelect
+                        label="Circunscrição desejada"
+                        valor={circunscricaoDestinoSelecionada?.toString() ?? ""}
+                        onChange={alterarCircunscricaoDestino}
+                        opcoes={circunscricoesDestinoFiltradas.map(item => ({ valor: item.id.toString(), rotulo: item.nome }))}
+                        placeholder="Todas as circunscrições"
+                      />
 
-
-                  <AutocompleteComarca
-                    label="Comarca atual do servidor"
-                    placeholder="Digite a comarca atual"
-                    valor={buscaComarcaAtual}
-                    aberta={abrirComarcaAtual}
-                    selecionada={comarcaAtualSelecionada}
-                    opcoes={opcoesComarcaAtual}
-                    onFocus={() =>
-                      setAbrirComarcaAtual(true)
-                    }
-                    onChange={
-                      valor => {
-                        setBuscaComarcaAtual(valor);
-                        setComarcaAtualSelecionada(null);
-                        setAbrirComarcaAtual(true);
-                      }
-                    }
-                    onSelecionar={selecionarComarcaAtual}
-                    onLimpar={limparComarcaAtual}
-                    onFechar={() =>
-                      setAbrirComarcaAtual(false)
-                    }
-                  />
-
-
-                  <AutocompleteComarca
-                    label="Comarca desejada pelo servidor"
-                    placeholder="Digite a comarca desejada"
-                    valor={buscaComarcaDestino}
-                    aberta={abrirComarcaDestino}
-                    selecionada={comarcaDestinoSelecionada}
-                    opcoes={opcoesComarcaDestino}
-                    onFocus={() =>
-                      setAbrirComarcaDestino(true)
-                    }
-                    onChange={
-                      valor => {
-                        setBuscaComarcaDestino(valor);
-                        setComarcaDestinoSelecionada(null);
-                        setAbrirComarcaDestino(true);
-                      }
-                    }
-                    onSelecionar={selecionarComarcaDestino}
-                    onLimpar={limparComarcaDestino}
-                    onFechar={() =>
-                      setAbrirComarcaDestino(false)
-                    }
-                  />
+                      <AutocompleteComarca
+                        label="Comarca desejada"
+                        placeholder="Digite a comarca desejada"
+                        valor={buscaComarcaDestino}
+                        aberta={abrirComarcaDestino}
+                        selecionada={comarcaDestinoSelecionada}
+                        opcoes={opcoesComarcaDestino}
+                        onFocus={() => setAbrirComarcaDestino(true)}
+                        onChange={valor => { setBuscaComarcaDestino(valor); setComarcaDestinoSelecionada(null); setAbrirComarcaDestino(true); }}
+                        onSelecionar={selecionarComarcaDestino}
+                        onLimpar={limparComarcaDestino}
+                        onFechar={() => setAbrirComarcaDestino(false)}
+                      />
+                    </div>
+                  </div>
 
 
                   <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-teal-300/10 bg-[#081b29] p-4 md:col-span-2">
@@ -2993,34 +2911,21 @@ function ServidorCard({
                 </h4>
               </div>
 
-              {
-                Array.isArray(
-                  servidor.destinos
-                ) &&
-                servidor.destinos.length > 0
-                  ? (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {
-                        servidor.destinos.map(
-                          destino => (
-                            <span
-                              key={`${servidor.perfil_id}-${destino.comarca_id}-${destino.prioridade}`}
-                              className="rounded-lg border border-teal-300/10 bg-teal-400/[0.07] px-3 py-2 text-sm text-teal-200"
-                            >
-                              <strong>{destino.prioridade}.</strong>{" "}
-                              {destino.comarca_nome}
-                            </span>
-                          )
-                        )
-                      }
-                    </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {
+                  servidor.destinos.map(
+                    destino => (
+                      <span
+                        key={`${servidor.perfil_id}-${destino.comarca_id}-${destino.prioridade}`}
+                        className="rounded-lg border border-teal-300/10 bg-teal-400/[0.07] px-3 py-2 text-sm text-teal-200"
+                      >
+                        <strong>{destino.prioridade}.</strong>{" "}
+                        {destino.comarca_nome}
+                      </span>
+                    )
                   )
-                  : (
-                    <p className="mt-3 text-sm text-slate-400">
-                      Nenhum destino ativo informado.
-                    </p>
-                  )
-              }
+                }
+              </div>
 
             </div>
 
