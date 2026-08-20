@@ -1208,7 +1208,19 @@ export default function BuscarServidoresPage() {
 
 
       const listaComDestino = ((data ?? []) as ServidorResultado[])
-        .filter(servidor => Array.isArray(servidor.destinos) && servidor.destinos.length > 0);
+        .map(
+          servidor => ({
+            ...servidor,
+            destinos:
+              Array.isArray(servidor.destinos)
+                ? servidor.destinos.filter(destinoEhValido)
+                : []
+          })
+        )
+        .filter(
+          servidor =>
+            servidor.destinos.length > 0
+        );
 
 
       setResultados(listaComDestino);
@@ -1450,7 +1462,19 @@ export default function BuscarServidoresPage() {
 
 
       const listaComDestino = ((data ?? []) as ServidorResultado[])
-        .filter(servidor => Array.isArray(servidor.destinos) && servidor.destinos.length > 0);
+        .map(
+          servidor => ({
+            ...servidor,
+            destinos:
+              Array.isArray(servidor.destinos)
+                ? servidor.destinos.filter(destinoEhValido)
+                : []
+          })
+        )
+        .filter(
+          servidor =>
+            servidor.destinos.length > 0
+        );
 
 
       setResultados(listaComDestino);
@@ -2772,7 +2796,7 @@ function AutocompleteComarca({
       {
         aberta &&
         !selecionada && (
-          <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-72 overflow-y-auto rounded-xl border border-teal-300/10 bg-[#081b29] p-1 shadow-[0_20px_50px_rgba(0,0,0,0.35)]">
+          <div className="relative z-30 mt-2 max-h-64 overflow-y-auto rounded-xl border border-teal-300/10 bg-[#071a28] p-1 shadow-[0_16px_36px_rgba(0,0,0,0.28)]">
 
             {
               opcoes.length > 0
@@ -2913,7 +2937,9 @@ function ServidorCard({
 
               <div className="mt-3 flex flex-wrap gap-2">
                 {
-                  servidor.destinos.map(
+                  servidor.destinos
+                    .filter(destinoEhValido)
+                    .map(
                     destino => (
                       <span
                         key={`${servidor.perfil_id}-${destino.comarca_id}-${destino.prioridade}`}
@@ -3158,6 +3184,28 @@ function EstadoVazio({
 
     </div>
   );
+}
+
+
+/* ======================================================
+   FILTRAR COMARCAS
+====================================================== */
+
+function destinoEhValido(
+  destino: DestinoServidor
+) {
+
+  const nome =
+    normalizarTexto(
+      destino.comarca_nome ?? ""
+    );
+
+
+  return (
+    nome.length > 0 &&
+    !nome.includes("sem prefer")
+  );
+
 }
 
 
