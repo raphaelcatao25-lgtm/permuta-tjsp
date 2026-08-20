@@ -1582,6 +1582,106 @@ export default function PropostasPage() {
 
 
   /* ======================================================
+     CANCELAR PERMUTA MONTADA PELO CRIADOR
+  ====================================================== */
+
+  async function cancelarPermutaManual(
+    permuta: PermutaManualResumo
+  ) {
+
+    if (!usuarioId) {
+      return;
+    }
+
+
+    const confirmou =
+      window.confirm(
+        permuta.tipo === "direta"
+          ? "Deseja realmente cancelar esta proposta de permuta direta?"
+          : `Deseja realmente cancelar este ciclo de ${permuta.quantidade_participantes} participantes? Os demais participantes serão avisados.`
+      );
+
+
+    if (!confirmou) {
+      return;
+    }
+
+
+    setProcessandoManual(
+      permuta.ciclo_id
+    );
+
+    setMensagemErro("");
+    setMensagemSucesso("");
+
+
+    try {
+
+      const {
+        error
+      } = await supabase.rpc(
+        "cancelar_permuta_manual",
+        {
+          p_ciclo_id:
+            permuta.ciclo_id,
+
+          p_usuario_id:
+            usuarioId
+        }
+      );
+
+
+      if (error) {
+        throw error;
+      }
+
+
+      await carregarPropostas(
+        false
+      );
+
+
+      setMensagemSucesso(
+        "A proposta de permuta montada foi cancelada."
+      );
+
+
+      window.dispatchEvent(
+        new Event(
+          "atualizar-notificacoes"
+        )
+      );
+
+    }
+
+    catch(error) {
+
+      console.error(
+        "Erro ao cancelar permuta montada:",
+        error
+      );
+
+
+      setMensagemErro(
+        extrairMensagemErro(
+          error
+        )
+      );
+
+    }
+
+    finally {
+
+      setProcessandoManual(
+        null
+      );
+
+    }
+
+  }
+
+
+  /* ======================================================
      RECUSAR PERMUTA MONTADA
   ====================================================== */
 
@@ -2176,6 +2276,10 @@ export default function PropostasPage() {
                     recusarPermutaManual
                   }
 
+                  onCancelar={
+                    cancelarPermutaManual
+                  }
+
                   onEncerrar={
                     abrirEncerramentoManual
                   }
@@ -2254,6 +2358,10 @@ export default function PropostasPage() {
 
                   onRecusar={
                     recusarPermutaManual
+                  }
+
+                  onCancelar={
+                    cancelarPermutaManual
                   }
 
                   onEncerrar={
@@ -3440,6 +3548,7 @@ function SecaoPermutasManuais({
   processando,
   onAceitar,
   onRecusar,
+  onCancelar,
   onEncerrar
 }: {
   titulo: string;
@@ -3450,6 +3559,7 @@ function SecaoPermutasManuais({
   processando: string | null;
   onAceitar: (permuta: PermutaManualResumo) => void;
   onRecusar: (permuta: PermutaManualResumo) => void;
+  onCancelar: (permuta: PermutaManualResumo) => void;
   onEncerrar: (permuta: PermutaManualResumo) => void;
 }) {
 
@@ -3558,6 +3668,7 @@ function SecaoPermutasManuais({
                     processando={processando === permuta.ciclo_id}
                     onAceitar={() => onAceitar(permuta)}
                     onRecusar={() => onRecusar(permuta)}
+                    onCancelar={() => onCancelar(permuta)}
                     onEncerrar={() => onEncerrar(permuta)}
                   />
 
@@ -3587,6 +3698,7 @@ function CardPermutaManual({
   processando,
   onAceitar,
   onRecusar,
+  onCancelar,
   onEncerrar
 }: {
   permuta: PermutaManualResumo;
@@ -3595,6 +3707,7 @@ function CardPermutaManual({
   processando: boolean;
   onAceitar: () => void;
   onRecusar: () => void;
+  onCancelar: () => void;
   onEncerrar: () => void;
 }) {
 
@@ -3977,6 +4090,36 @@ function CardPermutaManual({
 
             </>
 
+          )}
+
+
+          {souCriador && (
+            <button
+              type="button"
+              disabled={processando}
+              onClick={onCancelar}
+              className="
+                inline-flex
+                items-center
+                gap-2
+                rounded-xl
+                border
+                border-red-400/20
+                bg-red-400/[0.08]
+                px-4
+                py-2.5
+                text-sm
+                font-semibold
+                text-red-300
+                transition
+                hover:bg-red-400/12
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+              "
+            >
+              <XCircle size={17} />
+              {processando ? "Cancelando..." : "Cancelar proposta"}
+            </button>
           )}
 
 
