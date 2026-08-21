@@ -590,10 +590,10 @@ export default function BuscarServidoresPage() {
                   <UsersRound size={23} />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-teal-300">Montagem inteligente pelas duas pontas</p>
+                  <p className="text-sm font-semibold text-teal-300">Vamos montar sua permuta passo a passo</p>
                   <h1 className="mt-1 text-3xl font-bold text-white">Buscar Permuta</h1>
                   <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-400">
-                    Escolha uma comarca para onde você deseja ir. O sistema procura ao mesmo tempo quem está nessa comarca e quem quer ir para a sua comarca atual. Depois, tenta aproximar as duas pontas até fechar o círculo.
+                    Funciona como um jogo de encaixar peças: você escolhe para onde quer ir e o sistema mostra quem pode entrar no seu caminho. Você pode começar por qualquer lado e nós organizamos a ordem para você.
                   </p>
                 </div>
               </div>
@@ -627,8 +627,8 @@ export default function BuscarServidoresPage() {
 
               <div className="relative z-40 rounded-xl border border-teal-300/10 bg-[#081b29] p-4">
                 <AutocompleteComarca
-                  label="Para onde você quer montar este ciclo?"
-                  placeholder="Escolha uma das suas comarcas desejadas"
+                  label="1. Para onde você quer ir?"
+                  placeholder="Escolha a comarca onde você gostaria de trabalhar"
                   valor={buscaDestino}
                   aberta={abrirDestino}
                   selecionada={destinoInicial}
@@ -680,8 +680,8 @@ export default function BuscarServidoresPage() {
 
           {!destinoInicial ? (
             <EstadoVazio
-              titulo={carregando ? "Carregando suas preferências..." : "Escolha uma comarca de destino"}
-              texto="A partir dela, o sistema abrirá as duas pontas do ciclo automaticamente."
+              titulo={carregando ? "Carregando suas preferências..." : "Primeiro escolha para onde você quer ir"}
+              texto="Depois disso, vamos mostrar duas formas simples de começar: alguém que está onde você quer ir ou alguém que quer vir para onde você está."
             />
           ) : (
             <>
@@ -699,9 +699,9 @@ export default function BuscarServidoresPage() {
               <section className="overflow-hidden rounded-2xl border border-teal-300/10 bg-[#0d2232] shadow-[0_16px_40px_rgba(0,0,0,0.16)]">
                 <div className="flex flex-wrap items-center justify-between gap-4 border-b border-teal-300/10 bg-[#0a1f2f] px-6 py-5">
                   <div>
-                    <p className="text-sm font-semibold text-teal-300">Círculo da permuta</p>
+                    <p className="text-sm font-semibold text-teal-300">Seu caminho até agora</p>
                     <h2 className="mt-1 text-xl font-bold text-white">{quantidadeParticipantes} participante(s)</h2>
-                    <p className="mt-1 text-xs text-slate-400">Você pode adicionar pessoas pela frente ou por trás. A ordem final é validada automaticamente.</p>
+                    <p className="mt-1 text-xs text-slate-400">Adicione as pessoas que fizerem sentido. Você não precisa acertar a ordem: o sistema organiza tudo para você.</p>
                   </div>
 
                   {selecionados.length > 0 && (
@@ -734,8 +734,8 @@ export default function BuscarServidoresPage() {
                 <section className="rounded-2xl border border-emerald-300/20 bg-emerald-400/[0.06] p-5">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-sm font-bold text-emerald-300">Ciclo fechado e validado</p>
-                      <p className="mt-1 text-xs leading-5 text-slate-400">Todas as movimentações são compatíveis com as preferências cadastradas.</p>
+                      <p className="text-sm font-bold text-emerald-300">🎉 Todas as peças se encaixaram!</p>
+                      <p className="mt-1 text-xs leading-5 text-slate-400">O ciclo está completo e todos os participantes têm uma movimentação compatível.</p>
                     </div>
                     <CheckCircle2 className="h-6 w-6 text-emerald-300" />
                   </div>
@@ -761,7 +761,7 @@ export default function BuscarServidoresPage() {
                   {resultadosPonte.length > 0 && (
                     <GrupoResultados
                       destaque="ponte"
-                      titulo="Pode fechar a ponte agora"
+                      titulo="3. Esta pessoa pode completar o ciclo"
                       texto={textoPonte(alvosFrente, alvoTras)}
                       resultados={resultadosPonte}
                       lado="ponte"
@@ -778,7 +778,7 @@ export default function BuscarServidoresPage() {
                   <div className="grid gap-5 xl:grid-cols-2">
                     <GrupoResultados
                       destaque="frente"
-                      titulo="Avançar pela sua chegada"
+                      titulo="2A. Procure quem está onde você quer ir"
                       texto={textoFrente(alvosFrente)}
                       resultados={resultadosFrente}
                       lado="frente"
@@ -793,7 +793,7 @@ export default function BuscarServidoresPage() {
 
                     <GrupoResultados
                       destaque="tras"
-                      titulo="Avançar pelo seu retorno"
+                      titulo="2B. Ou procure quem quer sua vaga"
                       texto={textoTras(alvoTras)}
                       resultados={resultadosTras}
                       lado="tras"
@@ -812,8 +812,8 @@ export default function BuscarServidoresPage() {
                     resultadosFrente.length === 0 &&
                     resultadosTras.length === 0 && (
                       <EstadoVazio
-                        titulo="Nenhuma peça encontrada para estas pontas"
-                        texto="Ainda não há servidor disponível que avance por nenhuma das duas pontas. Você pode escolher outra comarca desejada para iniciar uma montagem diferente."
+                        titulo="Ainda não encontramos uma peça para continuar"
+                        texto="Neste momento não encontramos alguém que encaixe por nenhum dos dois lados. Você pode tentar outra comarca desejada ou voltar depois quando houver novos servidores cadastrados."
                       />
                     )}
                 </section>
@@ -863,32 +863,32 @@ function OrientacaoDuasPontas({
       <div className="flex items-start gap-3">
         <Info className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold text-amber-200">O que procurar agora</p>
+          <p className="text-sm font-bold text-amber-200">O que você precisa procurar agora</p>
 
           {organizacao?.fechou_ciclo ? (
-            <p className="mt-2 text-sm leading-6 text-slate-300">As pessoas selecionadas já formam um ciclo. O sistema está validando as movimentações.</p>
+            <p className="mt-2 text-sm leading-6 text-slate-300">🎉 As peças já formam um círculo completo. Agora o sistema só está conferindo se todas as movimentações são válidas.</p>
           ) : pontasSeEncontraram ? (
             <p className="mt-2 text-sm leading-6 text-slate-300">
-              As duas pontas já se encontraram em <strong className="text-amber-200">{alvoTras?.nome}</strong>. Se os participantes selecionados forem compatíveis, o ciclo pode fechar sem adicionar outra pessoa.
+              🎯 Os dois lados já chegaram em <strong className="text-amber-200">{alvoTras?.nome}</strong>. Isso significa que talvez não seja necessário adicionar mais ninguém. O sistema está conferindo.
             </p>
           ) : (
             <div className="mt-3 space-y-3">
               <p className="text-sm leading-6 text-slate-300">
-                Sua montagem começou em <strong className="text-white">{minhaComarca?.nome}</strong> → <strong className="text-white">{destinoInicial.nome}</strong>.
+                Você está em <strong className="text-white">{minhaComarca?.nome}</strong> e quer ir para <strong className="text-white">{destinoInicial.nome}</strong>. Agora podemos procurar pessoas pelos dois lados.
               </p>
 
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="rounded-xl border border-cyan-300/15 bg-[#081b29] p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-cyan-300">Ponta da frente</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-cyan-300">Caminho 1 — comece por onde você quer chegar</p>
                   <p className="mt-2 text-sm leading-6 text-slate-300">
-                    Tente encontrar alguém que <strong className="text-cyan-200">esteja em {nomesFrente}</strong>.
+                    Procure alguém que <strong className="text-cyan-200">esteja em {nomesFrente}</strong>. Essa pessoa pode continuar o caminho a partir de onde você quer chegar.
                   </p>
                 </div>
 
                 <div className="rounded-xl border border-violet-300/15 bg-[#081b29] p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-violet-300">Ponta de trás</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-violet-300">Caminho 2 — comece por quem quer sua vaga</p>
                   <p className="mt-2 text-sm leading-6 text-slate-300">
-                    Tente encontrar alguém que <strong className="text-violet-200">queira ir para {alvoTras?.nome ?? "sua comarca"}</strong>.
+                    Procure alguém que <strong className="text-violet-200">queira ir para {alvoTras?.nome ?? "sua comarca"}</strong>. Essa pessoa ajuda a fechar o caminho de volta até você.
                   </p>
                 </div>
               </div>
@@ -896,14 +896,14 @@ function OrientacaoDuasPontas({
               {alvoTras && (
                 <div className={`rounded-xl border p-4 ${possuiPonte ? "border-emerald-300/20 bg-emerald-400/[0.06]" : "border-amber-300/15 bg-[#081b29]"}`}>
                   <p className={`text-xs font-semibold uppercase tracking-wide ${possuiPonte ? "text-emerald-300" : "text-amber-300"}`}>
-                    {possuiPonte ? "Encontramos uma ponte possível" : "Para fechar o ciclo"}
+                    {possuiPonte ? "✅ Encontramos a pessoa que pode completar" : "🧩 A pessoa que falta"}
                   </p>
                   <p className="mt-2 text-sm leading-6 text-slate-300">
-                    Procure uma pessoa que <strong className="text-white">esteja em {nomesFrente}</strong> e <strong className="text-white">queira ir para {alvoTras.nome}</strong>.
+                    Para completar o círculo agora, procure uma pessoa que <strong className="text-white">esteja em {nomesFrente}</strong> e <strong className="text-white">queira ir para {alvoTras.nome}</strong>.
                   </p>
                   {!possuiPonte && (
                     <p className="mt-2 text-xs leading-5 text-slate-500">
-                      Se não existir essa pessoa, adicione alguém por uma das duas pontas. O sistema atualiza a ponta aberta e tenta formar uma nova ponte automaticamente.
+                      Não encontrou essa pessoa? Sem problema. Adicione alguém que esteja em uma dessas comarcas ou alguém que queira ir para a comarca indicada. O sistema recalcula o caminho automaticamente.
                     </p>
                   )}
                 </div>
@@ -1067,12 +1067,12 @@ function CicloVisualDuasPontas({
 
         <div className="absolute left-1/2 top-1/2 z-10 w-48 -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-teal-300/10 bg-[#071a28] p-4 text-center shadow-xl">
           <UsersRound className="mx-auto h-6 w-6 text-teal-300" />
-          <p className="mt-2 text-xs font-bold text-white">Duas pontas abertas</p>
+          <p className="mt-2 text-xs font-bold text-white">O que ainda falta encaixar</p>
           <p className="mt-2 text-[11px] leading-5 text-cyan-200">
-            Frente: {formatarNomes(alvosFrente.map(item => item.nome))}
+            Procure quem está em: {formatarNomes(alvosFrente.map(item => item.nome))}
           </p>
           <p className="mt-1 text-[11px] leading-5 text-violet-200">
-            Retorno: {alvoTras?.nome ?? "-"}
+            Ou quem quer ir para: {alvoTras?.nome ?? "-"}
           </p>
         </div>
 
@@ -1159,17 +1159,17 @@ function ServidorCard({
           <div className="mt-2 flex flex-wrap gap-1.5">
             {encaixaFrente && (
               <span className="rounded-full border border-cyan-300/15 bg-cyan-400/[0.07] px-2 py-1 text-[10px] font-semibold text-cyan-200">
-                encaixa na frente
+                está onde precisamos
               </span>
             )}
             {encaixaTras && (
               <span className="rounded-full border border-violet-300/15 bg-violet-400/[0.07] px-2 py-1 text-[10px] font-semibold text-violet-200">
-                encaixa no retorno
+                quer ir para onde precisamos
               </span>
             )}
             {encaixaFrente && encaixaTras && (
               <span className="rounded-full border border-emerald-300/20 bg-emerald-400/[0.08] px-2 py-1 text-[10px] font-semibold text-emerald-200">
-                pode fechar a ponte
+                pode completar o ciclo
               </span>
             )}
           </div>
@@ -1200,7 +1200,7 @@ function ServidorCard({
         }`}
       >
         {selecionado ? <X size={15} /> : <CirclePlus size={16} />}
-        {selecionado ? "Remover" : lado === "ponte" ? "Adicionar e tentar fechar" : "Adicionar por este lado"}
+        {selecionado ? "Remover" : lado === "ponte" ? "Adicionar e completar" : "Adicionar esta pessoa"}
       </button>
     </article>
   );
@@ -1428,15 +1428,15 @@ function textoPonte(
   alvosFrente: { id: number; nome: string }[],
   alvoTras: { id: number; nome: string } | null
 ) {
-  return `Estes servidores estão em ${formatarNomes(alvosFrente.map(item => item.nome))} e também querem ir para ${alvoTras?.nome ?? "a ponta de retorno"}. Eles podem unir as duas pontas do ciclo.`;
+  return `Estas pessoas fazem exatamente a ligação que está faltando: estão em ${formatarNomes(alvosFrente.map(item => item.nome))} e querem ir para ${alvoTras?.nome ?? "a comarca que precisamos"}. Se você adicionar uma delas, o ciclo pode ficar completo.`;
 }
 
 function textoFrente(alvosFrente: { id: number; nome: string }[]) {
-  return `Servidores que estão em ${formatarNomes(alvosFrente.map(item => item.nome))}. Ao adicionar um deles, seus destinos passam a ser a nova ponta da frente.`;
+  return `Estas pessoas estão em ${formatarNomes(alvosFrente.map(item => item.nome))}. Escolha uma delas para continuar o caminho a partir daí. Depois, o sistema mostra qual será a próxima peça necessária.`;
 }
 
 function textoTras(alvoTras: { id: number; nome: string } | null) {
-  return `Servidores que querem ir para ${alvoTras?.nome ?? "a comarca de retorno"}. Ao adicionar um deles, a comarca atual dele passa a ser a nova ponta de trás.`;
+  return `Estas pessoas querem ir para ${alvoTras?.nome ?? "a comarca que precisamos"}. Escolha uma delas para montar o caminho de volta até você. Depois, o sistema recalcula o que ainda falta.`;
 }
 
 function destinoEhValido(destino: DestinoServidor) {
