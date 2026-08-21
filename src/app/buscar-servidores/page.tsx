@@ -2,10 +2,13 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  ArrowDown,
+  ArrowRight,
   CheckCircle2,
   ChevronDown,
   CirclePlus,
   Info,
+  Link2,
   MapPin,
   Search,
   Send,
@@ -102,34 +105,33 @@ type OrganizacaoPermuta = {
   ordem?: ItemOrdemOrganizada[];
   ordem_parcial?: ItemOrdemOrganizada[];
   mensagem: string;
-  acertos?: number;
-  quebra_apos_usuario_id?: string;
-  quebra_apos_nome?: string;
-  proxima_origem_comarca_id?: number | null;
-  proxima_origem_nome?: string | null;
-  destino_para_fechamento_id?: number | null;
-  destino_para_fechamento_nome?: string | null;
 };
+
+type LadoMontagem = "frente" | "tras" | "ponte";
 
 export default function BuscarServidoresPage() {
   const [perfil, setPerfil] = useState<PerfilAtual | null>(null);
   const [comarcas, setComarcas] = useState<Comarca[]>([]);
   const [minhasPreferencias, setMinhasPreferencias] = useState<PreferenciaUsuario[]>([]);
 
-  const [comarcaBuscaSelecionada, setComarcaBuscaSelecionada] = useState<Comarca | null>(null);
-  const [buscaComarca, setBuscaComarca] = useState("");
-  const [abrirComarca, setAbrirComarca] = useState(false);
+  const [destinoInicial, setDestinoInicial] = useState<Comarca | null>(null);
+  const [buscaDestino, setBuscaDestino] = useState("");
+  const [abrirDestino, setAbrirDestino] = useState(false);
 
-  const [resultados, setResultados] = useState<ServidorResultado[]>([]);
-  const [pesquisou, setPesquisou] = useState(false);
+  const [cadeiaFrente, setCadeiaFrente] = useState<ServidorResultado[]>([]);
+  const [cadeiaTras, setCadeiaTras] = useState<ServidorResultado[]>([]);
+
+  const [resultadosFrente, setResultadosFrente] = useState<ServidorResultado[]>([]);
+  const [resultadosTras, setResultadosTras] = useState<ServidorResultado[]>([]);
+  const [resultadosPonte, setResultadosPonte] = useState<ServidorResultado[]>([]);
+
   const [carregando, setCarregando] = useState(true);
-  const [buscando, setBuscando] = useState(false);
+  const [buscandoSugestoes, setBuscandoSugestoes] = useState(false);
   const [erro, setErro] = useState("");
   const [mensagemSucesso, setMensagemSucesso] = useState("");
 
-  const [selecionados, setSelecionados] = useState<ServidorResultado[]>([]);
-  const [validacao, setValidacao] = useState<LigacaoValidacao[]>([]);
   const [organizacao, setOrganizacao] = useState<OrganizacaoPermuta | null>(null);
+  const [validacao, setValidacao] = useState<LigacaoValidacao[]>([]);
   const [organizando, setOrganizando] = useState(false);
 
   const [modalEnvioAberto, setModalEnvioAberto] = useState(false);
@@ -148,6 +150,7 @@ export default function BuscarServidoresPage() {
       try {
         const { data: dadosUsuario, error: erroUsuario } = await supabase.auth.getUser();
         if (erroUsuario) throw erroUsuario;
+
         const usuario = dadosUsuario.user;
         if (!usuario) throw new Error("Usuário não autenticado.");
 
@@ -204,10 +207,15 @@ export default function BuscarServidoresPage() {
       .filter((item): item is Comarca & { prioridade: number } => Boolean(item));
   }, [minhasPreferencias, comarcas]);
 
-  const opcoesComarca = useMemo(
-    () => filtrarComarcas(comarcas, buscaComarca),
-    [comarcas, buscaComarca]
-  );
+  const opcoesDestino = useMemo(() => {
+    return filtrarComarcas(meusDestinos, buscaDestino);
+  }, [meusDestinos, buscaDestino]);
+
+  const selecionados = useMemo(() => {
+    const mapa = new Map<string, ServidorResultado>();
+    [...cadeiaFrente, ...cadeiaTras].forEach(item => mapa.set(item.perfil_id, item));
+    return [...mapa.values()];
+  }, [cadeiaFrente, cadeiaTras]);
 
   const idsSelecionados = useMemo(
     () => new Set(selecionados.map(item => item.perfil_id)),
@@ -215,128 +223,54 @@ export default function BuscarServidoresPage() {
   );
 
   const quantidadeParticipantes = 1 + selecionados.length;
+
+  // PONTA DA FRENTE
+  // Inicialmente é a comarca onde o usuário quer chegar.
+  // Depois que adicionamos alguém desse lado, a nova ponta passa a ser
+  // qualquer comarca que o último servidor da frente deseja.
+  const alvosFrente = useMemo(() => {
+    if (!destinoInicial) return [] as { id: number; nome: string }[];
+
+    const ultimo = cadeiaFrente[cadeiaFrente.length - 1];
+    if (!ultimo) return [{ id: destinoInicial.id, nome: destinoInicial.nome }];
+
+    const mapa = new Map<number, string>();
+    ultimo.destinos.filter(destinoEhValido).forEach(destino => {
+      mapa.set(destino.comarca_id, destino.comarca_nome);
+    });
+
+    return [...mapa.entries()].map(([id, nome]) => ({ id, nome }));
+  }, [destinoInicial, cadeiaFrente]);
+
+  // PONTA DE TRÁS
+  // Inicialmente alguém precisa querer a comarca atual do usuário.
+  // Se adicionamos alguém por trás, o próximo precisa querer a comarca atual
+  // desse último servidor adicionado.
+  const alvoTras = useMemo(() => {
+    if (!minhaComarcaAtual) return null;
+
+    const ultimo = cadeiaTras[cadeiaTras.length - 1];
+    if (!ultimo) return { id: minhaComarcaAtual.id, nome: minhaComarcaAtual.nome };
+
+    return {
+      id: ultimo.comarca_atual_id,
+      nome: ultimo.comarca_atual_nome
+    };
+  }, [minhaComarcaAtual, cadeiaTras]);
+
+  // Se alguma das comarcas desejadas pela ponta da frente já é exatamente
+  // a comarca atual da ponta de trás, as pontas se encontraram sem precisar
+  // de outra pessoa.
+  const pontasSeEncontraram = useMemo(() => {
+    if (!alvoTras || alvosFrente.length === 0) return false;
+    return alvosFrente.some(alvo => alvo.id === alvoTras.id);
+  }, [alvosFrente, alvoTras]);
+
   const montagemValida =
     Boolean(organizacao?.fechou_ciclo) &&
     validacao.length === quantidadeParticipantes &&
     validacao.length >= 2 &&
     validacao.every(item => item.ligacao_compativel);
-
-  const destinosAlternativos = useMemo(() => {
-    if (!organizacao?.proxima_origem_comarca_id) return [];
-
-    const contagem = new Map<number, { nome: string; quantidade: number }>();
-    for (const servidor of resultados) {
-      if (servidor.comarca_atual_id !== organizacao.proxima_origem_comarca_id) continue;
-      for (const destino of servidor.destinos.filter(destinoEhValido)) {
-        if (destino.comarca_id === organizacao.destino_para_fechamento_id) continue;
-        const atual = contagem.get(destino.comarca_id);
-        contagem.set(destino.comarca_id, {
-          nome: destino.comarca_nome,
-          quantidade: (atual?.quantidade ?? 0) + 1
-        });
-      }
-    }
-
-    return [...contagem.entries()]
-      .sort((a, b) => b[1].quantidade - a[1].quantidade)
-      .slice(0, 3)
-      .map(([id, dados]) => ({ id, ...dados }));
-  }, [resultados, organizacao]);
-
-  useEffect(() => {
-    if (!perfil) return;
-    if (selecionados.length < 1) {
-      setOrganizacao(null);
-      setValidacao([]);
-      return;
-    }
-
-    let ativo = true;
-
-    async function organizarAutomaticamente() {
-      setOrganizando(true);
-      setErro("");
-      setMensagemSucesso("");
-
-      try {
-        const participantes = [perfil!.id, ...selecionados.map(item => item.perfil_id)];
-        const { data, error } = await supabase.rpc("organizar_permuta_manual", {
-          p_usuario_id: perfil!.id,
-          p_participantes: participantes
-        });
-        if (error) throw error;
-        if (!ativo) return;
-
-        const resultado = data as OrganizacaoPermuta;
-        setOrganizacao(resultado);
-
-        if (resultado.fechou_ciclo && Array.isArray(resultado.ordem)) {
-          const idsOrdenados = resultado.ordem
-            .filter(item => item.usuario_id !== perfil!.id)
-            .map(item => item.usuario_id);
-
-          const mapa = new Map(selecionados.map(item => [item.perfil_id, item]));
-          const novaOrdem = idsOrdenados
-            .map(id => mapa.get(id))
-            .filter((item): item is ServidorResultado => Boolean(item));
-
-          const mudou =
-            novaOrdem.length === selecionados.length &&
-            novaOrdem.some((item, indice) => item.perfil_id !== selecionados[indice]?.perfil_id);
-
-          if (mudou) {
-            setSelecionados(novaOrdem);
-            return;
-          }
-
-          const participantesOrdenados = [
-            perfil!.id,
-            ...resultado.ordem
-              .filter(item => item.usuario_id !== perfil!.id)
-              .map(item => item.usuario_id)
-          ];
-
-          const { data: dadosValidacao, error: erroValidacao } = await supabase.rpc(
-            "validar_permuta_manual",
-            {
-              p_usuario_id: perfil!.id,
-              p_participantes: participantesOrdenados
-            }
-          );
-          if (erroValidacao) throw erroValidacao;
-          if (!ativo) return;
-
-          setValidacao((dadosValidacao ?? []) as LigacaoValidacao[]);
-          setMensagemSucesso(resultado.mensagem);
-        } else {
-          setValidacao([]);
-          if (resultado.proxima_origem_comarca_id) {
-            const proxima = comarcas.find(
-              item => item.id === resultado.proxima_origem_comarca_id
-            );
-            if (proxima) {
-              setComarcaBuscaSelecionada(proxima);
-              setBuscaComarca(proxima.nome);
-              await buscarAutomaticamentePorOrigem(proxima.id);
-            }
-          }
-        }
-      } catch (error) {
-        if (!ativo) return;
-        setOrganizacao(null);
-        setValidacao([]);
-        setErro(extrairMensagemErro(error));
-      } finally {
-        if (ativo) setOrganizando(false);
-      }
-    }
-
-    organizarAutomaticamente();
-    return () => {
-      ativo = false;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [perfil, selecionados]);
 
   async function executarBusca(filtros: {
     comarcaAtualId?: number | null;
@@ -365,108 +299,234 @@ export default function BuscarServidoresPage() {
           ? servidor.destinos.filter(destinoEhValido)
           : []
       }))
-      .filter(servidor => servidor.destinos.length > 0);
+      .filter(servidor => servidor.destinos.length > 0)
+      .filter(servidor => !servidor.em_match && !servidor.busca_pausada);
   }
 
-  async function buscarPorComarca(comarca: Comarca) {
-    setBuscando(true);
-    setErro("");
-    setMensagemSucesso("");
-
-    try {
-      const [quemEstaNaComarca, quemQuerIrParaComarca] = await Promise.all([
-        executarBusca({ comarcaAtualId: comarca.id }),
-        executarBusca({ comarcaDestinoId: comarca.id })
-      ]);
-
-      const mapa = new Map<string, ServidorResultado>();
-      [...quemEstaNaComarca, ...quemQuerIrParaComarca].forEach(item => {
-        if (!idsSelecionados.has(item.perfil_id)) mapa.set(item.perfil_id, item);
-      });
-
-      const lista = [...mapa.values()].sort((a, b) => {
-        const aAtual = a.comarca_atual_id === comarca.id ? 1 : 0;
-        const bAtual = b.comarca_atual_id === comarca.id ? 1 : 0;
-        const aDestino = a.destinos.some(d => d.comarca_id === comarca.id) ? 1 : 0;
-        const bDestino = b.destinos.some(d => d.comarca_id === comarca.id) ? 1 : 0;
-        return bAtual + bDestino - (aAtual + aDestino);
-      });
-
-      setResultados(lista);
-      setPesquisou(true);
-    } catch (error) {
-      setResultados([]);
-      setPesquisou(true);
-      setErro(extrairMensagemErro(error));
-    } finally {
-      setBuscando(false);
+  useEffect(() => {
+    if (!perfil || !destinoInicial || !alvoTras || alvosFrente.length === 0) {
+      setResultadosFrente([]);
+      setResultadosTras([]);
+      setResultadosPonte([]);
+      return;
     }
-  }
 
-  async function buscarAutomaticamentePorOrigem(origemId: number) {
-    setBuscando(true);
-    setErro("");
+    let ativo = true;
 
-    try {
-      const lista = await executarBusca({ comarcaAtualId: origemId });
-      setResultados(lista.filter(item => !idsSelecionados.has(item.perfil_id)));
-      setPesquisou(true);
-    } catch (error) {
-      setResultados([]);
-      setPesquisou(true);
-      setErro(extrairMensagemErro(error));
-    } finally {
-      setBuscando(false);
+    async function carregarSugestoes() {
+      setBuscandoSugestoes(true);
+      setErro("");
+
+      try {
+        const buscasFrente = alvosFrente.slice(0, 10).map(alvo =>
+          executarBusca({ comarcaAtualId: alvo.id })
+        );
+
+        const [listasFrente, listaTras] = await Promise.all([
+          Promise.all(buscasFrente),
+          executarBusca({ comarcaDestinoId: alvoTras!.id })
+        ]);
+
+        if (!ativo) return;
+
+        const mapaFrente = new Map<string, ServidorResultado>();
+        listasFrente.flat().forEach(servidor => {
+          if (!idsSelecionados.has(servidor.perfil_id)) {
+            mapaFrente.set(servidor.perfil_id, servidor);
+          }
+        });
+
+        const mapaTras = new Map<string, ServidorResultado>();
+        listaTras.forEach(servidor => {
+          if (!idsSelecionados.has(servidor.perfil_id)) {
+            mapaTras.set(servidor.perfil_id, servidor);
+          }
+        });
+
+        // PONTE PERFEITA:
+        // está em uma das comarcas que a ponta da frente deseja
+        // E deseja ir para a comarca atual da ponta de trás.
+        const pontes = [...mapaFrente.values()].filter(servidor =>
+          servidor.destinos.some(destino => destino.comarca_id === alvoTras!.id)
+        );
+
+        const idsPontes = new Set(pontes.map(item => item.perfil_id));
+
+        const frenteSemPontes = [...mapaFrente.values()]
+          .filter(item => !idsPontes.has(item.perfil_id))
+          .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+
+        const trasSemPontes = [...mapaTras.values()]
+          .filter(item => !idsPontes.has(item.perfil_id))
+          .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+
+        setResultadosPonte(pontes.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")));
+        setResultadosFrente(frenteSemPontes);
+        setResultadosTras(trasSemPontes);
+      } catch (error) {
+        if (!ativo) return;
+        setResultadosFrente([]);
+        setResultadosTras([]);
+        setResultadosPonte([]);
+        setErro(extrairMensagemErro(error));
+      } finally {
+        if (ativo) setBuscandoSugestoes(false);
+      }
     }
+
+    void carregarSugestoes();
+    return () => {
+      ativo = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [perfil, destinoInicial, alvosFrente, alvoTras, idsSelecionados]);
+
+  useEffect(() => {
+    if (!perfil || selecionados.length < 1) {
+      setOrganizacao(null);
+      setValidacao([]);
+      return;
+    }
+
+    let ativo = true;
+
+    async function organizarAutomaticamente() {
+      setOrganizando(true);
+      setMensagemSucesso("");
+
+      try {
+        const participantes = [perfil!.id, ...selecionados.map(item => item.perfil_id)];
+
+        const { data, error } = await supabase.rpc("organizar_permuta_manual", {
+          p_usuario_id: perfil!.id,
+          p_participantes: participantes
+        });
+
+        if (error) throw error;
+        if (!ativo) return;
+
+        const resultado = data as OrganizacaoPermuta;
+        setOrganizacao(resultado);
+
+        if (!resultado.fechou_ciclo || !Array.isArray(resultado.ordem)) {
+          setValidacao([]);
+          return;
+        }
+
+        const participantesOrdenados = [
+          perfil!.id,
+          ...resultado.ordem
+            .filter(item => item.usuario_id !== perfil!.id)
+            .map(item => item.usuario_id)
+        ];
+
+        const { data: dadosValidacao, error: erroValidacao } = await supabase.rpc(
+          "validar_permuta_manual",
+          {
+            p_usuario_id: perfil!.id,
+            p_participantes: participantesOrdenados
+          }
+        );
+
+        if (erroValidacao) throw erroValidacao;
+        if (!ativo) return;
+
+        const linhas = (dadosValidacao ?? []) as LigacaoValidacao[];
+        setValidacao(linhas);
+
+        if (linhas.length > 0 && linhas.every(item => item.ligacao_compativel)) {
+          setMensagemSucesso("Ciclo fechado. Todas as movimentações foram validadas com sucesso.");
+        }
+      } catch (error) {
+        if (!ativo) return;
+        setOrganizacao(null);
+        setValidacao([]);
+        setErro(extrairMensagemErro(error));
+      } finally {
+        if (ativo) setOrganizando(false);
+      }
+    }
+
+    void organizarAutomaticamente();
+    return () => {
+      ativo = false;
+    };
+  }, [perfil, selecionados]);
+
+  function selecionarDestino(comarca: Comarca) {
+    setDestinoInicial(comarca);
+    setBuscaDestino(comarca.nome);
+    setAbrirDestino(false);
+    limparCadeias(false);
   }
 
-  function selecionarComarca(comarca: Comarca) {
-    setComarcaBuscaSelecionada(comarca);
-    setBuscaComarca(comarca.nome);
-    setAbrirComarca(false);
-    void buscarPorComarca(comarca);
+  function limparDestino() {
+    setDestinoInicial(null);
+    setBuscaDestino("");
+    setAbrirDestino(false);
+    limparCadeias(false);
   }
 
-  function limparComarca() {
-    setComarcaBuscaSelecionada(null);
-    setBuscaComarca("");
-    setAbrirComarca(false);
-    setResultados([]);
-    setPesquisou(false);
-    setErro("");
-  }
-
-  function adicionarServidor(servidor: ServidorResultado) {
+  function validarPodeAdicionar(servidor: ServidorResultado) {
     setErro("");
     setMensagemSucesso("");
 
     if (perfil?.em_match) {
       setErro("Você já possui uma permuta confirmada em andamento.");
-      return;
+      return false;
     }
+
     if (perfil?.busca_pausada) {
       setErro("Sua busca está pausada. Reative sua participação em Meu Perfil antes de montar uma proposta.");
-      return;
+      return false;
     }
-    if (idsSelecionados.has(servidor.perfil_id)) return;
+
+    if (idsSelecionados.has(servidor.perfil_id)) return false;
+
     if (selecionados.length >= 6) {
       setErro("A permuta montada pode ter no máximo 7 participantes contando com você.");
+      return false;
+    }
+
+    return true;
+  }
+
+  function adicionarServidor(servidor: ServidorResultado, lado: LadoMontagem) {
+    if (!validarPodeAdicionar(servidor)) return;
+
+    if (lado === "tras") {
+      setCadeiaTras(atuais => [...atuais, servidor]);
       return;
     }
 
-    setSelecionados(atuais => [...atuais, servidor]);
+    // Uma ponte é adicionada na frente porque sua comarca atual atende a
+    // ponta da frente e o seu destino já alcança a ponta de trás.
+    setCadeiaFrente(atuais => [...atuais, servidor]);
   }
 
   function removerServidor(perfilId: string) {
-    setSelecionados(atuais => atuais.filter(item => item.perfil_id !== perfilId));
+    setCadeiaFrente(atuais => atuais.filter(item => item.perfil_id !== perfilId));
+    setCadeiaTras(atuais => atuais.filter(item => item.perfil_id !== perfilId));
+    setErro("");
+    setMensagemSucesso("");
   }
 
-  function limparMontagem() {
-    setSelecionados([]);
+  function limparCadeias(limparDestinoTambem = false) {
+    setCadeiaFrente([]);
+    setCadeiaTras([]);
+    setResultadosFrente([]);
+    setResultadosTras([]);
+    setResultadosPonte([]);
     setOrganizacao(null);
     setValidacao([]);
     setMensagemSucesso("");
     setErro("");
+
+    if (limparDestinoTambem) {
+      setDestinoInicial(null);
+      setBuscaDestino("");
+      setAbrirDestino(false);
+    }
   }
 
   function abrirEnvioProposta() {
@@ -474,12 +534,14 @@ export default function BuscarServidoresPage() {
       setErro("O ciclo precisa estar totalmente compatível antes de enviar a proposta.");
       return;
     }
+
     setErro("");
     setModalEnvioAberto(true);
   }
 
   async function enviarPropostaManual() {
     if (!perfil || !montagemValida) return;
+
     const mensagem = mensagemProposta.trim();
     if (!mensagem) {
       setErro("Digite uma mensagem para acompanhar a proposta.");
@@ -491,17 +553,17 @@ export default function BuscarServidoresPage() {
 
     try {
       const participantes = [perfil.id, ...selecionados.map(item => item.perfil_id)];
+
       const { error } = await supabase.rpc("criar_permuta_manual", {
         p_usuario_id: perfil.id,
         p_participantes: participantes,
         p_mensagem: mensagem
       });
+
       if (error) throw error;
 
       setModalEnvioAberto(false);
-      setSelecionados([]);
-      setValidacao([]);
-      setOrganizacao(null);
+      limparCadeias(false);
       setMensagemSucesso(
         participantes.length === 2
           ? "Proposta de permuta direta enviada com sucesso."
@@ -515,6 +577,8 @@ export default function BuscarServidoresPage() {
     }
   }
 
+  const bloqueado = Boolean(perfil?.em_match) || Boolean(perfil?.busca_pausada);
+
   return (
     <AuthGuard>
       <DashboardLayout nomeUsuario={perfil?.nome?.trim().split(/\s+/)[0] || "Servidor"}>
@@ -526,10 +590,10 @@ export default function BuscarServidoresPage() {
                   <UsersRound size={23} />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-teal-300">Busca inteligente</p>
+                  <p className="text-sm font-semibold text-teal-300">Montagem inteligente pelas duas pontas</p>
                   <h1 className="mt-1 text-3xl font-bold text-white">Buscar Permuta</h1>
-                  <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-                    Pesquise uma comarca. O sistema mostra tanto quem está nela quanto quem deseja ir para ela e reorganiza o ciclo automaticamente conforme você adiciona servidores.
+                  <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-400">
+                    Escolha uma comarca para onde você deseja ir. O sistema procura ao mesmo tempo quem está nessa comarca e quem quer ir para a sua comarca atual. Depois, tenta aproximar as duas pontas até fechar o círculo.
                   </p>
                 </div>
               </div>
@@ -537,189 +601,225 @@ export default function BuscarServidoresPage() {
           </section>
 
           {perfil?.em_match && (
-            <Aviso tipo="teal" titulo="Você está em uma permuta confirmada." texto="Você pode consultar servidores, mas não poderá montar uma nova proposta enquanto a permuta atual estiver em andamento." />
+            <Aviso
+              tipo="teal"
+              titulo="Você está em uma permuta confirmada."
+              texto="Você pode consultar a montagem, mas não poderá enviar uma nova proposta enquanto a permuta atual estiver em andamento."
+            />
           )}
 
           {!perfil?.em_match && perfil?.busca_pausada && (
-            <Aviso tipo="amber" titulo="Sua busca está pausada." texto="Você pode consultar servidores, mas deverá reativar sua busca em Meu Perfil antes de montar uma proposta." />
+            <Aviso
+              tipo="amber"
+              titulo="Sua busca está pausada."
+              texto="Você pode consultar servidores, mas deverá reativar sua busca em Meu Perfil antes de montar uma proposta."
+            />
           )}
 
           <section className="overflow-visible rounded-2xl border border-teal-300/10 bg-[#0d2232] shadow-[0_16px_40px_rgba(0,0,0,0.16)]">
-            <div className="grid gap-6 p-6 lg:grid-cols-[1fr_auto_1fr] lg:items-center">
-              <div className="rounded-xl border border-teal-300/10 bg-[#081b29] p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Sua comarca atual</p>
+            <div className="grid gap-5 p-6 lg:grid-cols-[1fr_auto_1fr] lg:items-center">
+              <div className="rounded-xl border border-emerald-300/15 bg-emerald-400/[0.05] p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Você está em</p>
                 <p className="mt-2 text-lg font-bold text-white">{minhaComarcaAtual?.nome ?? "Não informada"}</p>
               </div>
 
-              <div className="hidden text-slate-600 lg:block">→</div>
+              <ArrowRight className="mx-auto hidden text-slate-600 lg:block" />
 
-              <div className="rounded-xl border border-teal-300/10 bg-[#081b29] p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Suas comarcas desejadas</p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {meusDestinos.length > 0 ? meusDestinos.map(destino => (
-                    <span key={destino.id} className="rounded-lg border border-teal-300/10 bg-teal-400/[0.06] px-3 py-1.5 text-sm text-teal-200">
-                      {destino.prioridade}. {destino.nome}
-                    </span>
-                  )) : <span className="text-sm text-slate-500">Nenhuma preferência cadastrada.</span>}
-                </div>
+              <div className="relative z-40 rounded-xl border border-teal-300/10 bg-[#081b29] p-4">
+                <AutocompleteComarca
+                  label="Para onde você quer montar este ciclo?"
+                  placeholder="Escolha uma das suas comarcas desejadas"
+                  valor={buscaDestino}
+                  aberta={abrirDestino}
+                  selecionada={destinoInicial}
+                  opcoes={opcoesDestino}
+                  onFocus={() => setAbrirDestino(true)}
+                  onChange={valor => {
+                    setBuscaDestino(valor);
+                    setDestinoInicial(null);
+                    setAbrirDestino(true);
+                  }}
+                  onSelecionar={selecionarDestino}
+                  onLimpar={limparDestino}
+                  onFechar={() => setAbrirDestino(false)}
+                />
+
+                {meusDestinos.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {meusDestinos.map(destino => (
+                      <button
+                        key={destino.id}
+                        type="button"
+                        onClick={() => selecionarDestino(destino)}
+                        className={`rounded-lg border px-2.5 py-1.5 text-xs transition ${
+                          destinoInicial?.id === destino.id
+                            ? "border-teal-300/30 bg-teal-400/15 text-teal-200"
+                            : "border-teal-300/10 bg-[#071a28] text-slate-400 hover:text-teal-200"
+                        }`}
+                      >
+                        {destino.prioridade}. {destino.nome}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </section>
 
-          <div className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)] xl:items-start">
-            <div className="space-y-6">
-              <section className="overflow-visible rounded-2xl border border-teal-300/10 bg-[#0d2232] shadow-[0_16px_40px_rgba(0,0,0,0.16)]">
-                <div className="border-b border-teal-300/10 bg-[#0a1f2f] px-5 py-5">
-                  <div className="flex items-center gap-3">
-                    <Search className="h-5 w-5 text-teal-300" />
-                    <div>
-                      <h2 className="text-lg font-bold text-white">Pesquisar comarca</h2>
-                      <p className="mt-1 text-xs leading-5 text-slate-400">Digite somente a comarca. A busca acontece ao selecionar.</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-5">
-                  <AutocompleteComarca
-                    label="Comarca"
-                    placeholder="Ex.: Vinhedo"
-                    valor={buscaComarca}
-                    aberta={abrirComarca}
-                    selecionada={comarcaBuscaSelecionada}
-                    opcoes={opcoesComarca}
-                    onFocus={() => setAbrirComarca(true)}
-                    onChange={valor => {
-                      setBuscaComarca(valor);
-                      setComarcaBuscaSelecionada(null);
-                      setAbrirComarca(true);
-                    }}
-                    onSelecionar={selecionarComarca}
-                    onLimpar={limparComarca}
-                    onFechar={() => setAbrirComarca(false)}
-                  />
-
-                  <div className="mt-4 rounded-xl border border-teal-300/10 bg-[#081b29] p-4">
-                    <p className="text-xs leading-5 text-slate-400">
-                      Exemplo: pesquisando <strong className="text-slate-200">Vinhedo</strong>, você verá servidores que estão em Vinhedo e querem sair de lá, além de servidores de outras comarcas que desejam ir para Vinhedo.
-                    </p>
-                  </div>
-                </div>
-              </section>
-
-              {erro && <div className="rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-300">{erro}</div>}
-              {mensagemSucesso && <div className="rounded-xl border border-emerald-400/20 bg-emerald-400/10 p-4 text-sm text-emerald-300">{mensagemSucesso}</div>}
-
-              <section className="space-y-3">
-                <div>
-                  <h2 className="text-lg font-bold text-white">Servidores encontrados</h2>
-                  <p className="mt-1 text-xs text-slate-400">
-                    {buscando ? "Buscando..." : pesquisou ? `${resultados.length} resultado(s).` : "Selecione uma comarca para começar."}
-                  </p>
-                </div>
-
-                {!carregando && resultados.map(servidor => (
-                  <ServidorCard
-                    key={servidor.perfil_id}
-                    servidor={servidor}
-                    comarcaReferenciaId={comarcaBuscaSelecionada?.id ?? null}
-                    selecionado={idsSelecionados.has(servidor.perfil_id)}
-                    limiteAtingido={selecionados.length >= 6}
-                    bloqueado={Boolean(perfil?.em_match) || Boolean(perfil?.busca_pausada)}
-                    onAdicionar={() => adicionarServidor(servidor)}
-                    onRemover={() => removerServidor(servidor.perfil_id)}
-                  />
-                ))}
-
-                {!buscando && pesquisou && resultados.length === 0 && (
-                  <EstadoVazio titulo="Nenhum servidor encontrado" texto="Não há servidores disponíveis para essa comarca neste momento." />
-                )}
-              </section>
+          {erro && (
+            <div className="rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-300">
+              {erro}
             </div>
+          )}
 
-            <div className="space-y-6">
-              <section className="overflow-hidden rounded-2xl border border-teal-300/10 bg-[#0d2232] shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
-                <div className="flex items-start justify-between gap-4 border-b border-teal-300/10 bg-[#0a1f2f] px-5 py-5">
+          {mensagemSucesso && (
+            <div className="rounded-xl border border-emerald-400/20 bg-emerald-400/10 p-4 text-sm text-emerald-300">
+              {mensagemSucesso}
+            </div>
+          )}
+
+          {!destinoInicial ? (
+            <EstadoVazio
+              titulo={carregando ? "Carregando suas preferências..." : "Escolha uma comarca de destino"}
+              texto="A partir dela, o sistema abrirá as duas pontas do ciclo automaticamente."
+            />
+          ) : (
+            <>
+              <OrientacaoDuasPontas
+                minhaComarca={minhaComarcaAtual}
+                destinoInicial={destinoInicial}
+                alvosFrente={alvosFrente}
+                alvoTras={alvoTras}
+                pontasSeEncontraram={pontasSeEncontraram}
+                possuiPonte={resultadosPonte.length > 0}
+                organizacao={organizacao}
+                organizando={organizando}
+              />
+
+              <section className="overflow-hidden rounded-2xl border border-teal-300/10 bg-[#0d2232] shadow-[0_16px_40px_rgba(0,0,0,0.16)]">
+                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-teal-300/10 bg-[#0a1f2f] px-6 py-5">
                   <div>
-                    <p className="text-sm font-semibold text-teal-300">Montagem visual</p>
-                    <h2 className="mt-1 text-xl font-bold text-white">Ciclo de Permuta</h2>
-                    <p className="mt-1 text-xs text-slate-400">{quantidadeParticipantes}/7 participantes</p>
+                    <p className="text-sm font-semibold text-teal-300">Círculo da permuta</p>
+                    <h2 className="mt-1 text-xl font-bold text-white">{quantidadeParticipantes} participante(s)</h2>
+                    <p className="mt-1 text-xs text-slate-400">Você pode adicionar pessoas pela frente ou por trás. A ordem final é validada automaticamente.</p>
                   </div>
+
                   {selecionados.length > 0 && (
-                    <button type="button" onClick={limparMontagem} className="rounded-lg p-2 text-slate-400 transition hover:bg-white/[0.05] hover:text-red-300" title="Limpar ciclo">
-                      <Trash2 size={18} />
+                    <button
+                      type="button"
+                      onClick={() => limparCadeias(false)}
+                      className="inline-flex items-center gap-2 rounded-xl border border-red-300/15 bg-red-400/[0.05] px-3 py-2 text-xs font-semibold text-red-300 hover:bg-red-400/[0.1]"
+                    >
+                      <Trash2 size={15} />
+                      Limpar pessoas
                     </button>
                   )}
                 </div>
 
-                <div className="p-5">
-                  <CicloVisual
+                <div className="p-6">
+                  <CicloVisualDuasPontas
                     perfil={perfil}
-                    minhaComarcaAtual={minhaComarcaAtual}
-                    selecionados={selecionados}
-                    validacao={validacao}
+                    minhaComarca={minhaComarcaAtual}
+                    destinoInicial={destinoInicial}
+                    cadeiaFrente={cadeiaFrente}
+                    cadeiaTras={cadeiaTras}
+                    alvosFrente={alvosFrente}
+                    alvoTras={alvoTras}
                     onRemover={removerServidor}
                   />
-
-                  <div className="mt-5 rounded-xl border border-teal-300/10 bg-[#081b29] p-4">
-                    <div className="flex items-start gap-3">
-                      <Info className="mt-0.5 h-4 w-4 shrink-0 text-teal-300" />
-                      <p className="text-xs leading-5 text-slate-400">
-                        Você pode adicionar os servidores em qualquer ordem. O sistema reorganiza automaticamente as peças para encontrar a melhor sequência.
-                      </p>
-                    </div>
-                  </div>
                 </div>
               </section>
 
-              {organizando && (
-                <div className="rounded-2xl border border-teal-300/15 bg-teal-400/[0.06] p-5">
-                  <p className="text-sm font-semibold text-teal-200">Recalculando o ciclo...</p>
-                  <p className="mt-1 text-xs leading-5 text-slate-400">Testando as combinações possíveis e definindo o próximo elo.</p>
-                </div>
-              )}
-
-              {!organizando && selecionados.length === 0 && (
-                <div className="rounded-2xl border border-dashed border-teal-300/15 bg-[#081b29] p-6 text-center">
-                  <CirclePlus className="mx-auto h-8 w-8 text-slate-500" />
-                  <p className="mt-3 text-sm font-semibold text-slate-300">Adicione o primeiro servidor</p>
-                  <p className="mt-1 text-xs leading-5 text-slate-500">O círculo começa com você e cresce automaticamente conforme novas pessoas são adicionadas.</p>
-                </div>
-              )}
-
-              {!organizando && organizacao && !organizacao.fechou_ciclo && (
-                <OrientacaoCiclo
-                  organizacao={organizacao}
-                  destinosAlternativos={destinosAlternativos}
-                />
-              )}
-
-              {!organizando && organizacao?.fechou_ciclo && validacao.length > 0 && (
-                <section className="rounded-2xl border border-emerald-300/15 bg-emerald-400/[0.05] p-5">
-                  <div className="flex items-center justify-between gap-3">
+              {montagemValida && validacao.length > 0 ? (
+                <section className="rounded-2xl border border-emerald-300/20 bg-emerald-400/[0.06] p-5">
+                  <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-sm font-bold text-emerald-300">Ciclo fechado</p>
-                      <p className="mt-1 text-xs leading-5 text-slate-400">A ordem foi organizada automaticamente.</p>
+                      <p className="text-sm font-bold text-emerald-300">Ciclo fechado e validado</p>
+                      <p className="mt-1 text-xs leading-5 text-slate-400">Todas as movimentações são compatíveis com as preferências cadastradas.</p>
                     </div>
                     <CheckCircle2 className="h-6 w-6 text-emerald-300" />
                   </div>
 
-                  <div className="mt-4 space-y-2">
-                    {validacao.map(item => <LigacaoCard key={`${item.participante_id}-${item.ordem}`} item={item} />)}
+                  <div className="mt-4 grid gap-2 md:grid-cols-2">
+                    {validacao.map(item => (
+                      <LigacaoCard key={`${item.participante_id}-${item.ordem}`} item={item} />
+                    ))}
                   </div>
 
                   <button
                     type="button"
                     onClick={abrirEnvioProposta}
-                    disabled={!montagemValida || enviandoProposta}
-                    className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-300/20 bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={bloqueado || enviandoProposta}
+                    className="mt-5 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <CheckCircle2 size={18} />
+                    <Send size={17} />
                     Enviar proposta
                   </button>
                 </section>
+              ) : (
+                <section className="space-y-5">
+                  {resultadosPonte.length > 0 && (
+                    <GrupoResultados
+                      destaque="ponte"
+                      titulo="Pode fechar a ponte agora"
+                      texto={textoPonte(alvosFrente, alvoTras)}
+                      resultados={resultadosPonte}
+                      lado="ponte"
+                      idsSelecionados={idsSelecionados}
+                      limiteAtingido={selecionados.length >= 6}
+                      bloqueado={bloqueado}
+                      referenciaFrenteIds={new Set(alvosFrente.map(item => item.id))}
+                      referenciaTrasId={alvoTras?.id ?? null}
+                      onAdicionar={adicionarServidor}
+                      onRemover={removerServidor}
+                    />
+                  )}
+
+                  <div className="grid gap-5 xl:grid-cols-2">
+                    <GrupoResultados
+                      destaque="frente"
+                      titulo="Avançar pela sua chegada"
+                      texto={textoFrente(alvosFrente)}
+                      resultados={resultadosFrente}
+                      lado="frente"
+                      idsSelecionados={idsSelecionados}
+                      limiteAtingido={selecionados.length >= 6}
+                      bloqueado={bloqueado}
+                      referenciaFrenteIds={new Set(alvosFrente.map(item => item.id))}
+                      referenciaTrasId={alvoTras?.id ?? null}
+                      onAdicionar={adicionarServidor}
+                      onRemover={removerServidor}
+                    />
+
+                    <GrupoResultados
+                      destaque="tras"
+                      titulo="Avançar pelo seu retorno"
+                      texto={textoTras(alvoTras)}
+                      resultados={resultadosTras}
+                      lado="tras"
+                      idsSelecionados={idsSelecionados}
+                      limiteAtingido={selecionados.length >= 6}
+                      bloqueado={bloqueado}
+                      referenciaFrenteIds={new Set(alvosFrente.map(item => item.id))}
+                      referenciaTrasId={alvoTras?.id ?? null}
+                      onAdicionar={adicionarServidor}
+                      onRemover={removerServidor}
+                    />
+                  </div>
+
+                  {!buscandoSugestoes &&
+                    resultadosPonte.length === 0 &&
+                    resultadosFrente.length === 0 &&
+                    resultadosTras.length === 0 && (
+                      <EstadoVazio
+                        titulo="Nenhuma peça encontrada para estas pontas"
+                        texto="Ainda não há servidor disponível que avance por nenhuma das duas pontas. Você pode escolher outra comarca desejada para iniciar uma montagem diferente."
+                      />
+                    )}
+                </section>
               )}
-            </div>
-          </div>
+            </>
+          )}
         </div>
 
         {modalEnvioAberto && (
@@ -737,45 +837,82 @@ export default function BuscarServidoresPage() {
   );
 }
 
-function OrientacaoCiclo({
+function OrientacaoDuasPontas({
+  minhaComarca,
+  destinoInicial,
+  alvosFrente,
+  alvoTras,
+  pontasSeEncontraram,
+  possuiPonte,
   organizacao,
-  destinosAlternativos
+  organizando
 }: {
-  organizacao: OrganizacaoPermuta;
-  destinosAlternativos: { id: number; nome: string; quantidade: number }[];
+  minhaComarca: Comarca | null;
+  destinoInicial: Comarca;
+  alvosFrente: { id: number; nome: string }[];
+  alvoTras: { id: number; nome: string } | null;
+  pontasSeEncontraram: boolean;
+  possuiPonte: boolean;
+  organizacao: OrganizacaoPermuta | null;
+  organizando: boolean;
 }) {
-  const origem = organizacao.proxima_origem_nome ?? "a comarca indicada";
-  const fechamento = organizacao.destino_para_fechamento_nome;
+  const nomesFrente = formatarNomes(alvosFrente.map(item => item.nome));
 
   return (
-    <section className="rounded-2xl border border-amber-300/20 bg-amber-400/[0.07] p-5">
-      <p className="text-sm font-bold text-amber-200">O ciclo ainda não fecha</p>
+    <section className="rounded-2xl border border-amber-300/20 bg-amber-400/[0.06] p-5">
+      <div className="flex items-start gap-3">
+        <Info className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-bold text-amber-200">O que procurar agora</p>
 
-      <div className="mt-4 space-y-3">
-        {fechamento && (
-          <div className="rounded-xl border border-amber-300/15 bg-[#081b29] p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Para fechar agora</p>
-            <p className="mt-2 text-sm leading-6 text-slate-200">
-              Tente encontrar uma pessoa que <strong className="text-amber-200">esteja em {origem}</strong> e queira ir para <strong className="text-amber-200">{fechamento}</strong>.
-            </p>
-          </div>
-        )}
-
-        <div className="rounded-xl border border-cyan-300/15 bg-[#081b29] p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Ou continue o ciclo</p>
-          {destinosAlternativos.length > 0 ? (
-            <p className="mt-2 text-sm leading-6 text-slate-200">
-              Você também pode adicionar mais um servidor que <strong className="text-cyan-200">esteja em {origem}</strong> e queira ir para {destinosAlternativos.map((item, indice) => (
-                <span key={item.id}>
-                  {indice > 0 && (indice === destinosAlternativos.length - 1 ? " ou " : ", ")}
-                  <strong className="text-cyan-200">{item.nome}</strong>
-                </span>
-              ))}. Depois disso, o sistema recalcula automaticamente o próximo elo necessário.
+          {organizacao?.fechou_ciclo ? (
+            <p className="mt-2 text-sm leading-6 text-slate-300">As pessoas selecionadas já formam um ciclo. O sistema está validando as movimentações.</p>
+          ) : pontasSeEncontraram ? (
+            <p className="mt-2 text-sm leading-6 text-slate-300">
+              As duas pontas já se encontraram em <strong className="text-amber-200">{alvoTras?.nome}</strong>. Se os participantes selecionados forem compatíveis, o ciclo pode fechar sem adicionar outra pessoa.
             </p>
           ) : (
-            <p className="mt-2 text-sm leading-6 text-slate-200">
-              Você também pode adicionar mais um servidor que <strong className="text-cyan-200">esteja em {origem}</strong> e queira ir para outra comarca. Ao adicioná-lo, o sistema recalcula automaticamente quem falta para fechar a cadeia.
-            </p>
+            <div className="mt-3 space-y-3">
+              <p className="text-sm leading-6 text-slate-300">
+                Sua montagem começou em <strong className="text-white">{minhaComarca?.nome}</strong> → <strong className="text-white">{destinoInicial.nome}</strong>.
+              </p>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="rounded-xl border border-cyan-300/15 bg-[#081b29] p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-cyan-300">Ponta da frente</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-300">
+                    Tente encontrar alguém que <strong className="text-cyan-200">esteja em {nomesFrente}</strong>.
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-violet-300/15 bg-[#081b29] p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-violet-300">Ponta de trás</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-300">
+                    Tente encontrar alguém que <strong className="text-violet-200">queira ir para {alvoTras?.nome ?? "sua comarca"}</strong>.
+                  </p>
+                </div>
+              </div>
+
+              {alvoTras && (
+                <div className={`rounded-xl border p-4 ${possuiPonte ? "border-emerald-300/20 bg-emerald-400/[0.06]" : "border-amber-300/15 bg-[#081b29]"}`}>
+                  <p className={`text-xs font-semibold uppercase tracking-wide ${possuiPonte ? "text-emerald-300" : "text-amber-300"}`}>
+                    {possuiPonte ? "Encontramos uma ponte possível" : "Para fechar o ciclo"}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-300">
+                    Procure uma pessoa que <strong className="text-white">esteja em {nomesFrente}</strong> e <strong className="text-white">queira ir para {alvoTras.nome}</strong>.
+                  </p>
+                  {!possuiPonte && (
+                    <p className="mt-2 text-xs leading-5 text-slate-500">
+                      Se não existir essa pessoa, adicione alguém por uma das duas pontas. O sistema atualiza a ponta aberta e tenta formar uma nova ponte automaticamente.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {organizando && (
+            <p className="mt-3 text-xs text-slate-500">Validando as combinações selecionadas...</p>
           )}
         </div>
       </div>
@@ -783,85 +920,313 @@ function OrientacaoCiclo({
   );
 }
 
-function CicloVisual({
+function GrupoResultados({
+  destaque,
+  titulo,
+  texto,
+  resultados,
+  lado,
+  idsSelecionados,
+  limiteAtingido,
+  bloqueado,
+  referenciaFrenteIds,
+  referenciaTrasId,
+  onAdicionar,
+  onRemover
+}: {
+  destaque: "frente" | "tras" | "ponte";
+  titulo: string;
+  texto: string;
+  resultados: ServidorResultado[];
+  lado: LadoMontagem;
+  idsSelecionados: Set<string>;
+  limiteAtingido: boolean;
+  bloqueado: boolean;
+  referenciaFrenteIds: Set<number>;
+  referenciaTrasId: number | null;
+  onAdicionar: (servidor: ServidorResultado, lado: LadoMontagem) => void;
+  onRemover: (perfilId: string) => void;
+}) {
+  const classes =
+    destaque === "ponte"
+      ? "border-emerald-300/20 bg-emerald-400/[0.035]"
+      : destaque === "frente"
+        ? "border-cyan-300/15 bg-cyan-400/[0.025]"
+        : "border-violet-300/15 bg-violet-400/[0.025]";
+
+  return (
+    <section className={`rounded-2xl border p-5 ${classes}`}>
+      <div className="flex items-start gap-3">
+        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border ${
+          destaque === "ponte"
+            ? "border-emerald-300/20 bg-emerald-400/10 text-emerald-300"
+            : destaque === "frente"
+              ? "border-cyan-300/20 bg-cyan-400/10 text-cyan-300"
+              : "border-violet-300/20 bg-violet-400/10 text-violet-300"
+        }`}>
+          {destaque === "ponte" ? <Link2 size={18} /> : destaque === "frente" ? <ArrowRight size={18} /> : <ArrowDown size={18} />}
+        </div>
+        <div>
+          <h3 className="text-base font-bold text-white">{titulo}</h3>
+          <p className="mt-1 text-xs leading-5 text-slate-400">{texto}</p>
+        </div>
+      </div>
+
+      <div className="mt-4 space-y-3">
+        {resultados.length > 0 ? (
+          resultados.slice(0, 40).map(servidor => (
+            <ServidorCard
+              key={`${lado}-${servidor.perfil_id}`}
+              servidor={servidor}
+              lado={lado}
+              selecionado={idsSelecionados.has(servidor.perfil_id)}
+              limiteAtingido={limiteAtingido}
+              bloqueado={bloqueado}
+              referenciaFrenteIds={referenciaFrenteIds}
+              referenciaTrasId={referenciaTrasId}
+              onAdicionar={() => onAdicionar(servidor, lado)}
+              onRemover={() => onRemover(servidor.perfil_id)}
+            />
+          ))
+        ) : (
+          <div className="rounded-xl border border-dashed border-teal-300/10 bg-[#071a28] p-4 text-center text-xs leading-5 text-slate-500">
+            Nenhum servidor disponível nesta direção agora.
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function CicloVisualDuasPontas({
   perfil,
-  minhaComarcaAtual,
-  selecionados,
-  validacao,
+  minhaComarca,
+  destinoInicial,
+  cadeiaFrente,
+  cadeiaTras,
+  alvosFrente,
+  alvoTras,
   onRemover
 }: {
   perfil: PerfilAtual | null;
-  minhaComarcaAtual: Comarca | null;
-  selecionados: ServidorResultado[];
-  validacao: LigacaoValidacao[];
+  minhaComarca: Comarca | null;
+  destinoInicial: Comarca;
+  cadeiaFrente: ServidorResultado[];
+  cadeiaTras: ServidorResultado[];
+  alvosFrente: { id: number; nome: string }[];
+  alvoTras: { id: number; nome: string } | null;
   onRemover: (perfilId: string) => void;
 }) {
+  const ordemVisual = [
+    ...cadeiaFrente.map(item => ({ servidor: item, lado: "frente" as const })),
+    ...[...cadeiaTras].reverse().map(item => ({ servidor: item, lado: "tras" as const }))
+  ];
+
   const participantes = [
     {
       id: perfil?.id ?? "eu",
-      nome: perfil?.nome ?? "Você",
-      comarca: minhaComarcaAtual?.nome ?? "Não informada",
-      fixo: true
+      nome: "Você",
+      comarca: minhaComarca?.nome ?? "Não informada",
+      detalhe: `quer ir para ${destinoInicial.nome}`,
+      tipo: "eu" as const,
+      removivel: false
     },
-    ...selecionados.map(item => ({
-      id: item.perfil_id,
-      nome: item.nome,
-      comarca: item.comarca_atual_nome,
-      fixo: false
+    ...ordemVisual.map(({ servidor, lado }) => ({
+      id: servidor.perfil_id,
+      nome: servidor.nome,
+      comarca: servidor.comarca_atual_nome,
+      detalhe:
+        lado === "frente"
+          ? `destinos: ${formatarNomes(servidor.destinos.slice(0, 2).map(item => item.comarca_nome))}`
+          : `fecha por trás → ${formatarNomes(servidor.destinos.slice(0, 2).map(item => item.comarca_nome))}`,
+      tipo: lado,
+      removivel: true
     }))
   ];
 
-  const ligacoes = new Map(validacao.map(item => [item.participante_id, item.proximo_origem_comarca_nome]));
   const total = participantes.length;
-  const tamanho = 520;
+  const tamanho = 560;
   const centro = tamanho / 2;
-  const raio = total <= 2 ? 145 : total <= 4 ? 175 : 190;
+  const raio = total <= 2 ? 155 : total <= 4 ? 185 : 205;
 
   return (
     <div className="overflow-x-auto">
-      <div className="relative mx-auto h-[520px] min-w-[520px] max-w-[520px]">
+      <div className="relative mx-auto h-[560px] min-w-[560px] max-w-[560px]">
         <svg className="absolute inset-0 h-full w-full" viewBox={`0 0 ${tamanho} ${tamanho}`} aria-hidden="true">
-          <circle cx={centro} cy={centro} r={raio} fill="none" stroke="rgba(94,234,212,0.18)" strokeWidth="2" strokeDasharray="7 8" />
+          <circle cx={centro} cy={centro} r={raio} fill="none" stroke="rgba(94,234,212,0.16)" strokeWidth="2" strokeDasharray="8 9" />
           {total > 1 && participantes.map((_, indice) => {
             const a1 = -Math.PI / 2 + (indice * 2 * Math.PI) / total;
             const a2 = -Math.PI / 2 + (((indice + 1) % total) * 2 * Math.PI) / total;
-            const x1 = centro + Math.cos(a1) * (raio - 52);
-            const y1 = centro + Math.sin(a1) * (raio - 52);
-            const x2 = centro + Math.cos(a2) * (raio - 52);
-            const y2 = centro + Math.sin(a2) * (raio - 52);
-            return <line key={indice} x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(45,212,191,0.42)" strokeWidth="2" />;
+            const x1 = centro + Math.cos(a1) * (raio - 58);
+            const y1 = centro + Math.sin(a1) * (raio - 58);
+            const x2 = centro + Math.cos(a2) * (raio - 58);
+            const y2 = centro + Math.sin(a2) * (raio - 58);
+            return <line key={indice} x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(45,212,191,0.35)" strokeWidth="2" />;
           })}
         </svg>
 
-        <div className="absolute left-1/2 top-1/2 z-10 w-36 -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-teal-300/10 bg-[#071a28] p-4 text-center shadow-xl">
+        <div className="absolute left-1/2 top-1/2 z-10 w-48 -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-teal-300/10 bg-[#071a28] p-4 text-center shadow-xl">
           <UsersRound className="mx-auto h-6 w-6 text-teal-300" />
-          <p className="mt-2 text-xs font-semibold text-slate-300">{total === 1 ? "Comece o ciclo" : `${total} participantes`}</p>
+          <p className="mt-2 text-xs font-bold text-white">Duas pontas abertas</p>
+          <p className="mt-2 text-[11px] leading-5 text-cyan-200">
+            Frente: {formatarNomes(alvosFrente.map(item => item.nome))}
+          </p>
+          <p className="mt-1 text-[11px] leading-5 text-violet-200">
+            Retorno: {alvoTras?.nome ?? "-"}
+          </p>
         </div>
 
         {participantes.map((item, indice) => {
           const angulo = -Math.PI / 2 + (indice * 2 * Math.PI) / total;
           const x = centro + Math.cos(angulo) * raio;
           const y = centro + Math.sin(angulo) * raio;
-          const destinoLigado = ligacoes.get(item.id);
+
+          const estilo =
+            item.tipo === "eu"
+              ? "border-emerald-300/30 bg-emerald-400/[0.08]"
+              : item.tipo === "frente"
+                ? "border-cyan-300/25 bg-cyan-400/[0.07]"
+                : "border-violet-300/25 bg-violet-400/[0.07]";
 
           return (
             <div
               key={item.id}
-              className={`absolute z-20 w-36 -translate-x-1/2 -translate-y-1/2 rounded-2xl border p-3 text-center shadow-lg ${item.fixo ? "border-emerald-300/30 bg-emerald-400/[0.08]" : "border-violet-300/25 bg-violet-400/[0.07]"}`}
+              className={`absolute z-20 w-40 -translate-x-1/2 -translate-y-1/2 rounded-2xl border p-3 text-center shadow-lg ${estilo}`}
               style={{ left: x, top: y }}
             >
-              <div className={`mx-auto flex h-8 w-8 items-center justify-center rounded-full ${item.fixo ? "bg-emerald-400/15 text-emerald-300" : "bg-violet-400/15 text-violet-300"}`}>
+              <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-slate-200">
                 <UserRound size={16} />
               </div>
-              <p className="mt-2 truncate text-xs font-bold text-white">{item.fixo ? "Você" : item.nome}</p>
-              <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-slate-400">{item.comarca}</p>
-              {destinoLigado && <p className="mt-2 text-[10px] leading-4 text-teal-300">→ {destinoLigado}</p>}
-              {!item.fixo && (
-                <button type="button" onClick={() => onRemover(item.id)} className="mt-2 text-[10px] font-semibold text-red-300 hover:text-red-200">remover</button>
+              <p className="mt-2 truncate text-xs font-bold text-white">{item.nome}</p>
+              <p className="mt-1 text-[11px] font-semibold leading-4 text-slate-300">{item.comarca}</p>
+              <p className="mt-1 line-clamp-2 text-[10px] leading-4 text-slate-500">{item.detalhe}</p>
+              {item.removivel && (
+                <button
+                  type="button"
+                  onClick={() => onRemover(item.id)}
+                  className="mt-2 text-[10px] font-semibold text-red-300 hover:text-red-200"
+                >
+                  remover
+                </button>
               )}
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+function ServidorCard({
+  servidor,
+  lado,
+  selecionado,
+  limiteAtingido,
+  bloqueado,
+  referenciaFrenteIds,
+  referenciaTrasId,
+  onAdicionar,
+  onRemover
+}: {
+  servidor: ServidorResultado;
+  lado: LadoMontagem;
+  selecionado: boolean;
+  limiteAtingido: boolean;
+  bloqueado: boolean;
+  referenciaFrenteIds: Set<number>;
+  referenciaTrasId: number | null;
+  onAdicionar: () => void;
+  onRemover: () => void;
+}) {
+  const encaixaFrente = referenciaFrenteIds.has(servidor.comarca_atual_id);
+  const encaixaTras = referenciaTrasId
+    ? servidor.destinos.some(destino => destino.comarca_id === referenciaTrasId)
+    : false;
+
+  return (
+    <article className="rounded-xl border border-teal-300/10 bg-[#0d2232] p-4">
+      <div className="flex items-start gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-teal-300/15 bg-teal-400/[0.08] text-teal-300">
+          <UserRound size={17} />
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-bold text-white">{servidor.nome}</p>
+          <p className="mt-1 text-xs text-slate-400">
+            Está em <strong className="text-slate-200">{servidor.comarca_atual_nome}</strong>
+          </p>
+
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {encaixaFrente && (
+              <span className="rounded-full border border-cyan-300/15 bg-cyan-400/[0.07] px-2 py-1 text-[10px] font-semibold text-cyan-200">
+                encaixa na frente
+              </span>
+            )}
+            {encaixaTras && (
+              <span className="rounded-full border border-violet-300/15 bg-violet-400/[0.07] px-2 py-1 text-[10px] font-semibold text-violet-200">
+                encaixa no retorno
+              </span>
+            )}
+            {encaixaFrente && encaixaTras && (
+              <span className="rounded-full border border-emerald-300/20 bg-emerald-400/[0.08] px-2 py-1 text-[10px] font-semibold text-emerald-200">
+                pode fechar a ponte
+              </span>
+            )}
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {servidor.destinos.slice(0, 4).map(destino => (
+              <span
+                key={`${destino.comarca_id}-${destino.prioridade}`}
+                className="rounded-lg border border-teal-300/10 bg-[#081b29] px-2 py-1 text-[10px] text-slate-300"
+              >
+                → {destino.comarca_nome}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={selecionado ? onRemover : onAdicionar}
+        disabled={!selecionado && (bloqueado || limiteAtingido)}
+        className={`mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold transition disabled:opacity-50 ${
+          selecionado
+            ? "border border-red-300/15 bg-red-400/[0.07] text-red-300"
+            : lado === "ponte"
+              ? "border border-emerald-300/20 bg-emerald-600 text-white hover:bg-emerald-500"
+              : "border border-teal-300/20 bg-teal-600 text-white hover:bg-teal-500"
+        }`}
+      >
+        {selecionado ? <X size={15} /> : <CirclePlus size={16} />}
+        {selecionado ? "Remover" : lado === "ponte" ? "Adicionar e tentar fechar" : "Adicionar por este lado"}
+      </button>
+    </article>
+  );
+}
+
+function LigacaoCard({ item }: { item: LigacaoValidacao }) {
+  return (
+    <div className={`rounded-xl border p-3 ${
+      item.ligacao_compativel
+        ? "border-emerald-300/15 bg-emerald-400/[0.05]"
+        : "border-red-300/15 bg-red-400/[0.05]"
+    }`}>
+      <div className="flex items-start gap-3">
+        {item.ligacao_compativel ? (
+          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" />
+        ) : (
+          <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-300" />
+        )}
+        <div>
+          <p className="text-xs font-semibold text-slate-200">
+            {item.participante_nome} → {item.proximo_participante_nome}
+          </p>
+          <p className="mt-1 text-[11px] text-slate-500">
+            {item.origem_comarca_nome} → {item.proximo_origem_comarca_nome}
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -887,11 +1252,21 @@ function ModalEnviarProposta({
       <div className="w-full max-w-xl overflow-hidden rounded-2xl border border-teal-300/10 bg-[#0d2232] shadow-2xl">
         <div className="flex items-start justify-between gap-4 border-b border-teal-300/10 bg-[#0a1f2f] px-6 py-5">
           <div>
-            <p className="text-sm font-semibold text-teal-300">{quantidadeParticipantes === 2 ? "Permuta direta" : `Ciclo de ${quantidadeParticipantes}`}</p>
+            <p className="text-sm font-semibold text-teal-300">
+              {quantidadeParticipantes === 2 ? "Permuta direta" : `Ciclo de ${quantidadeParticipantes}`}
+            </p>
             <h2 className="mt-1 text-xl font-bold text-white">Enviar proposta</h2>
           </div>
-          <button type="button" onClick={onFechar} disabled={enviando} className="rounded-lg p-2 text-slate-400 hover:bg-white/[0.05] hover:text-white"><X size={20} /></button>
+          <button
+            type="button"
+            onClick={onFechar}
+            disabled={enviando}
+            className="rounded-lg p-2 text-slate-400 hover:bg-white/[0.05] hover:text-white"
+          >
+            <X size={20} />
+          </button>
         </div>
+
         <div className="space-y-5 p-6">
           <textarea
             value={mensagem}
@@ -901,9 +1276,25 @@ function ModalEnviarProposta({
             disabled={enviando}
             className="w-full resize-none rounded-xl border border-teal-300/15 bg-[#081b29] px-4 py-3 text-sm leading-6 text-white outline-none focus:border-teal-400"
           />
+
           <div className="flex justify-end gap-3">
-            <button type="button" onClick={onFechar} disabled={enviando} className="rounded-xl border border-teal-300/15 bg-[#081b29] px-5 py-3 text-sm font-semibold text-slate-300">Cancelar</button>
-            <button type="button" onClick={onEnviar} disabled={enviando || !mensagem.trim()} className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-3 text-sm font-semibold text-white disabled:opacity-50"><Send size={17} />{enviando ? "Enviando..." : "Confirmar e enviar"}</button>
+            <button
+              type="button"
+              onClick={onFechar}
+              disabled={enviando}
+              className="rounded-xl border border-teal-300/15 bg-[#081b29] px-5 py-3 text-sm font-semibold text-slate-300"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={onEnviar}
+              disabled={enviando || !mensagem.trim()}
+              className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-3 text-sm font-semibold text-white disabled:opacity-50"
+            >
+              <Send size={17} />
+              {enviando ? "Enviando..." : "Confirmar e enviar"}
+            </button>
           </div>
         </div>
       </div>
@@ -911,10 +1302,27 @@ function ModalEnviarProposta({
   );
 }
 
-function Aviso({ tipo, titulo, texto }: { tipo: "teal" | "amber"; titulo: string; texto: string }) {
-  const classes = tipo === "amber" ? "border-amber-300/20 bg-amber-400/[0.07]" : "border-teal-300/10 bg-teal-400/[0.07]";
+function Aviso({
+  tipo,
+  titulo,
+  texto
+}: {
+  tipo: "teal" | "amber";
+  titulo: string;
+  texto: string;
+}) {
+  const classes =
+    tipo === "amber"
+      ? "border-amber-300/20 bg-amber-400/[0.07]"
+      : "border-teal-300/10 bg-teal-400/[0.07]";
   const tituloClasse = tipo === "amber" ? "text-amber-200" : "text-teal-200";
-  return <div className={`rounded-2xl border p-5 ${classes}`}><p className={`font-semibold ${tituloClasse}`}>{titulo}</p><p className="mt-1 text-sm leading-6 text-slate-400">{texto}</p></div>;
+
+  return (
+    <div className={`rounded-2xl border p-5 ${classes}`}>
+      <p className={`font-semibold ${tituloClasse}`}>{titulo}</p>
+      <p className="mt-1 text-sm leading-6 text-slate-400">{texto}</p>
+    </div>
+  );
 }
 
 function AutocompleteComarca({
@@ -949,12 +1357,13 @@ function AutocompleteComarca({
       const alvo = event.target as Node;
       if (containerRef.current && !containerRef.current.contains(alvo)) onFechar();
     }
+
     document.addEventListener("mousedown", verificarCliqueFora);
     return () => document.removeEventListener("mousedown", verificarCliqueFora);
   }, [onFechar]);
 
   return (
-    <div ref={containerRef} className="relative z-20">
+    <div ref={containerRef} className="relative z-50">
       <label className="mb-2 block text-sm font-semibold text-slate-300">{label}</label>
       <div className="relative">
         <input
@@ -964,84 +1373,43 @@ function AutocompleteComarca({
           onChange={event => onChange(event.target.value)}
           placeholder={placeholder}
           autoComplete="off"
-          className="w-full rounded-xl border border-teal-300/15 bg-[#081b29] px-4 py-3 pr-20 text-sm text-white outline-none transition placeholder:text-slate-600 hover:border-teal-300/25 focus:border-teal-400 focus:ring-4 focus:ring-teal-400/10"
+          className="w-full rounded-xl border border-teal-300/15 bg-[#071a28] px-4 py-3 pr-20 text-sm text-white outline-none transition placeholder:text-slate-600 hover:border-teal-300/25 focus:border-teal-400 focus:ring-4 focus:ring-teal-400/10"
         />
-        {valor && <button type="button" onClick={onLimpar} className="absolute right-10 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400"><X size={16} /></button>}
+
+        {valor && (
+          <button
+            type="button"
+            onClick={onLimpar}
+            className="absolute right-10 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400"
+          >
+            <X size={16} />
+          </button>
+        )}
+
         <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
       </div>
+
       {aberta && !selecionada && (
-        <div className="relative z-30 mt-2 max-h-64 overflow-y-auto rounded-xl border border-teal-300/10 bg-[#071a28] p-1 shadow-[0_16px_36px_rgba(0,0,0,0.28)]">
-          {opcoes.length > 0 ? opcoes.map(comarca => (
-            <button key={comarca.id} type="button" onMouseDown={event => { event.preventDefault(); onSelecionar(comarca); }} className="block w-full rounded-lg px-3 py-2.5 text-left text-sm text-slate-300 transition hover:bg-teal-400/[0.07] hover:text-teal-200">{comarca.nome}</button>
-          )) : <div className="px-3 py-4 text-sm text-slate-400">Nenhuma comarca encontrada.</div>}
+        <div className="absolute left-0 right-0 z-[80] mt-2 max-h-64 overflow-y-auto rounded-xl border border-teal-300/10 bg-[#071a28] p-1 shadow-[0_16px_36px_rgba(0,0,0,0.35)]">
+          {opcoes.length > 0 ? (
+            opcoes.map(comarca => (
+              <button
+                key={comarca.id}
+                type="button"
+                onMouseDown={event => {
+                  event.preventDefault();
+                  onSelecionar(comarca);
+                }}
+                className="block w-full rounded-lg px-3 py-2.5 text-left text-sm text-slate-300 transition hover:bg-teal-400/[0.07] hover:text-teal-200"
+              >
+                {comarca.nome}
+              </button>
+            ))
+          ) : (
+            <div className="px-3 py-4 text-sm text-slate-400">Nenhuma comarca desejada encontrada.</div>
+          )}
         </div>
       )}
-    </div>
-  );
-}
-
-function ServidorCard({
-  servidor,
-  comarcaReferenciaId,
-  selecionado,
-  limiteAtingido,
-  bloqueado,
-  onAdicionar,
-  onRemover
-}: {
-  servidor: ServidorResultado;
-  comarcaReferenciaId: number | null;
-  selecionado: boolean;
-  limiteAtingido: boolean;
-  bloqueado: boolean;
-  onAdicionar: () => void;
-  onRemover: () => void;
-}) {
-  const estaNaComarca = comarcaReferenciaId === servidor.comarca_atual_id;
-  const querIrParaComarca = comarcaReferenciaId
-    ? servidor.destinos.some(destino => destino.comarca_id === comarcaReferenciaId)
-    : false;
-
-  return (
-    <article className="rounded-2xl border border-teal-300/10 bg-[#0d2232] p-4 shadow-[0_12px_32px_rgba(0,0,0,0.14)]">
-      <div className="flex items-start gap-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-teal-300/15 bg-teal-400/[0.08] text-teal-300"><UserRound size={17} /></div>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-bold text-white">{servidor.nome}</p>
-          <p className="mt-1 text-xs text-slate-400">Atual: <strong className="text-slate-200">{servidor.comarca_atual_nome}</strong></p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {estaNaComarca && <span className="rounded-full border border-cyan-300/15 bg-cyan-400/[0.07] px-2 py-1 text-[10px] font-semibold text-cyan-200">Está nesta comarca</span>}
-            {querIrParaComarca && <span className="rounded-full border border-emerald-300/15 bg-emerald-400/[0.07] px-2 py-1 text-[10px] font-semibold text-emerald-200">Quer ir para esta comarca</span>}
-          </div>
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {servidor.destinos.slice(0, 3).map(destino => <span key={`${destino.comarca_id}-${destino.prioridade}`} className="rounded-lg border border-teal-300/10 bg-[#081b29] px-2 py-1 text-[10px] text-slate-300">→ {destino.comarca_nome}</span>)}
-          </div>
-        </div>
-      </div>
-
-      <button
-        type="button"
-        onClick={selecionado ? onRemover : onAdicionar}
-        disabled={!selecionado && (bloqueado || limiteAtingido)}
-        className={`mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold transition disabled:opacity-50 ${selecionado ? "border border-red-300/15 bg-red-400/[0.07] text-red-300" : "border border-teal-300/20 bg-teal-600 text-white hover:bg-teal-500"}`}
-      >
-        {selecionado ? <X size={15} /> : <CirclePlus size={16} />}
-        {selecionado ? "Remover" : "Adicionar ao ciclo"}
-      </button>
-    </article>
-  );
-}
-
-function LigacaoCard({ item }: { item: LigacaoValidacao }) {
-  return (
-    <div className={`rounded-xl border p-3 ${item.ligacao_compativel ? "border-emerald-300/15 bg-emerald-400/[0.05]" : "border-red-300/15 bg-red-400/[0.05]"}`}>
-      <div className="flex items-start gap-3">
-        {item.ligacao_compativel ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" /> : <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-300" />}
-        <div>
-          <p className="text-xs font-semibold text-slate-200">{item.participante_nome} → {item.proximo_participante_nome}</p>
-          <p className="mt-1 text-[11px] text-slate-500">{item.origem_comarca_nome} → {item.proximo_origem_comarca_nome}</p>
-        </div>
-      </div>
     </div>
   );
 }
@@ -1051,9 +1419,24 @@ function EstadoVazio({ titulo, texto }: { titulo: string; texto: string }) {
     <div className="rounded-2xl border border-dashed border-teal-300/15 bg-[#081b29] p-8 text-center">
       <Search className="mx-auto h-8 w-8 text-slate-500" />
       <h3 className="mt-3 text-sm font-bold text-white">{titulo}</h3>
-      <p className="mx-auto mt-2 max-w-sm text-xs leading-5 text-slate-400">{texto}</p>
+      <p className="mx-auto mt-2 max-w-lg text-xs leading-5 text-slate-400">{texto}</p>
     </div>
   );
+}
+
+function textoPonte(
+  alvosFrente: { id: number; nome: string }[],
+  alvoTras: { id: number; nome: string } | null
+) {
+  return `Estes servidores estão em ${formatarNomes(alvosFrente.map(item => item.nome))} e também querem ir para ${alvoTras?.nome ?? "a ponta de retorno"}. Eles podem unir as duas pontas do ciclo.`;
+}
+
+function textoFrente(alvosFrente: { id: number; nome: string }[]) {
+  return `Servidores que estão em ${formatarNomes(alvosFrente.map(item => item.nome))}. Ao adicionar um deles, seus destinos passam a ser a nova ponta da frente.`;
+}
+
+function textoTras(alvoTras: { id: number; nome: string } | null) {
+  return `Servidores que querem ir para ${alvoTras?.nome ?? "a comarca de retorno"}. Ao adicionar um deles, a comarca atual dele passa a ser a nova ponta de trás.`;
 }
 
 function destinoEhValido(destino: DestinoServidor) {
@@ -1061,14 +1444,26 @@ function destinoEhValido(destino: DestinoServidor) {
   return nome.length > 0 && !nome.includes("sem prefer");
 }
 
-function filtrarComarcas(lista: Comarca[], busca: string) {
+function filtrarComarcas<T extends { nome: string }>(lista: T[], busca: string) {
   const termo = normalizarTexto(busca);
   if (!termo) return lista.slice(0, 25);
   return lista.filter(comarca => normalizarTexto(comarca.nome).includes(termo)).slice(0, 25);
 }
 
+function formatarNomes(nomes: string[]) {
+  const unicos = [...new Set(nomes.filter(Boolean))];
+  if (unicos.length === 0) return "a comarca indicada";
+  if (unicos.length === 1) return unicos[0];
+  if (unicos.length === 2) return `${unicos[0]} ou ${unicos[1]}`;
+  return `${unicos.slice(0, -1).join(", ")} ou ${unicos[unicos.length - 1]}`;
+}
+
 function normalizarTexto(valor: string) {
-  return valor.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  return valor
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
 }
 
 function extrairMensagemErro(error: unknown) {
@@ -1076,5 +1471,6 @@ function extrairMensagemErro(error: unknown) {
     const mensagem = String((error as { message?: unknown }).message ?? "");
     if (mensagem) return mensagem;
   }
+
   return "Ocorreu um erro inesperado. Tente novamente.";
 }
