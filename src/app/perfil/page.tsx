@@ -836,6 +836,17 @@ setErro("");
 setMensagem("");
 
 
+if(!CARGOS.includes(cargo)){
+
+setErro(
+"Selecione um cargo válido."
+);
+
+return;
+
+}
+
+
 setSalvando(true);
 
 
@@ -1721,7 +1732,10 @@ return (
                 Cargo
               </label>
 
-              <div
+              <select
+                value={cargo}
+                onChange={(e)=>setCargo(e.target.value)}
+                disabled={emMatch}
                 className="
                   w-full
                   rounded-xl
@@ -1731,13 +1745,35 @@ return (
                   px-4
                   py-3
                   text-white
+                  outline-none
+                  transition
+                  hover:border-teal-300/25
+                  focus:border-teal-400
+                  focus:ring-4
+                  focus:ring-teal-400/10
+                  disabled:cursor-not-allowed
+                  disabled:opacity-60
                 "
               >
-                {cargo || "Cargo não informado"}
-              </div>
+                <option value="" disabled>
+                  Selecione seu cargo
+                </option>
+
+                {CARGOS.map((item)=>(
+                  <option
+                    key={item}
+                    value={item}
+                    className="bg-[#081b29] text-white"
+                  >
+                    {item}
+                  </option>
+                ))}
+              </select>
 
               <p className="mt-2 text-xs leading-5 text-slate-500">
-                O cargo é definido no cadastro e não pode ser alterado diretamente no perfil, pois faz parte das regras de compatibilidade da permuta.
+                {emMatch
+                  ? "O cargo não pode ser alterado enquanto houver uma permuta confirmada em andamento."
+                  : "Ao alterar o cargo, as oportunidades de permuta serão consideradas somente entre servidores do mesmo cargo."}
               </p>
 
             </div>
