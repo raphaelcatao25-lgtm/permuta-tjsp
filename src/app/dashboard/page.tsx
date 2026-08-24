@@ -917,6 +917,81 @@ export default function DashboardPage() {
           ) as PermutaManualResumo[];
 
 
+        /*
+        ========================================
+        CONTAGEM DAS PERMUTAS MONTADAS MANUALMENTE
+
+        Os ciclos criados pela página Buscar Permuta
+        não ficam em solicitacoes_permuta. Por isso,
+        precisamos somá-los à contagem do painel.
+        ========================================
+        */
+
+        const manuaisConfirmadas =
+          listaManuais.filter(
+            item => {
+
+              const status =
+                String(
+                  item.status ?? ""
+                ).toLowerCase();
+
+              return (
+                status === "confirmado" ||
+                status === "confirmada"
+              );
+
+            }
+          ).length;
+
+
+        const manuaisAguardando =
+          listaManuais.filter(
+            item => {
+
+              const status =
+                String(
+                  item.status ?? ""
+                ).toLowerCase();
+
+              return (
+                status === "aguardando_aceite" ||
+                status === "aguardando" ||
+                status === "pendente"
+              );
+
+            }
+          ).length;
+
+
+        const confirmadasSistemaAnterior =
+          listaSolicitacoes.filter(
+            proposta =>
+              proposta.status ===
+              "confirmado"
+          ).length;
+
+
+        const aguardandoSistemaAnterior =
+          listaSolicitacoes.filter(
+            proposta =>
+              proposta.status ===
+              "aguardando_aceite"
+          ).length;
+
+
+        setPropostasConfirmadas(
+          confirmadasSistemaAnterior +
+          manuaisConfirmadas
+        );
+
+
+        setPropostasAguardando(
+          aguardandoSistemaAnterior +
+          manuaisAguardando
+        );
+
+
         listaManuais.forEach(
           item => {
 
@@ -2676,7 +2751,11 @@ export default function DashboardPage() {
                     {
                       propostasConfirmadas > 0
 
-                      ? "Você possui uma permuta confirmada."
+                      ? `${propostasConfirmadas} ${
+                          propostasConfirmadas === 1
+                            ? "permuta confirmada."
+                            : "permutas confirmadas."
+                        }`
 
                       : propostasAguardando > 0
 

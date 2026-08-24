@@ -1645,6 +1645,117 @@ export default function PropostasPage() {
       }
 
 
+      /*
+      ==================================================
+      TENTA ENVIAR E-MAIL SE A PERMUTA MANUAL CONFIRMOU
+
+      O endpoint confere o status no servidor.
+      Se ainda faltarem aceites, nenhum e-mail é enviado.
+      Uma falha de e-mail nunca desfaz o aceite.
+      ==================================================
+      */
+
+      try {
+
+        const {
+          data: sessao
+        } =
+          await supabase.auth.getSession();
+
+
+        const accessToken =
+          sessao.session
+            ?.access_token;
+
+
+        if (accessToken) {
+
+          const respostaEmail =
+            await fetch(
+              "/api/email/permuta-manual-confirmada",
+              {
+                method:
+                  "POST",
+
+                headers: {
+                  "Content-Type":
+                    "application/json",
+
+                  "Authorization":
+                    `Bearer ${accessToken}`
+                },
+
+                body:
+                  JSON.stringify({
+                    cicloId:
+                      permuta.ciclo_id
+                  })
+              }
+            );
+
+
+          const resultadoEmail =
+            await respostaEmail
+              .json()
+              .catch(
+                () => null
+              );
+
+
+          if (
+            !respostaEmail.ok
+          ) {
+
+            console.error(
+              "Aceite registrado, mas ocorreu erro no envio dos e-mails da permuta manual:",
+              resultadoEmail
+            );
+
+          }
+
+          else if (
+            resultadoEmail
+              ?.confirmado ===
+            false
+          ) {
+
+            console.log(
+              "Aceite registrado. A permuta manual ainda aguarda outros participantes."
+            );
+
+          }
+
+          else {
+
+            console.log(
+              "Processamento dos e-mails da permuta manual confirmada concluído:",
+              resultadoEmail
+            );
+
+          }
+
+        }
+
+        else {
+
+          console.warn(
+            "Aceite registrado, mas não foi possível obter a sessão para o envio do e-mail."
+          );
+
+        }
+
+      }
+
+      catch(erroEmail) {
+
+        console.error(
+          "Aceite registrado, mas houve falha no processamento do e-mail da permuta manual:",
+          erroEmail
+        );
+
+      }
+
+
       await carregarPropostas(
         false
       );

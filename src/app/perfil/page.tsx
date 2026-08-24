@@ -1245,7 +1245,7 @@ setBuscaPausada(true);
 setConfirmarPausa(false);
 
 setMensagem(
-"Busca pausada com sucesso. Seu perfil e suas preferências foram mantidos."
+"Busca pausada com sucesso. Seu perfil, sua comarca e suas preferências continuam salvos, mas você não está disponível para nenhuma combinação de permuta."
 );
 
 window.dispatchEvent(new Event("atualizar-ciclos"));
@@ -1572,8 +1572,9 @@ return (
                   </p>
 
                   <p className="mt-1 text-sm leading-6 text-slate-300">
-                    Seu perfil, sua comarca e suas preferências continuam salvos,
-                    mas você não aparece em novas oportunidades de permuta.
+                    Seu perfil, sua comarca e suas preferências continuam salvos, mas você
+                    não está disponível para nenhuma combinação de permuta enquanto
+                    a busca estiver pausada.
                   </p>
 
                 </div>
@@ -2480,8 +2481,9 @@ return (
 
 
           <p className="mt-2 text-sm leading-6 text-slate-300">
-            Seu perfil e suas preferências serão mantidos, mas você deixará de
-            aparecer em novas oportunidades até reativar a busca.
+            Seu perfil, sua comarca e suas preferências continuarão salvos, mas você
+            não estará disponível para nenhuma combinação de permuta até reativar
+            a busca.
           </p>
 
 

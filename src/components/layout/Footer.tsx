@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import {
+  Mail,
   MapPin,
 } from "lucide-react";
 
@@ -173,7 +174,47 @@ export function Footer() {
           "
         >
           Desenvolvido por Raphael Catão Martinez
+          {" "}com a colaboração de Ana Lúcia Nunes de Souza
         </Link>
+
+
+        {/* CONTATO PARA ERROS */}
+
+        <div
+          className="
+            flex
+            flex-wrap
+            items-center
+            justify-center
+            gap-2
+            text-sm
+            text-slate-400
+          "
+        >
+
+          <Mail
+            size={15}
+            className="text-teal-400"
+            aria-hidden="true"
+          />
+
+          <span>
+            Servidor, encontrou algum erro?
+          </span>
+
+        <a
+  href="mailto:permutatjsp@gmail.com"
+  className="
+    font-semibold
+    text-teal-400
+    transition
+    hover:!text-teal-300
+    hover:underline
+  "
+>
+  permutatjsp@gmail.com
+</a>
+        </div>
 
 
         {/* AVISO */}
