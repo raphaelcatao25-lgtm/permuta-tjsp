@@ -95,6 +95,12 @@ type SolicitacaoResumo = {
 type PermutaManualResumo = Record<string, unknown>;
 
 
+type ContagemPropostasDashboard = {
+  confirmadas: number;
+  aguardando_aceite: number;
+};
+
+
 type AvaliacaoPendente = {
   historico_id: string;
   solicitacao_id: string;
@@ -683,6 +689,38 @@ export default function DashboardPage() {
 
         /*
         ========================================
+        CONTAGEM CONSOLIDADA DE PROPOSTAS
+
+        A contagem vem pronta do banco e considera:
+        - sistema antigo;
+        - permutas montadas manualmente.
+        ========================================
+        */
+
+        const {
+          data: contagemPropostas,
+          error: erroContagemPropostas
+        } = await supabase.rpc(
+          "contar_propostas_dashboard",
+          {
+            p_usuario_id:
+              usuarioId
+          }
+        );
+
+
+        if (erroContagemPropostas) {
+
+          console.error(
+            "Erro ao carregar contagem consolidada de propostas:",
+            erroContagemPropostas
+          );
+
+        }
+
+
+        /*
+        ========================================
         AVALIAÇÕES PENDENTES
         ========================================
         */
@@ -919,77 +957,122 @@ export default function DashboardPage() {
 
         /*
         ========================================
-        CONTAGEM DAS PERMUTAS MONTADAS MANUALMENTE
+        CONTAGEM CONSOLIDADA DAS PROPOSTAS
 
-        Os ciclos criados pela página Buscar Permuta
-        não ficam em solicitacoes_permuta. Por isso,
-        precisamos somá-los à contagem do painel.
+        Preferimos a RPC específica do Dashboard.
+        Se ela falhar por qualquer motivo, mantemos
+        um fallback local para o sistema continuar
+        exibindo os dados.
         ========================================
         */
 
-        const manuaisConfirmadas =
-          listaManuais.filter(
-            item => {
-
-              const status =
-                String(
-                  item.status ?? ""
-                ).toLowerCase();
-
-              return (
-                status === "confirmado" ||
-                status === "confirmada"
-              );
-
-            }
-          ).length;
+        const linhaContagem =
+          Array.isArray(
+            contagemPropostas
+          )
+            ? (
+                contagemPropostas[0] ??
+                null
+              ) as ContagemPropostasDashboard | null
+            : (
+                contagemPropostas ??
+                null
+              ) as ContagemPropostasDashboard | null;
 
 
-        const manuaisAguardando =
-          listaManuais.filter(
-            item => {
+        if (
+          !erroContagemPropostas &&
+          linhaContagem
+        ) {
 
-              const status =
-                String(
-                  item.status ?? ""
-                ).toLowerCase();
-
-              return (
-                status === "aguardando_aceite" ||
-                status === "aguardando" ||
-                status === "pendente"
-              );
-
-            }
-          ).length;
+          setPropostasConfirmadas(
+            Number(
+              linhaContagem.confirmadas ??
+              0
+            )
+          );
 
 
-        const confirmadasSistemaAnterior =
-          listaSolicitacoes.filter(
-            proposta =>
-              proposta.status ===
-              "confirmado"
-          ).length;
+          setPropostasAguardando(
+            Number(
+              linhaContagem.aguardando_aceite ??
+              0
+            )
+          );
+
+        }
+
+        else {
+
+          const manuaisConfirmadas =
+            listaManuais.filter(
+              item => {
+
+                const status =
+                  String(
+                    item.status ?? ""
+                  )
+                    .trim()
+                    .toLowerCase();
+
+                return (
+                  status === "confirmado" ||
+                  status === "confirmada"
+                );
+
+              }
+            ).length;
 
 
-        const aguardandoSistemaAnterior =
-          listaSolicitacoes.filter(
-            proposta =>
-              proposta.status ===
-              "aguardando_aceite"
-          ).length;
+          const manuaisAguardando =
+            listaManuais.filter(
+              item => {
+
+                const status =
+                  String(
+                    item.status ?? ""
+                  )
+                    .trim()
+                    .toLowerCase();
+
+                return (
+                  status === "aguardando_aceite" ||
+                  status === "aguardando" ||
+                  status === "pendente"
+                );
+
+              }
+            ).length;
 
 
-        setPropostasConfirmadas(
-          confirmadasSistemaAnterior +
-          manuaisConfirmadas
-        );
+          const confirmadasSistemaAnterior =
+            listaSolicitacoes.filter(
+              proposta =>
+                proposta.status ===
+                "confirmado"
+            ).length;
 
 
-        setPropostasAguardando(
-          aguardandoSistemaAnterior +
-          manuaisAguardando
-        );
+          const aguardandoSistemaAnterior =
+            listaSolicitacoes.filter(
+              proposta =>
+                proposta.status ===
+                "aguardando_aceite"
+            ).length;
+
+
+          setPropostasConfirmadas(
+            confirmadasSistemaAnterior +
+            manuaisConfirmadas
+          );
+
+
+          setPropostasAguardando(
+            aguardandoSistemaAnterior +
+            manuaisAguardando
+          );
+
+        }
 
 
         listaManuais.forEach(
