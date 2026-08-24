@@ -162,10 +162,6 @@ export function ComarcaDesejadaSelector({
             );
 
           }
-        )
-        .slice(
-          0,
-          8
         );
 
     }, [

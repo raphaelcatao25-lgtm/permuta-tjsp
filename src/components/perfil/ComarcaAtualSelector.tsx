@@ -107,8 +107,7 @@ export function ComarcaAtualSelector({
             comarca.nome
           ).includes(buscaNormalizada);
 
-        })
-        .slice(0, 8);
+        });
 
     }, [
       comarcas,
