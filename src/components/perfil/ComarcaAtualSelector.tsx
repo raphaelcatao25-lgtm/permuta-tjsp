@@ -31,12 +31,274 @@ type ComarcaAtualSelectorProps = {
 };
 
 
-function normalizarTexto(texto: string) {
+/*
+======================================================
+NORMALIZAR TEXTO
+======================================================
+*/
+
+function normalizarTexto(
+  texto: string
+) {
+
   return texto
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(
+      /[\u0300-\u036f]/g,
+      ""
+    )
     .toLowerCase()
     .trim();
+
+}
+
+
+/*
+======================================================
+CONVERTER NÚMERO ROMANO
+======================================================
+
+Exemplos:
+
+I    = 1
+IV   = 4
+IX   = 9
+XI   = 11
+XV   = 15
+
+======================================================
+*/
+
+function converterRomanoParaNumero(
+  romano: string
+) {
+
+  const valores:
+    Record<string, number> = {
+
+      I: 1,
+      V: 5,
+      X: 10,
+      L: 50,
+      C: 100,
+      D: 500,
+      M: 1000,
+
+    };
+
+
+  let total = 0;
+  let anterior = 0;
+
+
+  for (
+    let indice =
+      romano.length - 1;
+
+    indice >= 0;
+
+    indice--
+  ) {
+
+    const atual =
+      valores[
+        romano[indice]
+          .toUpperCase()
+      ] ?? 0;
+
+
+    if (
+      atual < anterior
+    ) {
+
+      total -= atual;
+
+    }
+
+    else {
+
+      total += atual;
+
+      anterior =
+        atual;
+
+    }
+
+  }
+
+
+  return total;
+
+}
+
+
+/*
+======================================================
+ORDENAÇÃO DAS COMARCAS
+======================================================
+
+Para São Paulo:
+
+Foro Central
+Foro Regional I
+Foro Regional II
+Foro Regional III
+Foro Regional IV
+Foro Regional V
+...
+Foro Regional IX
+Foro Regional X
+...
+
+As demais comarcas continuam em ordem alfabética.
+
+======================================================
+*/
+
+function ordenarComarcas(
+  a: ComarcaAtual,
+  b: ComarcaAtual
+) {
+
+  const nomeA =
+    a.nome.trim();
+
+  const nomeB =
+    b.nome.trim();
+
+
+  const saoPauloA =
+    normalizarTexto(
+      nomeA
+    ).startsWith(
+      "sao paulo - foro"
+    );
+
+  const saoPauloB =
+    normalizarTexto(
+      nomeB
+    ).startsWith(
+      "sao paulo - foro"
+    );
+
+
+  /*
+  --------------------------------------------------
+  ORDENAÇÃO ESPECIAL SOMENTE ENTRE FOROS DE SÃO PAULO
+  --------------------------------------------------
+  */
+
+  if (
+    saoPauloA &&
+    saoPauloB
+  ) {
+
+    const centralA =
+      normalizarTexto(
+        nomeA
+      ).includes(
+        "foro central"
+      );
+
+    const centralB =
+      normalizarTexto(
+        nomeB
+      ).includes(
+        "foro central"
+      );
+
+
+    /*
+    Foro Central sempre primeiro.
+    */
+
+    if (
+      centralA &&
+      !centralB
+    ) {
+
+      return -1;
+
+    }
+
+
+    if (
+      !centralA &&
+      centralB
+    ) {
+
+      return 1;
+
+    }
+
+
+    /*
+    Identifica o número romano.
+    */
+
+    const regexRegional =
+      /Foro Regional\s+([IVXLCDM]+)/i;
+
+
+    const romanoA =
+      nomeA.match(
+        regexRegional
+      )?.[1];
+
+    const romanoB =
+      nomeB.match(
+        regexRegional
+      )?.[1];
+
+
+    if (
+      romanoA &&
+      romanoB
+    ) {
+
+      const numeroA =
+        converterRomanoParaNumero(
+          romanoA
+        );
+
+      const numeroB =
+        converterRomanoParaNumero(
+          romanoB
+        );
+
+
+      if (
+        numeroA !==
+        numeroB
+      ) {
+
+        return (
+          numeroA -
+          numeroB
+        );
+
+      }
+
+    }
+
+  }
+
+
+  /*
+  --------------------------------------------------
+  DEMAIS COMARCAS: ORDEM ALFABÉTICA
+  --------------------------------------------------
+  */
+
+  return nomeA.localeCompare(
+    nomeB,
+    "pt-BR",
+    {
+      sensitivity:
+        "base",
+    }
+  );
+
 }
 
 
@@ -49,13 +311,23 @@ export function ComarcaAtualSelector({
 }: ComarcaAtualSelectorProps) {
 
   const containerRef =
-    useRef<HTMLDivElement>(null);
+    useRef<HTMLDivElement>(
+      null
+    );
+
 
   const [
     listaAberta,
     setListaAberta,
-  ] = useState(false);
+  ] =
+    useState(false);
 
+
+  /*
+  ======================================================
+  FECHAR LISTA AO CLICAR FORA
+  ======================================================
+  */
 
   useEffect(() => {
 
@@ -66,12 +338,20 @@ export function ComarcaAtualSelector({
       const alvo =
         event.target as Node;
 
+
       if (
         containerRef.current &&
-        !containerRef.current.contains(alvo)
+        !containerRef.current.contains(
+          alvo
+        )
       ) {
-        setListaAberta(false);
+
+        setListaAberta(
+          false
+        );
+
       }
+
     }
 
 
@@ -80,34 +360,58 @@ export function ComarcaAtualSelector({
       fecharAoClicarFora
     );
 
+
     return () => {
+
       document.removeEventListener(
         "mousedown",
         fecharAoClicarFora
       );
+
     };
 
   }, []);
 
 
+  /*
+  ======================================================
+  FILTRAR E ORDENAR COMARCAS
+  ======================================================
+  */
+
   const comarcasFiltradas =
     useMemo(() => {
 
       const buscaNormalizada =
-        normalizarTexto(valorBusca);
+        normalizarTexto(
+          valorBusca
+        );
+
 
       return comarcas
-        .filter((comarca) => {
+        .filter(
+          (comarca) => {
 
-          if (!buscaNormalizada) {
-            return true;
+            if (
+              !buscaNormalizada
+            ) {
+
+              return true;
+
+            }
+
+
+            return normalizarTexto(
+              comarca.nome
+            ).includes(
+              buscaNormalizada
+            );
+
           }
-
-          return normalizarTexto(
-            comarca.nome
-          ).includes(buscaNormalizada);
-
-        });
+        )
+        .sort(
+          ordenarComarcas
+        );
 
     }, [
       comarcas,
@@ -115,29 +419,55 @@ export function ComarcaAtualSelector({
     ]);
 
 
+  /*
+  ======================================================
+  ALTERAR BUSCA
+  ======================================================
+  */
+
   function alterarBusca(
     valor: string
   ) {
 
-    onChangeBusca(valor);
-    setListaAberta(true);
+    onChangeBusca(
+      valor
+    );
+
+    setListaAberta(
+      true
+    );
 
   }
 
+
+  /*
+  ======================================================
+  SELECIONAR COMARCA
+  ======================================================
+  */
 
   function selecionar(
     comarca: ComarcaAtual
   ) {
 
-    onSelecionar(comarca);
-    setListaAberta(false);
+    onSelecionar(
+      comarca
+    );
+
+    setListaAberta(
+      false
+    );
 
   }
 
 
   return (
 
-    <div ref={containerRef}>
+    <div
+      ref={
+        containerRef
+      }
+    >
 
       <label
         htmlFor="comarca-atual"
@@ -153,7 +483,11 @@ export function ComarcaAtualSelector({
       </label>
 
 
-      <div className="relative">
+      <div
+        className="
+          relative
+        "
+      >
 
         <Search
           aria-hidden="true"
@@ -168,23 +502,32 @@ export function ComarcaAtualSelector({
             -translate-y-1/2
             text-slate-500
           "
-          strokeWidth={1.8}
+          strokeWidth={
+            1.8
+          }
         />
 
 
         <input
           id="comarca-atual"
           type="text"
-          value={valorBusca}
 
-          onChange={(event) =>
-            alterarBusca(
-              event.target.value
-            )
+          value={
+            valorBusca
           }
 
-          onFocus={() =>
-            setListaAberta(true)
+          onChange={
+            (event) =>
+              alterarBusca(
+                event.target.value
+              )
+          }
+
+          onFocus={
+            () =>
+              setListaAberta(
+                true
+              )
           }
 
           className="
@@ -206,13 +549,16 @@ export function ComarcaAtualSelector({
             focus:ring-teal-400/10
           "
 
-          placeholder="Digite para localizar sua comarca"
+          placeholder=
+            "Digite para localizar sua comarca"
+
           autoComplete="off"
         />
 
 
         <ChevronDown
           aria-hidden="true"
+
           className={[
             `
               pointer-events-none
@@ -226,11 +572,16 @@ export function ComarcaAtualSelector({
               transition-transform
               duration-200
             `,
+
             listaAberta
               ? "rotate-180"
               : "",
+
           ].join(" ")}
-          strokeWidth={1.8}
+
+          strokeWidth={
+            1.8
+          }
         />
 
 
@@ -255,23 +606,37 @@ export function ComarcaAtualSelector({
             >
 
               {
-                comarcasFiltradas.length > 0
+                comarcasFiltradas
+                  .length > 0
 
-                  ? comarcasFiltradas.map(
+                  ? (
+
+                    comarcasFiltradas.map(
                       (comarca) => {
 
                         const selecionada =
                           comarca.id ===
-                          Number(comarcaAtualId);
+                          Number(
+                            comarcaAtualId
+                          );
+
 
                         return (
 
                           <button
-                            key={comarca.id}
-                            type="button"
-                            onClick={() =>
-                              selecionar(comarca)
+                            key={
+                              comarca.id
                             }
+
+                            type="button"
+
+                            onClick={
+                              () =>
+                                selecionar(
+                                  comarca
+                                )
+                            }
+
                             className={[
                               `
                                 flex
@@ -289,31 +654,65 @@ export function ComarcaAtualSelector({
                                 last:border-b-0
                                 hover:bg-teal-400/[0.08]
                               `,
+
                               selecionada
                                 ? "bg-teal-400/[0.06]"
                                 : "",
+
                             ].join(" ")}
                           >
 
-                            <div className="min-w-0">
+                            <div
+                              className="
+                                min-w-0
+                              "
+                            >
 
                               <p
                                 className={[
-                                  "truncate text-sm font-semibold",
+                                  `
+                                    truncate
+                                    text-sm
+                                    font-semibold
+                                  `,
+
                                   selecionada
                                     ? "text-teal-200"
                                     : "text-slate-200",
+
                                 ].join(" ")}
                               >
-                                {comarca.nome}
+                                {
+                                  comarca.nome
+                                }
                               </p>
 
-                              <p className="mt-1 text-xs text-slate-500">
-                                Circunscrição: {comarca.circunscricao}
+
+                              <p
+                                className="
+                                  mt-1
+                                  text-xs
+                                  text-slate-500
+                                "
+                              >
+                                Circunscrição:{" "}
+                                {
+                                  comarca.circunscricao
+                                }
                               </p>
 
-                              <p className="mt-0.5 text-xs text-slate-500">
-                                RAJ: {comarca.raj}
+
+                              <p
+                                className="
+                                  mt-0.5
+                                  text-xs
+                                  text-slate-500
+                                "
+                              >
+                                RAJ:{" "}
+                                {
+                                  comarca.raj
+                                }
                               </p>
 
                             </div>
@@ -324,6 +723,7 @@ export function ComarcaAtualSelector({
 
                                 <Check
                                   aria-hidden="true"
+
                                   className="
                                     mt-1
                                     h-4
@@ -331,7 +731,10 @@ export function ComarcaAtualSelector({
                                     shrink-0
                                     text-teal-300
                                   "
-                                  strokeWidth={2}
+
+                                  strokeWidth={
+                                    2
+                                  }
                                 />
 
                               )
@@ -344,14 +747,18 @@ export function ComarcaAtualSelector({
                       }
                     )
 
+                  )
+
                   : (
 
-                    <p className="
-                      px-4
-                      py-4
-                      text-sm
-                      text-slate-500
-                    ">
+                    <p
+                      className="
+                        px-4
+                        py-4
+                        text-sm
+                        text-slate-500
+                      "
+                    >
                       Nenhuma comarca encontrada.
                     </p>
 

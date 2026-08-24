@@ -38,9 +38,214 @@ function normalizarTexto(
 
   return texto
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(
+      /[\u0300-\u036f]/g,
+      ""
+    )
     .toLowerCase()
     .trim();
+
+}
+
+
+/*
+======================================================
+CONVERTER NÚMERO ROMANO
+======================================================
+*/
+
+function converterRomanoParaNumero(
+  romano: string
+) {
+
+  const valores:
+    Record<string, number> = {
+
+      I: 1,
+      V: 5,
+      X: 10,
+      L: 50,
+      C: 100,
+      D: 500,
+      M: 1000,
+
+    };
+
+
+  let total = 0;
+  let anterior = 0;
+
+
+  for (
+    let indice =
+      romano.length - 1;
+
+    indice >= 0;
+
+    indice--
+  ) {
+
+    const atual =
+      valores[
+        romano[indice]
+          .toUpperCase()
+      ] ?? 0;
+
+
+    if (
+      atual < anterior
+    ) {
+
+      total -= atual;
+
+    }
+
+    else {
+
+      total += atual;
+
+      anterior =
+        atual;
+
+    }
+
+  }
+
+
+  return total;
+
+}
+
+
+/*
+======================================================
+ORDENAR COMARCAS
+======================================================
+*/
+
+function ordenarComarcas(
+  a: ComarcaDesejadaOpcao,
+  b: ComarcaDesejadaOpcao
+) {
+
+  const nomeA =
+    a.nome.trim();
+
+  const nomeB =
+    b.nome.trim();
+
+
+  const saoPauloA =
+    normalizarTexto(
+      nomeA
+    ).startsWith(
+      "sao paulo - foro"
+    );
+
+  const saoPauloB =
+    normalizarTexto(
+      nomeB
+    ).startsWith(
+      "sao paulo - foro"
+    );
+
+
+  if (
+    saoPauloA &&
+    saoPauloB
+  ) {
+
+    const centralA =
+      normalizarTexto(
+        nomeA
+      ).includes(
+        "foro central"
+      );
+
+    const centralB =
+      normalizarTexto(
+        nomeB
+      ).includes(
+        "foro central"
+      );
+
+
+    if (
+      centralA &&
+      !centralB
+    ) {
+
+      return -1;
+
+    }
+
+
+    if (
+      !centralA &&
+      centralB
+    ) {
+
+      return 1;
+
+    }
+
+
+    const regexRegional =
+      /Foro Regional\s+([IVXLCDM]+)/i;
+
+
+    const romanoA =
+      nomeA.match(
+        regexRegional
+      )?.[1];
+
+    const romanoB =
+      nomeB.match(
+        regexRegional
+      )?.[1];
+
+
+    if (
+      romanoA &&
+      romanoB
+    ) {
+
+      const numeroA =
+        converterRomanoParaNumero(
+          romanoA
+        );
+
+      const numeroB =
+        converterRomanoParaNumero(
+          romanoB
+        );
+
+
+      if (
+        numeroA !==
+        numeroB
+      ) {
+
+        return (
+          numeroA -
+          numeroB
+        );
+
+      }
+
+    }
+
+  }
+
+
+  return nomeA.localeCompare(
+    nomeB,
+    "pt-BR",
+    {
+      sensitivity:
+        "base",
+    }
+  );
 
 }
 
@@ -54,7 +259,9 @@ export function ComarcaDesejadaSelector({
 }: ComarcaDesejadaSelectorProps) {
 
   const containerRef =
-    useRef<HTMLDivElement>(null);
+    useRef<HTMLDivElement>(
+      null
+    );
 
 
   const [
@@ -72,9 +279,16 @@ export function ComarcaDesejadaSelector({
 
 
   const atingiuLimite =
-    comarcasSelecionadasIds.length >=
+    comarcasSelecionadasIds
+      .length >=
     limite;
 
+
+  /*
+  ======================================================
+  FECHAR AO CLICAR FORA
+  ======================================================
+  */
 
   useEffect(() => {
 
@@ -88,10 +302,14 @@ export function ComarcaDesejadaSelector({
 
       if (
         containerRef.current &&
-        !containerRef.current.contains(alvo)
+        !containerRef.current.contains(
+          alvo
+        )
       ) {
 
-        setListaAberta(false);
+        setListaAberta(
+          false
+        );
 
       }
 
@@ -116,11 +334,19 @@ export function ComarcaDesejadaSelector({
   }, []);
 
 
+  /*
+  ======================================================
+  FILTRAR E ORDENAR COMARCAS
+  ======================================================
+  */
+
   const opcoesFiltradas =
     useMemo(() => {
 
       const buscaNormalizada =
-        normalizarTexto(busca);
+        normalizarTexto(
+          busca
+        );
 
 
       return comarcas
@@ -128,14 +354,17 @@ export function ComarcaDesejadaSelector({
           (comarca) => {
 
             const jaSelecionada =
-              comarcasSelecionadasIds.includes(
-                comarca.id
-              );
+              comarcasSelecionadasIds
+                .includes(
+                  comarca.id
+                );
 
 
             const eComarcaAtual =
               comarca.id ===
-              Number(comarcaAtualId);
+              Number(
+                comarcaAtualId
+              );
 
 
             if (
@@ -148,7 +377,9 @@ export function ComarcaDesejadaSelector({
             }
 
 
-            if (!buscaNormalizada) {
+            if (
+              !buscaNormalizada
+            ) {
 
               return true;
 
@@ -162,6 +393,9 @@ export function ComarcaDesejadaSelector({
             );
 
           }
+        )
+        .sort(
+          ordenarComarcas
         );
 
     }, [
@@ -172,20 +406,36 @@ export function ComarcaDesejadaSelector({
     ]);
 
 
+  /*
+  ======================================================
+  ADICIONAR COMARCA
+  ======================================================
+  */
+
   function adicionarComarca(
     comarca: ComarcaDesejadaOpcao
   ) {
 
-    if (atingiuLimite) {
+    if (
+      atingiuLimite
+    ) {
+
       return;
+
     }
 
 
-    onAdicionar(comarca);
+    onAdicionar(
+      comarca
+    );
+
 
     setBusca("");
 
-    setListaAberta(false);
+
+    setListaAberta(
+      false
+    );
 
   }
 
@@ -193,7 +443,9 @@ export function ComarcaDesejadaSelector({
   return (
 
     <div
-      ref={containerRef}
+      ref={
+        containerRef
+      }
     >
 
       <div
@@ -232,16 +484,28 @@ export function ComarcaDesejadaSelector({
             text-teal-300
           "
         >
-          {comarcasSelecionadasIds.length}/{limite}
+          {
+            comarcasSelecionadasIds
+              .length
+          }
+          /
+          {
+            limite
+          }
         </span>
 
       </div>
 
 
-      <div className="relative">
+      <div
+        className="
+          relative
+        "
+      >
 
         <Search
           aria-hidden="true"
+
           className="
             pointer-events-none
             absolute
@@ -253,7 +517,10 @@ export function ComarcaDesejadaSelector({
             -translate-y-1/2
             text-slate-500
           "
-          strokeWidth={1.8}
+
+          strokeWidth={
+            1.8
+          }
         />
 
 
@@ -261,7 +528,9 @@ export function ComarcaDesejadaSelector({
           id="comarca-desejada"
           type="text"
 
-          value={busca}
+          value={
+            busca
+          }
 
           onChange={
             (event) => {
@@ -270,13 +539,18 @@ export function ComarcaDesejadaSelector({
                 event.target.value
               );
 
-              setListaAberta(true);
+              setListaAberta(
+                true
+              );
 
             }
           }
 
-          onFocus={() =>
-            setListaAberta(true)
+          onFocus={
+            () =>
+              setListaAberta(
+                true
+              )
           }
 
           disabled={
@@ -308,7 +582,9 @@ export function ComarcaDesejadaSelector({
 
           placeholder={
             atingiuLimite
+
               ? `Limite de ${limite} comarcas atingido`
+
               : "Digite para adicionar uma comarca"
           }
 
@@ -338,7 +614,8 @@ export function ComarcaDesejadaSelector({
             >
 
               {
-                opcoesFiltradas.length > 0
+                opcoesFiltradas
+                  .length > 0
 
                   ? (
 
@@ -352,10 +629,11 @@ export function ComarcaDesejadaSelector({
 
                           type="button"
 
-                          onClick={() =>
-                            adicionarComarca(
-                              comarca
-                            )
+                          onClick={
+                            () =>
+                              adicionarComarca(
+                                comarca
+                              )
                           }
 
                           className="
@@ -393,7 +671,9 @@ export function ComarcaDesejadaSelector({
                                 group-hover:text-teal-200
                               "
                             >
-                              {comarca.nome}
+                              {
+                                comarca.nome
+                              }
                             </p>
 
 
@@ -404,7 +684,10 @@ export function ComarcaDesejadaSelector({
                                 text-slate-500
                               "
                             >
-                              Circunscrição: {comarca.circunscricao}
+                              Circunscrição:{" "}
+                              {
+                                comarca.circunscricao
+                              }
                             </p>
 
 
@@ -415,7 +698,10 @@ export function ComarcaDesejadaSelector({
                                 text-slate-500
                               "
                             >
-                              RAJ: {comarca.raj}
+                              RAJ:{" "}
+                              {
+                                comarca.raj
+                              }
                             </p>
 
                           </div>
@@ -442,11 +728,15 @@ export function ComarcaDesejadaSelector({
 
                             <Plus
                               aria-hidden="true"
+
                               className="
                                 h-4
                                 w-4
                               "
-                              strokeWidth={2}
+
+                              strokeWidth={
+                                2
+                              }
                             />
 
                           </div>
