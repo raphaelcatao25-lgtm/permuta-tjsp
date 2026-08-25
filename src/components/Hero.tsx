@@ -365,24 +365,24 @@ export default function Hero() {
                 </div>
 
                 <div
-                  className="
-                    text-xs
-                    leading-5
-                    text-slate-300
-                  "
-                >
-                  <strong
-                    className="
-                      block
-                      text-sm
-                      text-white
-                    "
-                  >
-                    Grátis
-                  </strong>
+  className="
+    text-xs
+    leading-5
+    text-slate-300
+  "
+>
+  <strong
+    className="
+      block
+      text-sm
+      text-white
+    "
+  >
+    100% gratuita
+  </strong>
 
-                  para começar
-                </div>
+  para servidores do TJSP
+</div>
 
               </div>
 
