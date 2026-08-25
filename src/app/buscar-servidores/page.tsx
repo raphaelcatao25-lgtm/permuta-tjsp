@@ -107,7 +107,7 @@ type OrganizacaoPermuta = {
   mensagem: string;
 };
 
-type LadoMontagem = "frente" | "tras" | "ponte";
+type LadoMontagem = "frente" | "tras" | "ponte" | "livre";
 
 export default function BuscarServidoresPage() {
   const [perfil, setPerfil] = useState<PerfilAtual | null>(null);
@@ -120,10 +120,15 @@ export default function BuscarServidoresPage() {
 
   const [cadeiaFrente, setCadeiaFrente] = useState<ServidorResultado[]>([]);
   const [cadeiaTras, setCadeiaTras] = useState<ServidorResultado[]>([]);
+  const [cadeiaLivre, setCadeiaLivre] = useState<ServidorResultado[]>([]);
 
   const [resultadosFrente, setResultadosFrente] = useState<ServidorResultado[]>([]);
   const [resultadosTras, setResultadosTras] = useState<ServidorResultado[]>([]);
   const [resultadosPonte, setResultadosPonte] = useState<ServidorResultado[]>([]);
+
+  const [buscaLivre, setBuscaLivre] = useState("");
+  const [resultadosBuscaLivre, setResultadosBuscaLivre] = useState<ServidorResultado[]>([]);
+  const [buscandoLivre, setBuscandoLivre] = useState(false);
 
   const [carregando, setCarregando] = useState(true);
   const [buscandoSugestoes, setBuscandoSugestoes] = useState(false);
@@ -213,9 +218,11 @@ export default function BuscarServidoresPage() {
 
   const selecionados = useMemo(() => {
     const mapa = new Map<string, ServidorResultado>();
-    [...cadeiaFrente, ...cadeiaTras].forEach(item => mapa.set(item.perfil_id, item));
+    [...cadeiaFrente, ...cadeiaTras, ...cadeiaLivre].forEach(item =>
+      mapa.set(item.perfil_id, item)
+    );
     return [...mapa.values()];
-  }, [cadeiaFrente, cadeiaTras]);
+  }, [cadeiaFrente, cadeiaTras, cadeiaLivre]);
 
   const idsSelecionados = useMemo(
     () => new Set(selecionados.map(item => item.perfil_id)),
@@ -301,6 +308,108 @@ export default function BuscarServidoresPage() {
       }))
       .filter(servidor => servidor.destinos.length > 0)
       .filter(servidor => !servidor.em_match && !servidor.busca_pausada);
+  }
+
+  async function buscarQualquerServidor() {
+    if (!perfil) return;
+
+    const termo = buscaLivre.trim();
+
+    if (termo.length < 2) {
+      setResultadosBuscaLivre([]);
+      setErro("Digite pelo menos 2 caracteres para buscar por nome ou comarca.");
+      return;
+    }
+
+    setBuscandoLivre(true);
+    setErro("");
+
+    try {
+      const termoNormalizado = normalizarTexto(termo);
+
+      const comarcasCorrespondentes = comarcas
+        .filter(comarca => normalizarTexto(comarca.nome).includes(termoNormalizado))
+        .slice(0, 6);
+
+      const parametrosBase = {
+        p_usuario_id: perfil.id,
+        p_raj_atual_id: null,
+        p_circunscricao_atual_id: null,
+        p_raj_destino_id: null,
+        p_circunscricao_destino_id: null,
+        p_limite: 250
+      };
+
+      const requisicoes = [
+        supabase.rpc("buscar_servidores_manual_v3", {
+          ...parametrosBase,
+          p_nome: termo,
+          p_comarca_atual_id: null,
+          p_comarca_destino_id: null
+        }),
+        ...comarcasCorrespondentes.map(comarca =>
+          supabase.rpc("buscar_servidores_manual_v3", {
+            ...parametrosBase,
+            p_nome: null,
+            p_comarca_atual_id: comarca.id,
+            p_comarca_destino_id: null
+          })
+        ),
+        ...comarcasCorrespondentes.map(comarca =>
+          supabase.rpc("buscar_servidores_manual_v3", {
+            ...parametrosBase,
+            p_nome: null,
+            p_comarca_atual_id: null,
+            p_comarca_destino_id: comarca.id
+          })
+        )
+      ];
+
+      const respostas = await Promise.all(requisicoes);
+      const respostaComErro = respostas.find(resposta => resposta.error);
+
+      if (respostaComErro?.error) throw respostaComErro.error;
+
+      const mapa = new Map<string, ServidorResultado>();
+
+      respostas.forEach(resposta => {
+        ((resposta.data ?? []) as ServidorResultado[]).forEach(servidor => {
+          if (servidor.perfil_id === perfil.id) return;
+          if (servidor.em_match || servidor.busca_pausada) return;
+
+          const destinos = Array.isArray(servidor.destinos)
+            ? servidor.destinos.filter(destinoEhValido)
+            : [];
+
+          if (destinos.length === 0) return;
+
+          mapa.set(servidor.perfil_id, {
+            ...servidor,
+            destinos
+          });
+        });
+      });
+
+      const resultados = [...mapa.values()]
+        .filter(servidor => {
+          const nomeCombina = normalizarTexto(servidor.nome).includes(termoNormalizado);
+          const atualCombina = normalizarTexto(servidor.comarca_atual_nome).includes(termoNormalizado);
+          const destinoCombina = servidor.destinos.some(destino =>
+            normalizarTexto(destino.comarca_nome).includes(termoNormalizado)
+          );
+
+          return nomeCombina || atualCombina || destinoCombina;
+        })
+        .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"))
+        .slice(0, 50);
+
+      setResultadosBuscaLivre(resultados);
+    } catch (error) {
+      setResultadosBuscaLivre([]);
+      setErro(extrairMensagemErro(error));
+    } finally {
+      setBuscandoLivre(false);
+    }
   }
 
   useEffect(() => {
@@ -499,6 +608,17 @@ export default function BuscarServidoresPage() {
       return;
     }
 
+    if (lado === "livre") {
+      if (!destinoInicial) {
+        setErro("Escolha primeiro uma das suas comarcas de destino para iniciar a montagem.");
+        return;
+      }
+
+      setCadeiaLivre(atuais => [...atuais, servidor]);
+      setMensagemSucesso("Servidor adicionado pela busca livre. O sistema vai tentar organizar a combinação automaticamente.");
+      return;
+    }
+
     // Uma ponte é adicionada na frente porque sua comarca atual atende a
     // ponta da frente e o seu destino já alcança a ponta de trás.
     setCadeiaFrente(atuais => [...atuais, servidor]);
@@ -507,6 +627,7 @@ export default function BuscarServidoresPage() {
   function removerServidor(perfilId: string) {
     setCadeiaFrente(atuais => atuais.filter(item => item.perfil_id !== perfilId));
     setCadeiaTras(atuais => atuais.filter(item => item.perfil_id !== perfilId));
+    setCadeiaLivre(atuais => atuais.filter(item => item.perfil_id !== perfilId));
     setErro("");
     setMensagemSucesso("");
   }
@@ -514,6 +635,7 @@ export default function BuscarServidoresPage() {
   function limparCadeias(limparDestinoTambem = false) {
     setCadeiaFrente([]);
     setCadeiaTras([]);
+    setCadeiaLivre([]);
     setResultadosFrente([]);
     setResultadosTras([]);
     setResultadosPonte([]);
@@ -666,6 +788,107 @@ export default function BuscarServidoresPage() {
             </div>
           </section>
 
+          <section className="overflow-hidden rounded-2xl border border-amber-300/15 bg-[#0d2232] shadow-[0_16px_40px_rgba(0,0,0,0.16)]">
+            <div className="border-b border-amber-300/10 bg-[#0a1f2f] px-6 py-5">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-amber-300/20 bg-amber-400/[0.08] text-amber-300">
+                  <Search size={19} />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-amber-200">Buscar qualquer servidor</p>
+                  <p className="mt-1 max-w-4xl text-xs leading-5 text-slate-400">
+                    Localize um servidor pelo nome ou por uma comarca, mesmo que essa comarca não esteja entre os seus destinos.
+                    A busca não altera suas preferências. Ao adicionar alguém, o sistema tenta reorganizar todos os participantes e só libera a proposta se a combinação for realmente válida.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6">
+              <div className="flex flex-col gap-3 md:flex-row">
+                <div className="relative flex-1">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                  <input
+                    type="text"
+                    value={buscaLivre}
+                    onChange={event => {
+                      setBuscaLivre(event.target.value);
+                      if (!event.target.value.trim()) setResultadosBuscaLivre([]);
+                    }}
+                    onKeyDown={event => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        void buscarQualquerServidor();
+                      }
+                    }}
+                    placeholder="Digite o nome do servidor ou uma comarca"
+                    autoComplete="off"
+                    className="w-full rounded-xl border border-amber-300/15 bg-[#071a28] py-3 pl-10 pr-4 text-sm text-white outline-none transition placeholder:text-slate-600 hover:border-amber-300/25 focus:border-amber-300 focus:ring-4 focus:ring-amber-300/10"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => void buscarQualquerServidor()}
+                  disabled={buscandoLivre || buscaLivre.trim().length < 2}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-amber-300/20 bg-amber-500/15 px-5 py-3 text-sm font-semibold text-amber-200 transition hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Search size={16} />
+                  {buscandoLivre ? "Buscando..." : "Buscar servidor"}
+                </button>
+              </div>
+
+              {!destinoInicial && (
+                <p className="mt-3 text-xs leading-5 text-amber-200/80">
+                  Você pode pesquisar agora, mas para adicionar alguém à montagem escolha primeiro uma das suas comarcas de destino no campo acima.
+                </p>
+              )}
+
+              {resultadosBuscaLivre.length > 0 && (
+                <div className="mt-5">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      {resultadosBuscaLivre.length} servidor(es) encontrado(s)
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBuscaLivre("");
+                        setResultadosBuscaLivre([]);
+                      }}
+                      className="text-xs font-semibold text-slate-500 hover:text-slate-300"
+                    >
+                      Limpar busca
+                    </button>
+                  </div>
+
+                  <div className="grid gap-3 lg:grid-cols-2">
+                    {resultadosBuscaLivre.map(servidor => (
+                      <ServidorCard
+                        key={`livre-${servidor.perfil_id}`}
+                        servidor={servidor}
+                        lado="livre"
+                        selecionado={idsSelecionados.has(servidor.perfil_id)}
+                        limiteAtingido={selecionados.length >= 6}
+                        bloqueado={bloqueado || !destinoInicial}
+                        referenciaFrenteIds={new Set(alvosFrente.map(item => item.id))}
+                        referenciaTrasId={alvoTras?.id ?? null}
+                        onAdicionar={() => adicionarServidor(servidor, "livre")}
+                        onRemover={() => removerServidor(servidor.perfil_id)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {!buscandoLivre && buscaLivre.trim().length >= 2 && resultadosBuscaLivre.length === 0 && (
+                <div className="mt-5 rounded-xl border border-dashed border-amber-300/10 bg-[#071a28] p-4 text-center text-xs leading-5 text-slate-500">
+                  Nenhum servidor encontrado com esse nome ou comarca.
+                </div>
+              )}
+            </div>
+          </section>
+
           {erro && (
             <div className="rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-300">
               {erro}
@@ -723,6 +946,7 @@ export default function BuscarServidoresPage() {
                     destinoInicial={destinoInicial}
                     cadeiaFrente={cadeiaFrente}
                     cadeiaTras={cadeiaTras}
+                    cadeiaLivre={cadeiaLivre}
                     alvosFrente={alvosFrente}
                     alvoTras={alvoTras}
                     onRemover={removerServidor}
@@ -1004,6 +1228,7 @@ function CicloVisualDuasPontas({
   destinoInicial,
   cadeiaFrente,
   cadeiaTras,
+  cadeiaLivre,
   alvosFrente,
   alvoTras,
   onRemover
@@ -1013,12 +1238,14 @@ function CicloVisualDuasPontas({
   destinoInicial: Comarca;
   cadeiaFrente: ServidorResultado[];
   cadeiaTras: ServidorResultado[];
+  cadeiaLivre: ServidorResultado[];
   alvosFrente: { id: number; nome: string }[];
   alvoTras: { id: number; nome: string } | null;
   onRemover: (perfilId: string) => void;
 }) {
   const ordemVisual = [
     ...cadeiaFrente.map(item => ({ servidor: item, lado: "frente" as const })),
+    ...cadeiaLivre.map(item => ({ servidor: item, lado: "livre" as const })),
     ...[...cadeiaTras].reverse().map(item => ({ servidor: item, lado: "tras" as const }))
   ];
 
@@ -1038,7 +1265,9 @@ function CicloVisualDuasPontas({
       detalhe:
         lado === "frente"
           ? `destinos: ${formatarNomes(servidor.destinos.slice(0, 2).map(item => item.comarca_nome))}`
-          : `fecha por trás → ${formatarNomes(servidor.destinos.slice(0, 2).map(item => item.comarca_nome))}`,
+          : lado === "livre"
+            ? `busca livre · destinos: ${formatarNomes(servidor.destinos.slice(0, 2).map(item => item.comarca_nome))}`
+            : `fecha por trás → ${formatarNomes(servidor.destinos.slice(0, 2).map(item => item.comarca_nome))}`,
       tipo: lado,
       removivel: true
     }))
@@ -1086,7 +1315,9 @@ function CicloVisualDuasPontas({
               ? "border-emerald-300/30 bg-emerald-400/[0.08]"
               : item.tipo === "frente"
                 ? "border-cyan-300/25 bg-cyan-400/[0.07]"
-                : "border-violet-300/25 bg-violet-400/[0.07]";
+                : item.tipo === "livre"
+                  ? "border-amber-300/25 bg-amber-400/[0.07]"
+                  : "border-violet-300/25 bg-violet-400/[0.07]";
 
           return (
             <div
@@ -1196,11 +1427,21 @@ function ServidorCard({
             ? "border border-red-300/15 bg-red-400/[0.07] text-red-300"
             : lado === "ponte"
               ? "border border-emerald-300/20 bg-emerald-600 text-white hover:bg-emerald-500"
-              : "border border-teal-300/20 bg-teal-600 text-white hover:bg-teal-500"
+              : lado === "livre"
+                ? "border border-amber-300/20 bg-amber-500/20 text-amber-100 hover:bg-amber-500/30"
+                : "border border-teal-300/20 bg-teal-600 text-white hover:bg-teal-500"
         }`}
       >
         {selecionado ? <X size={15} /> : <CirclePlus size={16} />}
-        {selecionado ? "Remover" : lado === "ponte" ? "Adicionar e completar" : "Adicionar esta pessoa"}
+        {
+          selecionado
+            ? "Remover"
+            : lado === "ponte"
+              ? "Adicionar e completar"
+              : lado === "livre"
+                ? "Adicionar à montagem"
+                : "Adicionar esta pessoa"
+        }
       </button>
     </article>
   );
