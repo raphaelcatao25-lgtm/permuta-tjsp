@@ -1,6 +1,15 @@
 "use client";
 
+import {
+  useEffect,
+  useState,
+} from "react";
+
 import ServerCount from "@/components/ServerCount";
+
+import {
+  supabase,
+} from "@/lib/supabase";
 
 import Link from "next/link";
 
@@ -9,6 +18,7 @@ import {
   ArrowRightLeft,
   ShieldCheck,
   Search,
+  Sparkles,
 } from "lucide-react";
 
 
@@ -16,6 +26,54 @@ const SP_PATH = `M 0 404 L 22 395 L 59 405 L 73 396 L 127 412 L 143 390 L 198 41
 
 
 export default function Hero() {
+
+  const [
+    oportunidadesEncontradas,
+    setOportunidadesEncontradas,
+  ] = useState<number | null>(null);
+
+
+  useEffect(() => {
+
+    let ativo = true;
+
+    async function carregarOportunidades() {
+
+      const {
+        data,
+        error,
+      } = await supabase.rpc(
+        "total_oportunidades_encontradas"
+      );
+
+      if (!ativo) {
+        return;
+      }
+
+      if (error) {
+
+        console.error(
+          "Erro ao carregar total histórico de oportunidades:",
+          error
+        );
+
+        return;
+      }
+
+      setOportunidadesEncontradas(
+        Number(data ?? 0)
+      );
+
+    }
+
+    carregarOportunidades();
+
+    return () => {
+      ativo = false;
+    };
+
+  }, []);
+
 
   return (
 
@@ -390,16 +448,113 @@ export default function Hero() {
 
 
             {/* =================================================
-                CONTADOR REAL
+                CONTADORES REAIS
             ================================================= */}
 
             <div
               className="
                 mt-6
-                max-w-md
+                grid
+                max-w-2xl
+                gap-4
+                sm:grid-cols-2
               "
             >
+
               <ServerCount />
+
+
+              {
+                oportunidadesEncontradas !== null && (
+
+                  <div
+                    className="
+                      flex
+                      min-h-[120px]
+                      items-center
+                      gap-4
+                      rounded-2xl
+                      border
+                      border-teal-300/15
+                      bg-[#0d2637]/80
+                      px-5
+                      py-5
+                      shadow-[0_18px_45px_rgba(0,0,0,0.18)]
+                      backdrop-blur-lg
+                    "
+                  >
+
+                    <div
+                      className="
+                        flex
+                        h-14
+                        w-14
+                        shrink-0
+                        items-center
+                        justify-center
+                        rounded-full
+                        border
+                        border-teal-300/20
+                        bg-teal-400/10
+                        text-teal-300
+                      "
+                    >
+                      <Sparkles size={27} />
+                    </div>
+
+
+                    <div className="min-w-0">
+
+                      <div
+                        className="
+                          text-3xl
+                          font-black
+                          leading-none
+                          tracking-tight
+                          text-teal-300
+                        "
+                      >
+                        {
+                          oportunidadesEncontradas
+                            .toLocaleString("pt-BR")
+                        }
+                      </div>
+
+
+                      <div
+                        className="
+                          mt-1
+                          text-sm
+                          font-bold
+                          text-white
+                        "
+                      >
+                        {
+                          oportunidadesEncontradas === 1
+                            ? "oportunidade encontrada"
+                            : "oportunidades encontradas"
+                        }
+                      </div>
+
+
+                      <div
+                        className="
+                          mt-1
+                          text-xs
+                          leading-5
+                          text-slate-400
+                        "
+                      >
+                        Combinações identificadas pela plataforma
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                )
+              }
+
             </div>
 
           </div>
