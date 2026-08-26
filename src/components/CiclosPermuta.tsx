@@ -20,7 +20,9 @@ import {
   ChevronUp,
   Eye,
   MapPin,
+  Send,
   Users,
+  X,
 } from "lucide-react";
 
 
@@ -103,6 +105,21 @@ interface Participante {
   destinoCircunscricao: string;
 
   destinoRaj: string;
+
+}
+
+const MENSAGEM_PADRAO =
+  "Olá! Encontrei uma possibilidade de permuta pelo Permuta TJSP e gostaria de verificar se vocês têm interesse em seguir com essa combinação. Se quiserem, podemos conversar para alinhar os detalhes.";
+
+function chaveParticipantes(
+  participantes: string[]
+) {
+
+  return [
+    ...participantes
+  ]
+    .sort()
+    .join("--");
 
 }
 
@@ -193,6 +210,274 @@ export default function CiclosPermuta({
 
 
       /* =========================================
+         REMOVE CICLOS QUE JÁ POSSUEM PROPOSTA ATIVA
+         ========================================= */
+
+      const chavesComPropostaAtiva =
+        new Set<string>();
+
+
+      const {
+        data: solicitacoesAtivas,
+        error: erroSolicitacoesAtivas
+      } = await supabase
+        .from("solicitacoes_permuta")
+        .select(`
+          participante_1,
+          participante_2,
+          participante_3,
+          status
+        `)
+        .or(
+          `participante_1.eq.${usuarioId},participante_2.eq.${usuarioId},participante_3.eq.${usuarioId}`
+        )
+        .in(
+          "status",
+          [
+            "aguardando_aceite",
+            "confirmado"
+          ]
+        );
+
+
+      if (erroSolicitacoesAtivas) {
+
+        console.error(
+          "Erro ao verificar propostas automáticas existentes:",
+          erroSolicitacoesAtivas
+        );
+
+      }
+
+
+      (
+        solicitacoesAtivas ?? []
+      ).forEach(
+        solicitacao => {
+
+          const participantes = [
+            solicitacao.participante_1,
+            solicitacao.participante_2,
+            solicitacao.participante_3
+          ].filter(
+            (id): id is string =>
+              Boolean(id)
+          );
+
+
+          if (
+            participantes.length === 3
+          ) {
+
+            chavesComPropostaAtiva.add(
+              chaveParticipantes(
+                participantes
+              )
+            );
+
+          }
+
+        }
+      );
+
+
+      const {
+        data: participacoesManuais,
+        error: erroParticipacoesManuais
+      } = await supabase
+        .from("ciclos_manuais_participantes")
+        .select("ciclo_id")
+        .eq(
+          "usuario_id",
+          usuarioId
+        );
+
+
+      if (erroParticipacoesManuais) {
+
+        console.error(
+          "Erro ao verificar participações manuais:",
+          erroParticipacoesManuais
+        );
+
+      }
+
+
+      const idsCiclosManuais =
+        [
+          ...new Set(
+            (
+              participacoesManuais ?? []
+            ).map(
+              item => item.ciclo_id
+            )
+          )
+        ];
+
+
+      if (
+        idsCiclosManuais.length > 0
+      ) {
+
+        const {
+          data: ciclosManuaisAtivos,
+          error: erroCiclosManuaisAtivos
+        } = await supabase
+          .from("ciclos_manuais")
+          .select(`
+            id,
+            quantidade_participantes,
+            status
+          `)
+          .in(
+            "id",
+            idsCiclosManuais
+          )
+          .eq(
+            "quantidade_participantes",
+            3
+          )
+          .in(
+            "status",
+            [
+              "aguardando_aceite",
+              "confirmado"
+            ]
+          );
+
+
+        if (erroCiclosManuaisAtivos) {
+
+          console.error(
+            "Erro ao verificar ciclos manuais ativos:",
+            erroCiclosManuaisAtivos
+          );
+
+        }
+
+
+        const idsCiclosAtivos =
+          (
+            ciclosManuaisAtivos ?? []
+          ).map(
+            item => item.id
+          );
+
+
+        if (
+          idsCiclosAtivos.length > 0
+        ) {
+
+          const {
+            data: participantesManuais,
+            error: erroParticipantesManuais
+          } = await supabase
+            .from("ciclos_manuais_participantes")
+            .select(`
+              ciclo_id,
+              usuario_id
+            `)
+            .in(
+              "ciclo_id",
+              idsCiclosAtivos
+            );
+
+
+          if (erroParticipantesManuais) {
+
+            console.error(
+              "Erro ao verificar participantes das propostas manuais:",
+              erroParticipantesManuais
+            );
+
+          }
+
+
+          const porCiclo =
+            new Map<string, string[]>();
+
+
+          (
+            participantesManuais ?? []
+          ).forEach(
+            item => {
+
+              const atual =
+                porCiclo.get(
+                  item.ciclo_id
+                )
+                ?? [];
+
+              atual.push(
+                item.usuario_id
+              );
+
+              porCiclo.set(
+                item.ciclo_id,
+                atual
+              );
+
+            }
+          );
+
+
+          porCiclo.forEach(
+            participantes => {
+
+              if (
+                participantes.length === 3
+              ) {
+
+                chavesComPropostaAtiva.add(
+                  chaveParticipantes(
+                    participantes
+                  )
+                );
+
+              }
+
+            }
+          );
+
+        }
+
+      }
+
+
+      const ciclosDisponiveis =
+        ciclosRecebidos.filter(
+          ciclo => {
+
+            const chave =
+              chaveParticipantes([
+                ciclo.participante_1,
+                ciclo.participante_2,
+                ciclo.participante_3
+              ]);
+
+
+            return !chavesComPropostaAtiva.has(
+              chave
+            );
+
+          }
+        );
+
+
+      if (
+        ciclosDisponiveis.length === 0
+      ) {
+
+        setCiclos([]);
+
+        setCarregando(false);
+
+        return;
+
+      }
+
+
+      /* =========================================
          BUSCA NOMES DOS PARTICIPANTES
       ========================================= */
 
@@ -268,7 +553,7 @@ export default function CiclosPermuta({
 
 
       const ciclosComNomes =
-        ciclosRecebidos.map(
+        ciclosDisponiveis.map(
 
           (ciclo) => ({
 
@@ -594,6 +879,23 @@ const [
   setPropondo
 ] = useState(false);
 
+  const [
+    modalPropostaAberto,
+    setModalPropostaAberto
+  ] = useState(false);
+
+  const [
+    mensagemProposta,
+    setMensagemProposta
+  ] = useState(
+    MENSAGEM_PADRAO
+  );
+
+  const [
+    erroProposta,
+    setErroProposta
+  ] = useState("");
+
   const medalha =
 
     index === 0
@@ -815,10 +1117,11 @@ async function proporPermuta() {
     const {
       error
     } = await supabase.rpc(
-      "solicitar_permuta_ciclo_3",
+      "solicitar_permuta_ciclo_3_v2",
       {
         p_match_ciclo_id: ciclo.id,
-        p_usuario_id: usuarioId
+        p_usuario_id: usuarioId,
+        p_mensagem: mensagemProposta.trim()
       }
     );
 
@@ -829,9 +1132,18 @@ async function proporPermuta() {
         error
       );
 
+      setErroProposta(
+        error.message ||
+        "Não foi possível enviar a proposta."
+      );
+
       return;
 
     }
+
+    setModalPropostaAberto(false);
+    setErroProposta("");
+    setMensagemProposta(MENSAGEM_PADRAO);
 
     window.dispatchEvent(
       new Event(
@@ -850,6 +1162,12 @@ async function proporPermuta() {
     console.error(
       "Erro inesperado ao propor permuta:",
       error
+    );
+
+    setErroProposta(
+      error instanceof Error
+        ? error.message
+        : "Não foi possível enviar a proposta."
     );
 
   }
@@ -939,9 +1257,11 @@ async function proporPermuta() {
     propondo
   }
 
-  onClick={
-    proporPermuta
-  }
+  onClick={() => {
+    setErroProposta("");
+    setMensagemProposta(MENSAGEM_PADRAO);
+    setModalPropostaAberto(true);
+  }}
 
   className="
     rounded-xl
@@ -1166,6 +1486,267 @@ async function proporPermuta() {
           )
         }
 
+
+      </div>
+
+      {
+        modalPropostaAberto && (
+
+          <ModalMensagemProposta
+            mensagem={mensagemProposta}
+            enviando={propondo}
+            erro={erroProposta}
+            onMensagemChange={setMensagemProposta}
+            onFechar={() => {
+              if (propondo) return;
+              setModalPropostaAberto(false);
+              setErroProposta("");
+            }}
+            onEnviar={() => {
+              if (!mensagemProposta.trim()) {
+                setErroProposta("Digite uma mensagem para acompanhar a proposta.");
+                return;
+              }
+
+              setErroProposta("");
+              void proporPermuta();
+            }}
+          />
+
+        )
+      }
+
+    </div>
+
+  );
+
+}
+
+
+function ModalMensagemProposta({
+  mensagem,
+  enviando,
+  erro,
+  onMensagemChange,
+  onFechar,
+  onEnviar
+}: {
+  mensagem: string;
+  enviando: boolean;
+  erro: string;
+  onMensagemChange: (valor: string) => void;
+  onFechar: () => void;
+  onEnviar: () => void;
+}) {
+
+  return (
+
+    <div className="
+      fixed
+      inset-0
+      z-[100]
+      flex
+      items-center
+      justify-center
+      bg-black/70
+      p-4
+    ">
+
+      <div className="
+        w-full
+        max-w-xl
+        overflow-hidden
+        rounded-2xl
+        border
+        border-teal-300/15
+        bg-[#0d2232]
+        shadow-2xl
+      ">
+
+        <div className="
+          flex
+          items-start
+          justify-between
+          gap-4
+          border-b
+          border-teal-300/10
+          bg-[#0a1f2f]
+          p-5
+        ">
+
+          <div>
+            <h3 className="text-lg font-bold text-white">
+              Enviar proposta de ciclo
+            </h3>
+
+            <p className="mt-1 text-sm leading-5 text-slate-400">
+              A mensagem será enviada aos demais participantes. Você pode complementar, modificar ou substituir o texto abaixo.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onFechar}
+            disabled={enviando}
+            className="
+              rounded-lg
+              p-2
+              text-slate-400
+              transition
+              hover:bg-white/5
+              hover:text-white
+              disabled:opacity-50
+            "
+            aria-label="Fechar"
+          >
+            <X size={18} />
+          </button>
+
+        </div>
+
+        <div className="p-5">
+
+          <label className="
+            mb-2
+            block
+            text-sm
+            font-semibold
+            text-slate-300
+          ">
+            Mensagem para os participantes
+          </label>
+
+          <textarea
+            value={mensagem}
+            onChange={event =>
+              onMensagemChange(
+                event.target.value
+              )
+            }
+            maxLength={1000}
+            rows={6}
+            className="
+              w-full
+              resize-y
+              rounded-xl
+              border
+              border-teal-300/15
+              bg-[#081b29]
+              px-4
+              py-3
+              text-sm
+              leading-6
+              text-white
+              outline-none
+              transition
+              placeholder:text-slate-600
+              focus:border-teal-300/40
+              focus:ring-4
+              focus:ring-teal-300/10
+            "
+          />
+
+          <div className="
+            mt-2
+            flex
+            items-center
+            justify-between
+            gap-3
+            text-xs
+            text-slate-500
+          ">
+            <span>
+              A mensagem já vem preenchida, mas pode ser alterada livremente.
+            </span>
+
+            <span>
+              {mensagem.length}/1000
+            </span>
+          </div>
+
+          {
+            erro && (
+
+              <div className="
+                mt-4
+                rounded-xl
+                border
+                border-red-400/20
+                bg-red-400/10
+                p-3
+                text-sm
+                text-red-300
+              ">
+                {erro}
+              </div>
+
+            )
+          }
+
+          <div className="
+            mt-5
+            flex
+            flex-col-reverse
+            gap-3
+            sm:flex-row
+            sm:justify-end
+          ">
+
+            <button
+              type="button"
+              onClick={onFechar}
+              disabled={enviando}
+              className="
+                rounded-xl
+                border
+                border-slate-600
+                px-4
+                py-2.5
+                text-sm
+                font-semibold
+                text-slate-300
+                transition
+                hover:bg-white/5
+                disabled:opacity-50
+              "
+            >
+              Cancelar
+            </button>
+
+            <button
+              type="button"
+              onClick={onEnviar}
+              disabled={enviando || !mensagem.trim()}
+              className="
+                inline-flex
+                items-center
+                justify-center
+                gap-2
+                rounded-xl
+                bg-teal-600
+                px-5
+                py-2.5
+                text-sm
+                font-semibold
+                text-white
+                transition
+                hover:bg-teal-500
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+              "
+            >
+              <Send size={16} />
+
+              {
+                enviando
+                  ? "Enviando..."
+                  : "Enviar proposta"
+              }
+            </button>
+
+          </div>
+
+        </div>
 
       </div>
 

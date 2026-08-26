@@ -141,7 +141,7 @@ export default function BuscarServidoresPage() {
 
   const [modalEnvioAberto, setModalEnvioAberto] = useState(false);
   const [mensagemProposta, setMensagemProposta] = useState(
-    "Olá! Encontrei uma possibilidade de permuta compatível pelo Permuta TJSP. Confira a movimentação proposta e, caso tenha interesse, registre seu aceite. Meus dados de contato estão disponíveis nesta proposta para que você possa falar comigo."
+    "Olá! Encontrei uma possibilidade de permuta pelo Permuta TJSP e gostaria de verificar se vocês têm interesse em seguir com essa combinação. Se quiserem, podemos conversar para alinhar os detalhes."
   );
   const [enviandoProposta, setEnviandoProposta] = useState(false);
 
@@ -676,7 +676,7 @@ export default function BuscarServidoresPage() {
     try {
       const participantes = [perfil.id, ...selecionados.map(item => item.perfil_id)];
 
-      const { error } = await supabase.rpc("criar_permuta_manual", {
+      const { error } = await supabase.rpc("criar_permuta_manual_v2", {
         p_usuario_id: perfil.id,
         p_participantes: participantes,
         p_mensagem: mensagem
