@@ -459,20 +459,20 @@ export default function Hero() {
                 flex-col
                 gap-4
                 sm:flex-row
-                sm:items-stretch
+                sm:items-start
               "
             >
 
               <div
                 className="
+                  w-full
                   shrink-0
                   rounded-2xl
                   transition
                   duration-300
                   hover:-translate-y-1
                   hover:shadow-[0_22px_55px_rgba(45,212,191,0.14)]
-                  hover:ring-1
-                  hover:ring-teal-300/25
+                  sm:w-[352px]
                 "
               >
                 <ServerCount />
@@ -487,7 +487,7 @@ export default function Hero() {
                       flex
                       min-h-[120px]
                       w-full
-                      min-w-[285px]
+                      sm:w-[352px]
                       items-center
                       gap-4
                       rounded-2xl
