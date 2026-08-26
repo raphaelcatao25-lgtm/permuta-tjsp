@@ -18,7 +18,7 @@ import {
   ArrowRightLeft,
   ShieldCheck,
   Search,
-  Sparkles,
+  RefreshCw,
 } from "lucide-react";
 
 
@@ -454,14 +454,29 @@ export default function Hero() {
             <div
               className="
                 mt-6
-                grid
-                max-w-2xl
+                flex
+                max-w-[780px]
+                flex-col
                 gap-4
-                sm:grid-cols-2
+                sm:flex-row
+                sm:items-stretch
               "
             >
 
-              <ServerCount />
+              <div
+                className="
+                  shrink-0
+                  rounded-2xl
+                  transition
+                  duration-300
+                  hover:-translate-y-1
+                  hover:shadow-[0_22px_55px_rgba(45,212,191,0.14)]
+                  hover:ring-1
+                  hover:ring-teal-300/25
+                "
+              >
+                <ServerCount />
+              </div>
 
 
               {
@@ -471,6 +486,8 @@ export default function Hero() {
                     className="
                       flex
                       min-h-[120px]
+                      w-full
+                      min-w-[285px]
                       items-center
                       gap-4
                       rounded-2xl
@@ -481,6 +498,12 @@ export default function Hero() {
                       py-5
                       shadow-[0_18px_45px_rgba(0,0,0,0.18)]
                       backdrop-blur-lg
+                      transition
+                      duration-300
+                      hover:-translate-y-1
+                      hover:border-teal-300/30
+                      hover:bg-[#103047]/90
+                      hover:shadow-[0_22px_55px_rgba(45,212,191,0.14)]
                     "
                   >
 
@@ -499,7 +522,7 @@ export default function Hero() {
                         text-teal-300
                       "
                     >
-                      <Sparkles size={27} />
+                      <RefreshCw size={27} />
                     </div>
 
 
