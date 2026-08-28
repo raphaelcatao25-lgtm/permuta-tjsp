@@ -206,6 +206,14 @@ const [aceitouTermos,setAceitouTermos] =
 useState(false);
 
 
+const [usuarioSessaoId,setUsuarioSessaoId] =
+useState("");
+
+
+const cadastroEmConclusao =
+Boolean(usuarioSessaoId);
+
+
 
 
 
@@ -262,13 +270,17 @@ data.session?.user;
 if(usuario){
 
 /*
-No cadastro iniciado pelo Google o usuário já está
-autenticado. Em vez de mandá-lo direto ao dashboard,
-mantemos esta página aberta para ele completar cargo,
-telefone, comarca atual e destinos.
-*/
+Usuário já autenticado.
 
-if(cadastroGoogle){
+Isso também cobre contas criadas anteriormente que,
+por qualquer motivo, ainda não possuem um registro
+completo em public.perfis.
+
+Em vez de mandar automaticamente para o dashboard,
+primeiro confirmamos se o perfil realmente existe e
+está completo. Se estiver incompleto, mantemos o
+usuário nesta página para concluir o cadastro.
+*/
 
 const {
 data:perfilExistente,
@@ -280,6 +292,10 @@ id,
 nome,
 email,
 cargo,
+telefone,
+mostrar_telefone,
+teams,
+mostrar_teams,
 comarca_atual_id
 `)
 .eq(
@@ -300,6 +316,8 @@ console.warn(
 "Não foi possível verificar o perfil existente:",
 perfilExistenteError.message
 );
+
+throw perfilExistenteError;
 
 }
 
@@ -325,13 +343,13 @@ return;
 }
 
 
-const nomeGoogle =
+const nomeSessao =
 (
+perfilExistente?.nome
+||
 usuario.user_metadata?.full_name
 ||
 usuario.user_metadata?.name
-||
-perfilExistente?.nome
 ||
 searchParams.get("nome")
 ||
@@ -341,11 +359,11 @@ searchParams.get("nome")
 .trim();
 
 
-const emailGoogle =
+const emailSessao =
 (
-usuario.email
-||
 perfilExistente?.email
+||
+usuario.email
 ||
 searchParams.get("email")
 ||
@@ -356,37 +374,55 @@ searchParams.get("email")
 .toLowerCase();
 
 
+setUsuarioSessaoId(
+usuario.id
+);
+
 setNome(
-nomeGoogle
+nomeSessao
 );
 
 setEmail(
-emailGoogle
+emailSessao
 );
 
 setConfirmarEmail(
-emailGoogle
+emailSessao
 );
+
+setCargo(
+perfilExistente?.cargo ?? ""
+);
+
+setTelefone(
+perfilExistente?.telefone ?? ""
+);
+
+setMostrarTelefone(
+Boolean(perfilExistente?.mostrar_telefone)
+);
+
+setTeams(
+perfilExistente?.teams ?? ""
+);
+
+setMostrarTeams(
+Boolean(perfilExistente?.mostrar_teams)
+);
+
+if(perfilExistente?.comarca_atual_id){
+
+setComarcaAtualId(
+String(perfilExistente.comarca_atual_id)
+);
+
+}
 
 setVerificandoSessao(false);
 
 return;
 
 }
-
-
-/*
-Usuário autenticado pelo fluxo tradicional.
-*/
-
-router.replace(
-"/dashboard"
-);
-
-return;
-
-}
-
 
 /*
 Se a URL indicar cadastro Google, mas não existir
@@ -784,7 +820,7 @@ return;
 
 
 if(
-!cadastroGoogle
+!(cadastroGoogle || cadastroEmConclusao)
 &&
 email.trim().toLowerCase() !== confirmarEmail.trim().toLowerCase()
 ){
@@ -800,7 +836,7 @@ return;
 
 
 if(
-!cadastroGoogle
+!(cadastroGoogle || cadastroEmConclusao)
 &&
 !senha
 ){
@@ -816,7 +852,7 @@ return;
 
 
 if(
-!cadastroGoogle
+!(cadastroGoogle || cadastroEmConclusao)
 &&
 senha.length < 8
 ){
@@ -832,7 +868,7 @@ return;
 
 
 if(
-!cadastroGoogle
+!(cadastroGoogle || cadastroEmConclusao)
 &&
 senha !== confirmarSenha
 ){
@@ -915,32 +951,32 @@ try{
 let usuarioId = "";
 
 
-if(cadastroGoogle){
+if(cadastroGoogle || cadastroEmConclusao){
 
 const {
-data:sessaoGoogle,
-error:sessaoGoogleError
+data:sessaoAtual,
+error:sessaoAtualError
 }=await supabase.auth.getSession();
 
 
-if(sessaoGoogleError){
+if(sessaoAtualError){
 
-throw sessaoGoogleError;
+throw sessaoAtualError;
 
 }
 
 
-if(!sessaoGoogle.session?.user){
+if(!sessaoAtual.session?.user){
 
 throw new Error(
-"Sua sessão com Google não está mais disponível. Entre novamente."
+"Sua sessão expirou. Entre novamente para concluir seu cadastro."
 );
 
 }
 
 
 usuarioId =
-sessaoGoogle.session.user.id;
+sessaoAtual.session.user.id;
 
 }
 else{
@@ -978,9 +1014,6 @@ nome:nome.trim()
 });
 
 
-
-
-
 if(authError){
 
 throw authError;
@@ -988,31 +1021,40 @@ throw authError;
 }
 
 
-
-
-
 if(!authData.user){
 
-
 throw new Error(
-
 "Não foi possível criar usuário."
-
 );
-
 
 }
 
 
+/*
+Quando a confirmação de e-mail estiver habilitada,
+o Supabase pode criar auth.users sem abrir uma sessão.
 
+Nesse cenário não tentamos gravar public.perfis nem
+preferencias_movimentacao sem autenticação. O usuário
+confirma o e-mail, entra normalmente e esta mesma
+página permitirá concluir o cadastro.
+*/
+
+if(!authData.session){
+
+setErro(
+"Sua conta foi criada. Confirme seu e-mail e depois entre na plataforma para concluir seu perfil."
+);
+
+return;
+
+}
 
 
 usuarioId =
 authData.user.id;
 
 }
-
-
 
 
 
@@ -1062,14 +1104,8 @@ updated_at:new Date().toISOString()
 
 
 const {
-
 error:perfilError
-
-} =
-cadastroGoogle
-
-?
-await supabase
+}=await supabase
 
 .from("perfis")
 
@@ -1086,37 +1122,55 @@ created_at:new Date().toISOString()
 onConflict:"id"
 
 }
-)
-
-:
-await supabase
-
-.from("perfis")
-
-.insert(
-{
-
-...dadosPerfil,
-
-created_at:new Date().toISOString()
-
-}
 );
-
-
-
 
 
 if(perfilError){
 
-
 throw perfilError;
-
 
 }
 
 
+/*
+Proteção contra o problema de conta existente no Auth,
+mas perfil ainda ausente em public.perfis.
 
+Só continuamos para as preferências depois que o banco
+confirmar que o perfil realmente existe.
+*/
+
+const {
+data:perfilConfirmado,
+error:perfilConfirmadoError
+}=await supabase
+
+.from("perfis")
+
+.select("id")
+
+.eq(
+"id",
+usuarioId
+)
+
+.maybeSingle();
+
+
+if(perfilConfirmadoError){
+
+throw perfilConfirmadoError;
+
+}
+
+
+if(!perfilConfirmado?.id){
+
+throw new Error(
+"Seu acesso foi criado, mas o perfil ainda não pôde ser confirmado. Entre novamente e conclua seu cadastro."
+);
+
+}
 
 
 
@@ -1128,8 +1182,6 @@ throw perfilError;
 ================================================
 */
 
-
-if(cadastroGoogle){
 
 const {
 error:limparPreferenciasError
@@ -1148,8 +1200,6 @@ usuarioId
 if(limparPreferenciasError){
 
 throw limparPreferenciasError;
-
-}
 
 }
 
@@ -1232,39 +1282,28 @@ throw preferenciaError;
 */
 
 
-if(!cadastroGoogle){
-
 const {
-
-error:loginError
-
-}=await supabase.auth.signInWithPassword({
-
-email:email.trim(),
-
-password:senha
-
-});
+data:sessaoFinal,
+error:sessaoFinalError
+}=await supabase.auth.getSession();
 
 
-if(loginError){
+if(sessaoFinalError){
 
-console.warn(
-"Cadastro criado, mas não foi possível iniciar a sessão:",
-loginError.message
-);
+throw sessaoFinalError;
 
+}
+
+
+if(!sessaoFinal.session?.user){
 
 setErro(
-"Sua conta foi criada, mas não foi possível entrar automaticamente. Acesse a página de login."
+"Seu cadastro foi salvo, mas sua sessão não está disponível. Entre novamente para continuar."
 );
 
 return;
 
 }
-
-}
-
 
 
 
@@ -1431,7 +1470,7 @@ return (
 
 <h1 className="text-2xl font-bold text-slate-900">
 
-{cadastroGoogle
+{(cadastroGoogle || cadastroEmConclusao)
 ?
 "Complete seu cadastro"
 :
@@ -1443,9 +1482,9 @@ return (
 
 <p className="mt-2 mb-8 text-sm text-slate-500">
 
-{cadastroGoogle
+{(cadastroGoogle || cadastroEmConclusao)
 ?
-"Seu acesso com Google foi confirmado. Complete os dados abaixo para começar a buscar oportunidades de permuta."
+"Complete os dados abaixo para finalizar seu perfil e começar a buscar oportunidades de permuta."
 :
 "Cadastre seus dados para encontrar oportunidades de permuta."
 }
@@ -1459,7 +1498,7 @@ return (
 <div className="space-y-6">
 
 {
-!cadastroGoogle && (
+!(cadastroGoogle || cadastroEmConclusao) && (
 
 <>
 
@@ -1592,14 +1631,14 @@ onChange={(e)=>setNome(e.target.value)}
 
 autoComplete="name"
 
-readOnly={cadastroGoogle}
+readOnly={cadastroGoogle || cadastroEmConclusao}
 
 className={`
 w-full rounded-xl border
 border-slate-300
 px-4 py-3
 text-slate-900
-${cadastroGoogle ? "bg-slate-100" : ""}
+${(cadastroGoogle || cadastroEmConclusao) ? "bg-slate-100" : ""}
 `}
 
 placeholder="Digite seu nome"
@@ -1635,14 +1674,14 @@ onChange={(e)=>setEmail(e.target.value)}
 
 autoComplete="email"
 
-readOnly={cadastroGoogle}
+readOnly={cadastroGoogle || cadastroEmConclusao}
 
 className={`
 w-full rounded-xl border
 border-slate-300
 px-4 py-3
 text-slate-900
-${cadastroGoogle ? "bg-slate-100" : ""}
+${(cadastroGoogle || cadastroEmConclusao) ? "bg-slate-100" : ""}
 `}
 
 placeholder="seu@email.com"
@@ -1683,7 +1722,7 @@ Seu nome e e-mail foram obtidos da sua conta Google. Complete os demais dados pa
 
 
 {
-!cadastroGoogle && (
+!(cadastroGoogle || cadastroEmConclusao) && (
 
 <>
 <div>
@@ -2333,7 +2372,7 @@ carregando
 
 :
 
-cadastroGoogle
+(cadastroGoogle || cadastroEmConclusao)
 
 ?
 

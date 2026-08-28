@@ -464,7 +464,7 @@ user.id
 
 )
 
-.single();
+.maybeSingle();
 
 
 
@@ -477,7 +477,29 @@ throw perfilError;
 }
 
 
+/*
+Se existe sessão no Auth, mas o perfil ainda não existe,
+não deixamos a página continuar com dados vazios.
 
+Esse era o cenário capaz de fazer um UPDATE afetar zero
+linhas e, logo depois, tentar inserir preferências para
+um perfil inexistente, causando a foreign key
+preferencias_perfil_fk.
+*/
+
+if(!dadosPerfil?.id){
+
+setErro(
+"Seu acesso existe, mas seu perfil ainda precisa ser concluído. Redirecionando para finalizar o cadastro..."
+);
+
+window.location.replace(
+"/cadastro?completar=1"
+);
+
+return;
+
+}
 
 
 const perfilAtual = dadosPerfil as Perfil;
@@ -847,10 +869,104 @@ return;
 }
 
 
+if(!perfil?.id){
+
+setErro(
+"Seu perfil ainda não foi carregado corretamente. Atualize a página e tente novamente."
+);
+
+return;
+
+}
+
+
 setSalvando(true);
 
 
 try{
+
+
+/*
+========================================
+CONFIRMA USUÁRIO / PERFIL
+========================================
+
+Nunca usamos apenas um id guardado em estado local
+para gravar preferências. Primeiro confirmamos o
+usuário autenticado e garantimos que ele corresponde
+ao perfil carregado do banco.
+*/
+
+
+const {
+data:{
+user:usuarioAtual
+},
+error:usuarioAtualError
+}=await supabase.auth.getUser();
+
+
+if(usuarioAtualError || !usuarioAtual){
+
+throw new Error(
+"Sua sessão expirou. Entre novamente para salvar as alterações."
+);
+
+}
+
+
+const perfilId =
+perfil.id;
+
+
+if(
+usuarioAtual.id !== perfilId
+||
+usuarioId !== perfilId
+){
+
+throw new Error(
+"Os dados da sessão foram atualizados. Recarregue a página e tente novamente."
+);
+
+}
+
+
+const {
+data:perfilConfirmado,
+error:perfilConfirmadoError
+}=await supabase
+
+.from("perfis")
+
+.select("id, em_match")
+
+.eq(
+"id",
+perfilId
+)
+
+.maybeSingle();
+
+
+if(perfilConfirmadoError){
+
+throw perfilConfirmadoError;
+
+}
+
+
+if(!perfilConfirmado?.id){
+
+window.location.replace(
+"/cadastro?completar=1"
+);
+
+throw new Error(
+"Seu acesso existe, mas seu perfil ainda precisa ser concluído."
+);
+
+}
 
 
 /*
@@ -865,7 +981,7 @@ usados no matching ficam preservados.
 
 const dadosPerfil:any = {
 
-nome,
+nome:nome.trim(),
 
 cargo,
 
@@ -884,6 +1000,14 @@ updated_at:new Date().toISOString()
 
 if(!emMatch){
 
+if(!comarcaAtualId){
+
+throw new Error(
+"Selecione sua comarca atual."
+);
+
+}
+
 dadosPerfil.comarca_atual_id =
 Number(comarcaAtualId);
 
@@ -891,9 +1015,8 @@ Number(comarcaAtualId);
 
 
 const {
-
-error
-
+data:perfilAtualizado,
+error:perfilUpdateError
 }=await supabase
 
 .from("perfis")
@@ -903,23 +1026,35 @@ dadosPerfil
 )
 
 .eq(
-
 "id",
+perfilId
+)
 
-usuarioId
+.select("id")
 
-);
-
-
+.maybeSingle();
 
 
-if(error){
+if(perfilUpdateError){
 
-throw error;
+throw perfilUpdateError;
 
 }
 
 
+/*
+Um UPDATE sem erro pode afetar zero linhas.
+Confirmamos explicitamente a linha atualizada antes
+de tocar em preferencias_movimentacao.
+*/
+
+if(!perfilAtualizado?.id){
+
+throw new Error(
+"Não foi possível confirmar a atualização do seu perfil. Atualize a página e tente novamente."
+);
+
+}
 
 
 /*
@@ -935,23 +1070,25 @@ não estiver em uma permuta confirmada.
 if(!emMatch){
 
 
-await supabase
+const {
+error:limparPreferenciasError
+}=await supabase
 
 .from("preferencias_movimentacao")
 
 .delete()
 
 .eq(
-
 "perfil_id",
-
-usuarioId
-
+perfilId
 );
 
 
+if(limparPreferenciasError){
 
+throw limparPreferenciasError;
 
+}
 
 
 const registros = destinos.map(
@@ -960,7 +1097,7 @@ const registros = destinos.map(
 
 {
 
-perfil_id:usuarioId,
+perfil_id:perfilId,
 
 comarca_destino_id:item.id,
 
@@ -977,16 +1114,10 @@ tipo_preferencia:"mudanca"
 );
 
 
-
-
-
-
 if(registros.length > 0){
 
 const {
-
 error:destinoError
-
 }=await supabase
 
 .from("preferencias_movimentacao")
@@ -994,31 +1125,42 @@ error:destinoError
 .insert(registros);
 
 
-
-
-
 if(destinoError){
 
-throw destinoError;
+/*
+Não exibimos diretamente ao usuário mensagens internas
+de constraint do PostgreSQL. O erro continua disponível
+no console para diagnóstico.
+*/
+
+console.error(
+"Erro ao salvar preferências:",
+destinoError
+);
+
+throw new Error(
+"Não foi possível salvar suas preferências agora. Atualize a página e tente novamente."
+);
 
 }
 
 }
-
-
 
 
 const {
-  error: recalculoError
-} = await supabase.rpc(
-  "recalcular_matches_ciclo_3_usuario",
-  {
-    p_perfil_id: usuarioId
-  }
+error:recalculoError
+}=await supabase.rpc(
+"recalcular_matches_ciclo_3_usuario",
+{
+p_perfil_id:perfilId
+}
 );
 
-if (recalculoError) {
-  throw recalculoError;
+
+if(recalculoError){
+
+throw recalculoError;
+
 }
 
 
@@ -1040,14 +1182,45 @@ emMatch
 );
 
 
+/*
+Mantém o objeto perfil sincronizado com o registro
+que acabou de ser confirmado no banco.
+*/
+
+setPerfil(
+atual=>
+atual
+?
+{
+...atual,
+nome:nome.trim(),
+cargo,
+telefone,
+mostrar_telefone:mostrarTelefone,
+teams:teams.trim() || null,
+mostrar_teams:mostrarTeams,
+comarca_atual_id:emMatch
+? atual.comarca_atual_id
+: Number(comarcaAtualId)
+}
+:
+atual
+);
+
+
 }
 
 catch(error:any){
 
+console.error(
+"Erro ao salvar perfil:",
+error
+);
+
 
 setErro(
 
-error.message ??
+error?.message ??
 
 "Erro ao salvar perfil."
 
@@ -1064,7 +1237,6 @@ setSalvando(false);
 
 
 }
-
 
 
 /*
