@@ -1,0 +1,57 @@
+
+name: Permuta TJSP - Matching Automático
+
+on:
+  schedule:
+    - cron: "0 */3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: permuta-tjsp-matching
+  cancel-in-progress: false
+
+jobs:
+  matching:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Executar matching automático
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -eu
+
+          if [ -z "$CRON_SECRET" ]; then
+            echo "Erro: o segredo CRON_SECRET não está configurado."
+            exit 1
+          fi
+
+          HTTP_CODE=$(curl \
+            --silent \
+            --show-error \
+            --output resposta.json \
+            --write-out "%{http_code}" \
+            --max-time 180 \
+            --retry 2 \
+            --retry-delay 10 \
+            --retry-all-errors \
+            --request GET \
+            --header "Authorization: Bearer ${CRON_SECRET}" \
+            "https://permuta-tjsp.vercel.app/api/cron/matching")
+
+          echo "Código HTTP: $HTTP_CODE"
+          cat resposta.json
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "Erro: o endpoint de matching não retornou HTTP 200."
+            exit 1
+          fi
+
+          if ! grep -q '"ok"[[:space:]]*:[[:space:]]*true' resposta.json; then
+            echo "Erro: o endpoint não confirmou sucesso."
+            exit 1
+          fi
