@@ -144,9 +144,7 @@ useState("");
 
 
 
-const [telefone: telefone.trim(),
-
-situacao_tjsp: perfilJaExistente ? undefined : situacaoTJSP,setTelefone] =
+const [telefone,setTelefone] =
 useState("");
 
 
@@ -1103,7 +1101,9 @@ nome:nome.trim(),
 cargo,
 
 
-telefone,
+telefone: telefone.trim(),
+
+...(perfilJaExistente ? {} : { situacao_tjsp: situacaoTJSP }),
 
 
 teams:teams.trim() || null,
