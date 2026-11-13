@@ -4,7 +4,7 @@ create or replace function public.salvar_perfil_com_preferencias(
 )
 returns uuid
 language plpgsql
-security definer
+security invoker
 set search_path = ''
 as $function$
 declare
