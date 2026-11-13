@@ -390,18 +390,13 @@ export default function LoginPage() {
       return;
     }
 
-    loginEmAndamento.current = true;
     setMensagemErro("");
 
-
-    if (
-      !validarFormulario()
-    ) {
-
+    if (!validarFormulario()) {
       return;
-
     }
 
+    loginEmAndamento.current = true;
 
     try {
 
@@ -440,12 +435,8 @@ export default function LoginPage() {
 
 
       /*
-        Normalmente o onAuthStateChange acima receberá
-        SIGNED_IN e fará o redirecionamento.
-
-        Mantemos este redirecionamento também como
-        segurança caso o evento demore ou não seja
-        disparado imediatamente.
+        O redirecionamento é feito uma única vez após a
+        confirmação do signInWithPassword.
       */
 
       redirecionarAposLogin();
