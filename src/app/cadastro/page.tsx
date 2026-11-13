@@ -813,10 +813,10 @@ setErro("");
 
 
 
-if (!perfilJaExistente) {
-  const erroNome = validarNomeCompleto(nome);
-  if (erroNome) { setErro(erroNome); return; }
+const erroNome = validarNomeCompleto(nome);
+if (erroNome) { setErro(erroNome); return; }
 
+if (!perfilJaExistente) {
   const telefoneNormalizado = telefone.replace(/\D/g, "");
   if (telefoneNormalizado.length < 10 || telefoneNormalizado.length > 11) {
     setErro("Informe um telefone válido com DDD (10 ou 11 dígitos).");
@@ -1494,7 +1494,7 @@ onChange={(e)=>setNome(e.target.value)}
 
 autoComplete="name"
 
-readOnly={cadastroGoogle || cadastroEmConclusao}
+readOnly={false}
 
 className={`
 w-full rounded-xl border
