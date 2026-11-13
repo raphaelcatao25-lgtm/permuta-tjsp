@@ -49,6 +49,20 @@ ComarcaInfoCard
 
 
 
+function validarNomeCompleto(valor: string): string {
+  const nome = valor.trim().replace(/\\s+/g, " ");
+  if (!nome) return "Informe seu nome e sobrenome verdadeiros.";
+  if (/\\d/.test(nome)) return "Não utilize números no nome. Informe seu nome e sobrenome verdadeiros.";
+  if (!/^[\\p{L}\\s.'’-]+$/u.test(nome)) return "Use somente letras, espaços, apóstrofo ou hífen no nome.";
+  const partes = nome.split(" ").filter(Boolean);
+  if (partes.length < 2) return "Informe nome e sobrenome. Apelidos ou apenas o primeiro nome não são aceitos.";
+  if (partes.some((parte) => parte.replace(/[.'’-]/g, "").length < 2)) return "Confira o nome e o sobrenome informados.";
+  const normalizado = nome.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase();
+  const nomesGenericos = ["admin", "administrador", "teste", "test", "usuario teste", "nome sobrenome", "seu nome", "fulano de tal", "ciclano de tal", "beltrano de tal", "asdf", "qwerty"];
+  if (nomesGenericos.includes(normalizado)) return "Apelidos, nomes fictícios ou de teste não são aceitos. Informe seu nome verdadeiro.";
+  return "";
+}
+
 const CARGOS = [
   "Assistente Social Judiciário",
   "Oficial de Justiça",
@@ -89,6 +103,9 @@ DADOS DE ACESSO
 const [nome,setNome] =
 useState("");
 
+const [situacaoTJSP,setSituacaoTJSP] = useState("");
+const [perfilJaExistente,setPerfilJaExistente] = useState(false);
+
 
 const [email,setEmail] =
 useState("");
@@ -127,7 +144,9 @@ useState("");
 
 
 
-const [telefone,setTelefone] =
+const [telefone: telefone.trim(),
+
+situacao_tjsp: perfilJaExistente ? undefined : situacaoTJSP,setTelefone] =
 useState("");
 
 
@@ -377,6 +396,7 @@ searchParams.get("email")
 setUsuarioSessaoId(
 usuario.id
 );
+setPerfilJaExistente(Boolean(perfilExistente?.id));
 
 setNome(
 nomeSessao
@@ -795,14 +815,20 @@ setErro("");
 
 
 
-if(!nome.trim()){
+if (!perfilJaExistente) {
+  const erroNome = validarNomeCompleto(nome);
+  if (erroNome) { setErro(erroNome); return; }
 
-setErro(
-"Informe seu nome."
-);
+  const telefoneNormalizado = telefone.replace(/\D/g, "");
+  if (telefoneNormalizado.length < 10 || telefoneNormalizado.length > 11) {
+    setErro("Informe um telefone válido com DDD (10 ou 11 dígitos).");
+    return;
+  }
 
-return;
-
+  if (!situacaoTJSP) {
+    setErro("Informe sua situação em relação ao TJSP.");
+    return;
+  }
 }
 
 
@@ -1114,8 +1140,6 @@ error:perfilError
 
 ...dadosPerfil,
 
-created_at:new Date().toISOString()
-
 },
 {
 
@@ -1387,13 +1411,17 @@ error?.message ?? "Erro sem mensagem."
 
 
 
-setErro(
-
-error?.message ??
-
-"Erro ao criar cadastro."
-
-);
+const mensagem = String(error?.message ?? "");
+const codigo = String(error?.code ?? "");
+if (codigo === "23505" && mensagem.includes("perfis_email_normalizado_unique")) {
+  setErro("Este e-mail já está cadastrado. Faça login ou utilize a recuperação de senha.");
+} else if (codigo === "23505" && mensagem.includes("perfis_telefone_normalizado_unique")) {
+  setErro("Este número de telefone já está vinculado a outra conta. Confira o número informado.");
+} else if (/already registered|user already exists|email.*already/i.test(mensagem)) {
+  setErro("Este e-mail já está cadastrado. Faça login ou utilize a recuperação de senha.");
+} else {
+  setErro(mensagem || "Erro ao criar cadastro.");
+}
 
 
 
@@ -1641,10 +1669,18 @@ text-slate-900
 ${(cadastroGoogle || cadastroEmConclusao) ? "bg-slate-100" : ""}
 `}
 
-placeholder="Digite seu nome"
+placeholder="Digite seu nome completo"
 
  />
 
+<p className="mt-2 text-xs leading-5 text-slate-600">
+  Utilize seu nome e sobrenome verdadeiros, sem apelidos ou números. Isso é importante para que outros servidores e candidatos do TJSP encontrem você e saibam com quem estão negociando uma permuta.
+</p>
+{!perfilJaExistente && nome.trim() && validarNomeCompleto(nome) && (
+  <p role="alert" className="mt-2 text-sm font-medium text-red-700">
+    {validarNomeCompleto(nome)}
+  </p>
+)}
 
 </div>
 
@@ -1938,6 +1974,17 @@ placeholder="Digite novamente a senha"
 
 
 
+{!perfilJaExistente && (
+<div>
+<label className="mb-2 block text-sm font-medium">Situação em relação ao TJSP</label>
+<select value={situacaoTJSP} onChange={(e)=>setSituacaoTJSP(e.target.value)} className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900">
+<option value="">Selecione sua situação</option>
+<option value="servidor_ativo">Servidor ativo do TJSP</option>
+<option value="aprovado_aguardando_posse">Aprovado em concurso, aguardando posse</option>
+</select>
+</div>
+)}
+
 <div>
 
 
@@ -2043,6 +2090,7 @@ text-slate-900
 placeholder="(00) 00000-0000"
 
 />
+{!perfilJaExistente && <p className="mt-2 text-xs text-slate-600">O telefone deve ser válido e não pode estar cadastrado em outra conta.</p>}
 
 
 
