@@ -9,6 +9,7 @@ import {
 import {
   FormEvent,
   useEffect,
+  useRef,
   useState
 } from "react";
 
@@ -171,22 +172,24 @@ export default function LoginPage() {
     useState("");
 
 
+  // Evita duplo envio e redirecionamentos concorrentes durante o login.
+  const loginEmAndamento = useRef(false);
+  const redirecionamentoIniciado = useRef(false);
+
+
   /* ======================================================
      REDIRECIONA APÓS AUTENTICAÇÃO
   ====================================================== */
 
   function redirecionarAposLogin() {
 
-    const destino =
-      obterDestinoAposLogin();
+    if (redirecionamentoIniciado.current) {
+      return;
+    }
 
+    redirecionamentoIniciado.current = true;
 
-    router.replace(
-      destino
-    );
-
-
-    router.refresh();
+    router.replace(obterDestinoAposLogin());
 
   }
 
@@ -248,60 +251,8 @@ export default function LoginPage() {
     verificarSessao();
 
 
-    /* ==================================================
-       ACOMPANHA ALTERAÇÕES NA AUTENTICAÇÃO
-    ================================================== */
-
-    const {
-      data: authListener
-    } =
-      supabase.auth.onAuthStateChange(
-        (
-          evento,
-          sessao
-        ) => {
-
-          if (!ativo) {
-
-            return;
-
-          }
-
-
-          if (
-            evento ===
-              "SIGNED_IN"
-            &&
-            sessao?.user
-          ) {
-
-            const destino =
-              obterDestinoAposLogin();
-
-
-            router.replace(
-              destino
-            );
-
-
-            router.refresh();
-
-          }
-
-        }
-      );
-
-
     return () => {
-
-      ativo =
-        false;
-
-
-      authListener
-        .subscription
-        .unsubscribe();
-
+      ativo = false;
     };
 
 
@@ -435,7 +386,11 @@ export default function LoginPage() {
 
     evento.preventDefault();
 
+    if (loginEmAndamento.current || redirecionamentoIniciado.current) {
+      return;
+    }
 
+    loginEmAndamento.current = true;
     setMensagemErro("");
 
 
@@ -507,9 +462,11 @@ export default function LoginPage() {
 
     finally {
 
-      setCarregando(
-        false
-      );
+      loginEmAndamento.current = false;
+
+      if (!redirecionamentoIniciado.current) {
+        setCarregando(false);
+      }
 
     }
 
