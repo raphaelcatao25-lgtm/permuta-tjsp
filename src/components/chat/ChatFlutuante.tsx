@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowLeft, LoaderCircle, MessageCircle, Search, Send, X,
+  ArrowLeft, LoaderCircle, MessageCircle, Search, Send, Trash2, X,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
@@ -219,6 +219,25 @@ export function ChatFlutuante() {
     await carregarMensagens(conversaAtiva.conversa_id);
   }
 
+  async function ocultarConversa(conversa: Conversa) {
+    const confirmar = window.confirm(`Remover a conversa com ${conversa.outro_nome} da sua lista? O histórico da outra pessoa será preservado.`);
+    if (!confirmar) return;
+    const { error } = await supabase.rpc("chat_ocultar_conversa", {
+      p_conversa: conversa.conversa_id,
+    });
+    if (error) {
+      console.error("Erro ao remover conversa:", error.message);
+      setAviso("Não foi possível remover esta conversa. Tente novamente.");
+      return;
+    }
+    setConversas((atuais) => atuais.filter((item) => item.conversa_id !== conversa.conversa_id));
+    if (conversaAtiva?.conversa_id === conversa.conversa_id) {
+      setConversaAtiva(null);
+      setMensagens([]);
+    }
+    setAviso("");
+  }
+
   function fecharPainel() {
     setAberto(false);
     setConversaAtiva(null);
@@ -294,14 +313,19 @@ export function ChatFlutuante() {
                     <p className="mt-1 text-xs leading-5 text-slate-500">Busque um servidor ou uma comarca e comece uma conversa.</p>
                   </div>
                 ) : conversas.map((conversa) => (
-                  <button key={conversa.conversa_id} type="button" onClick={() => { setConversaAtiva(conversa); void carregarMensagens(conversa.conversa_id); }} className="flex w-full items-center gap-3 border-b border-white/[0.06] px-4 py-3 text-left transition hover:bg-teal-400/[0.06]">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-teal-300/20 bg-teal-400/10 text-sm font-bold text-teal-200">{conversa.outro_nome.slice(0,1).toUpperCase()}</div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-white">{conversa.outro_nome}</p>
-                      <p className="truncate text-xs text-slate-400">{conversa.ultima_mensagem || conversa.outra_comarca}</p>
-                    </div>
-                    {Number(conversa.nao_lidas) > 0 && <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold text-white">{conversa.nao_lidas}</span>}
-                  </button>
+                  <div key={conversa.conversa_id} className="flex items-center border-b border-white/[0.06] transition hover:bg-teal-400/[0.06]">
+                    <button type="button" onClick={() => { setConversaAtiva(conversa); void carregarMensagens(conversa.conversa_id); }} className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3 text-left">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-teal-300/20 bg-teal-400/10 text-sm font-bold text-teal-200">{conversa.outro_nome.slice(0,1).toUpperCase()}</div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-white">{conversa.outro_nome}</p>
+                        <p className="truncate text-xs text-slate-400">{conversa.ultima_mensagem || conversa.outra_comarca}</p>
+                      </div>
+                      {Number(conversa.nao_lidas) > 0 && <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold text-white">{conversa.nao_lidas}</span>}
+                    </button>
+                    <button type="button" title={`Remover conversa com ${conversa.outro_nome}`} aria-label={`Remover conversa com ${conversa.outro_nome}`} onClick={() => void ocultarConversa(conversa)} className="mr-3 rounded-lg p-2 text-slate-500 transition hover:bg-rose-500/10 hover:text-rose-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 ))}
               </div>
             </>
