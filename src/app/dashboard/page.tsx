@@ -2364,7 +2364,10 @@ export default function DashboardPage() {
 
                 {/* PERFIL */}
 
-                <Card>
+                <Link href="/perfil" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b1d2a]" aria-label="Abrir perfil e preferências">
+
+                  <Card className="h-full transition-all duration-200 ease-out group-hover:-translate-y-1 group-hover:border-teal-300/40 group-hover:bg-surface/90 group-hover:shadow-[0_14px_32px_rgba(20,184,166,0.12)] group-focus-visible:border-teal-300/50">
+
 
                   <div className="
                     flex
@@ -2477,10 +2480,15 @@ export default function DashboardPage() {
 
                 </Card>
 
+                </Link>
+
 
                 {/* COMARCAS */}
 
-                <Card>
+                <Link href="/perfil" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b1d2a]" aria-label="Abrir perfil e preferências">
+
+                  <Card className="h-full transition-all duration-200 ease-out group-hover:-translate-y-1 group-hover:border-teal-300/40 group-hover:bg-surface/90 group-hover:shadow-[0_14px_32px_rgba(20,184,166,0.12)] group-focus-visible:border-teal-300/50">
+
 
                   <div className="
                     flex
@@ -2551,10 +2559,15 @@ export default function DashboardPage() {
 
                 </Card>
 
+                </Link>
+
 
                 {/* OPORTUNIDADES */}
 
-                <Card>
+                <Link href="/buscar-permutas" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b1d2a]" aria-label="Ver oportunidades de permuta">
+
+                  <Card className="h-full transition-all duration-200 ease-out group-hover:-translate-y-1 group-hover:border-teal-300/40 group-hover:bg-surface/90 group-hover:shadow-[0_14px_32px_rgba(20,184,166,0.12)] group-focus-visible:border-teal-300/50">
+
 
                   <div className="
                     flex
@@ -2699,10 +2712,15 @@ export default function DashboardPage() {
 
                 </Card>
 
+                </Link>
+
 
                 {/* PROPOSTAS */}
 
-                <Card>
+                <Link href="/propostas" className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b1d2a]" aria-label="Ver propostas">
+
+                  <Card className="h-full transition-all duration-200 ease-out group-hover:-translate-y-1 group-hover:border-teal-300/40 group-hover:bg-surface/90 group-hover:shadow-[0_14px_32px_rgba(20,184,166,0.12)] group-focus-visible:border-teal-300/50">
+
 
                   <div className="
                     flex
@@ -2854,6 +2872,8 @@ export default function DashboardPage() {
                   </p>
 
                 </Card>
+
+                </Link>
 
 
               </div>
