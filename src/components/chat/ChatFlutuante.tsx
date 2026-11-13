@@ -358,7 +358,7 @@ export function ChatFlutuante() {
         </section>
       )}
 
-      <button type="button" onClick={() => { setAberto(!aberto); if (!aberto) void carregarConversas(); }} aria-label={totalNaoLidas > 0 ? `Abrir chat, ${totalNaoLidas} mensagens não lidas` : "Abrir chat"} className="fixed bottom-5 right-5 z-[130] flex h-14 w-14 items-center justify-center rounded-full border border-teal-200/35 bg-gradient-to-br from-teal-600 to-teal-400 text-white shadow-[0_12px_35px_rgba(20,184,166,0.35)] transition duration-200 hover:-translate-y-1 hover:brightness-110 active:scale-95">
+      <button type="button" onClick={() => { setAberto(!aberto); if (!aberto) void carregarConversas(); }} aria-label={totalNaoLidas > 0 ? `Abrir chat, ${totalNaoLidas} mensagens não lidas` : "Abrir chat"} className="fixed bottom-5 right-5 z-[130] flex h-14 w-14 items-center justify-center rounded-full border border-amber-200/80 bg-gradient-to-br from-amber-400 via-orange-500 to-orange-600 text-white shadow-[0_12px_38px_rgba(249,115,22,0.55)] ring-2 ring-amber-300/25 transition duration-200 hover:-translate-y-1 hover:brightness-110 hover:shadow-[0_16px_44px_rgba(249,115,22,0.7)] active:scale-95">
         {aberto ? <X size={24} /> : <MessageCircle size={25} />}
         {totalNaoLidas > 0 && <span className="absolute -right-1 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-[#04111d] bg-rose-500 px-1 text-[10px] font-extrabold text-white">{totalNaoLidas > 99 ? "99+" : totalNaoLidas}</span>}
       </button>
