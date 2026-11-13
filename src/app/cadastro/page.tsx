@@ -1053,6 +1053,10 @@ throw new Error(
 
 }
 
+if (authData.user.identities?.length === 0) {
+  throw new Error("Este e-mail já está cadastrado. Faça login ou utilize a recuperação de senha.");
+}
+
 
 /*
 Quando a confirmação de e-mail estiver habilitada,
