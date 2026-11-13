@@ -1089,219 +1089,50 @@ authData.user.id;
 
 /*
 ===============================================
-2 - CRIA / ATUALIZA PERFIL
+2 - SALVA PERFIL E PREFERÊNCIAS EM UMA TRANSAÇÃO
 ===============================================
-*/
 
+O RPC grava o perfil e substitui as preferências
+na mesma transação do PostgreSQL. Se qualquer etapa
+falhar, tudo é revertido e as preferências anteriores
+permanecem intactas.
+*/
 
 const dadosPerfil = {
-
-id:usuarioId,
-
-
-nome:nome.trim(),
-
-
-cargo,
-
-
-telefone: telefone.trim(),
-
-...(perfilJaExistente ? {} : { situacao_tjsp: situacaoTJSP }),
-
-
-teams:teams.trim() || null,
-
-
-mostrar_telefone:mostrarTelefone,
-
-
-mostrar_teams:mostrarTeams,
-
-
-mostrar_email:true,
-
-
-email:email.trim(),
-
-
-comarca_atual_id:Number(comarcaAtualId),
-
-
-updated_at:new Date().toISOString()
-
+  nome: nome.trim(),
+  cargo,
+  telefone: telefone.trim(),
+  ...(perfilJaExistente ? {} : { situacao_tjsp: situacaoTJSP }),
+  teams: teams.trim() || null,
+  mostrar_telefone: mostrarTelefone,
+  mostrar_teams: mostrarTeams,
+  mostrar_email: true,
+  email: email.trim().toLowerCase(),
+  comarca_atual_id: Number(comarcaAtualId),
 };
 
+const preferencias = destinos.map((item, index) => ({
+  comarca_destino_id: item.id,
+  prioridade: index + 1,
+}));
 
 const {
-error:perfilError
-}=await supabase
+  data: perfilSalvo,
+  error: salvarPerfilError,
+} = await supabase.rpc("salvar_perfil_com_preferencias", {
+  p_perfil: dadosPerfil,
+  p_preferencias: preferencias,
+});
 
-.from("perfis")
-
-.upsert(
-{
-
-...dadosPerfil,
-
-},
-{
-
-onConflict:"id"
-
-}
-);
-
-
-if(perfilError){
-
-throw perfilError;
-
+if (salvarPerfilError) {
+  throw salvarPerfilError;
 }
 
-
-/*
-Proteção contra o problema de conta existente no Auth,
-mas perfil ainda ausente em public.perfis.
-
-Só continuamos para as preferências depois que o banco
-confirmar que o perfil realmente existe.
-*/
-
-const {
-data:perfilConfirmado,
-error:perfilConfirmadoError
-}=await supabase
-
-.from("perfis")
-
-.select("id")
-
-.eq(
-"id",
-usuarioId
-)
-
-.maybeSingle();
-
-
-if(perfilConfirmadoError){
-
-throw perfilConfirmadoError;
-
+if (perfilSalvo !== usuarioId) {
+  throw new Error(
+    "Não foi possível confirmar o salvamento completo do perfil e das preferências. Entre novamente e tente concluir o cadastro."
+  );
 }
-
-
-if(!perfilConfirmado?.id){
-
-throw new Error(
-"Seu acesso foi criado, mas o perfil ainda não pôde ser confirmado. Entre novamente e conclua seu cadastro."
-);
-
-}
-
-
-
-
-
-/*
-================================================
-3 - SALVA DESTINOS
-================================================
-*/
-
-
-const {
-error:limparPreferenciasError
-}=await supabase
-
-.from("preferencias_movimentacao")
-
-.delete()
-
-.eq(
-"perfil_id",
-usuarioId
-);
-
-
-if(limparPreferenciasError){
-
-throw limparPreferenciasError;
-
-}
-
-
-
-
-const preferencias = destinos.map(
-
-(item,index)=>(
-
-
-{
-
-
-perfil_id:usuarioId,
-
-
-comarca_destino_id:item.id,
-
-
-prioridade:index+1,
-
-
-ativo:true,
-
-
-tipo_preferencia:"mudanca"
-
-
-}
-
-
-
-)
-
-);
-
-
-
-
-
-const {
-
-error:preferenciaError
-
-}=await supabase
-
-
-.from("preferencias_movimentacao")
-
-
-.insert(preferencias);
-
-
-
-
-
-
-
-if(preferenciaError){
-
-
-throw preferenciaError;
-
-
-}
-
-
-
-
-
-
-
-
 
 /*
 ===============================================
