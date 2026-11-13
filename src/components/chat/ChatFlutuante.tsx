@@ -297,14 +297,19 @@ export function ChatFlutuante() {
                   busca.trim().length < 2 ? <p className="px-5 py-10 text-center text-sm text-slate-500">Digite parte do nome ou da comarca. Não precisa escrever o nome completo nem usar acentos.</p> :
                   resultados.length === 0 ? <p className="px-5 py-10 text-center text-sm text-slate-500">Nenhum servidor encontrado.</p> :
                   resultados.map((servidor) => (
-                    <button key={servidor.id} type="button" onClick={() => void abrirConversa(servidor.id)} className="flex w-full items-center gap-3 border-b border-white/[0.06] px-4 py-3 text-left transition hover:bg-teal-400/[0.06]">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-teal-300/20 bg-teal-400/10 text-sm font-bold text-teal-200">{servidor.nome.slice(0,1).toUpperCase()}</div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-white">{servidor.nome}</p>
-                        <p className="truncate text-xs text-slate-400">{servidor.cargo} • {servidor.comarca}</p>
+                    <div key={servidor.id} className="border-b border-white/[0.06] px-4 py-3 transition hover:bg-teal-400/[0.06]">
+                      <div className="flex w-full items-start gap-3 text-left">
+                        <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-teal-300/20 bg-teal-400/10 text-sm font-bold text-teal-200">{servidor.nome.slice(0,1).toUpperCase()}</div>
+                        <div className="min-w-0 flex-1">
+                          <p className="whitespace-normal break-words text-sm font-semibold leading-5 text-white">{servidor.nome}</p>
+                          <p className="mt-1 whitespace-normal break-words text-xs leading-4 text-slate-400">{servidor.cargo}</p>
+                          <p className="mt-1 whitespace-normal break-words text-xs leading-4 text-teal-200/80">{servidor.comarca}</p>
+                          <div className="mt-2 flex justify-end">
+                            <button type="button" onClick={() => void abrirConversa(servidor.id)} className="rounded-lg border border-teal-300/20 bg-teal-400/10 px-3 py-1.5 text-xs font-semibold text-teal-200 transition hover:bg-teal-400/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-300">Conversar</button>
+                          </div>
+                        </div>
                       </div>
-                      <span className="text-xs font-semibold text-teal-300">Conversar</span>
-                    </button>
+                    </div>
                   ))
                 ) : conversas.length === 0 ? (
                   <div className="px-6 py-12 text-center">
