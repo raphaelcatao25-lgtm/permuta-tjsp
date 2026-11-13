@@ -98,12 +98,9 @@ export default function CiclosQuatroPermuta({ usuarioId }: { usuarioId: string }
       ) : (
         ciclos.map((ciclo, index) => (
           <article key={ciclo.assinatura} className="rounded-xl border border-teal-300/10 bg-[#081b29] p-4 sm:p-5">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-teal-300">Ciclo de 4 servidores</p>
-                <h3 className="mt-1 font-bold text-white">Combinação {index + 1}</h3>
-              </div>
-              <span className="rounded-lg bg-teal-400/10 px-3 py-1.5 text-xs font-bold text-teal-200">{ciclo.score_total} pts</span>
+            <div className="mb-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-teal-300">Ciclo de 4 servidores</p>
+              <h3 className="mt-1 font-bold text-white">Combinação {index + 1}</h3>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               {ciclo.participantes.map((p) => (
