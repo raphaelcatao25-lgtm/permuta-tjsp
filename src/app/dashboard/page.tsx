@@ -614,6 +614,31 @@ export default function DashboardPage() {
 
         /*
         ========================================
+        CICLOS AUTOMÁTICOS DE 4 SERVIDORES
+        ========================================
+        */
+
+        const {
+          data: ciclosQuatro,
+          error: erroCiclosQuatro
+        } = await supabase.rpc(
+          "buscar_ciclos_4_preferencias",
+          {
+            p_perfil_id: usuarioId,
+            p_limite: 10
+          }
+        );
+
+        if (erroCiclosQuatro) {
+          console.error(
+            "Erro ao carregar ciclos de 4 servidores:",
+            erroCiclosQuatro
+          );
+        }
+
+
+        /*
+        ========================================
         PROPOSTAS
         ========================================
         */
@@ -809,29 +834,22 @@ export default function DashboardPage() {
 
         /*
         ========================================
-        NO MÁXIMO 3 CICLOS
+        CONTAGEM DOS CICLOS DE 3 E 4 SERVIDORES
         ========================================
         */
 
+        const quantidadeCiclosTres = Array.isArray(ciclos)
+          ? Math.min(ciclos.length, 3)
+          : 0;
+
+        const quantidadeCiclosQuatro = Array.isArray(ciclosQuatro)
+          ? ciclosQuatro.length
+          : 0;
+
         setOportunidadesCiclos(
-
-          Boolean(
-            perfilEncontrado.busca_pausada
-          )
-
+          Boolean(perfilEncontrado.busca_pausada)
             ? 0
-
-            : Array.isArray(
-                ciclos
-              )
-
-              ? Math.min(
-                  ciclos.length,
-                  3
-                )
-
-              : 0
-
+            : quantidadeCiclosTres + quantidadeCiclosQuatro
         );
 
 
