@@ -206,7 +206,13 @@ export function ChatFlutuante() {
     });
     setEnviando(false);
     if (error) {
-      setAviso("Não foi possível enviar a mensagem. Tente novamente.");
+      console.error("Erro ao enviar mensagem no chat:", {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+      });
+      setAviso(`Falha ao enviar: ${error.message || "erro desconhecido"}`);
       return;
     }
     setTexto("");
