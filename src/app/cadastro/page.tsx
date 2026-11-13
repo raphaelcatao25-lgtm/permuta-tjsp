@@ -50,14 +50,14 @@ ComarcaInfoCard
 
 
 function validarNomeCompleto(valor: string): string {
-  const nome = valor.trim().replace(/\\s+/g, " ");
+  const nome = valor.trim().replace(/\s+/g, " ");
   if (!nome) return "Informe seu nome e sobrenome verdadeiros.";
-  if (/\\d/.test(nome)) return "Não utilize números no nome. Informe seu nome e sobrenome verdadeiros.";
-  if (!/^[\\p{L}\\s.'’-]+$/u.test(nome)) return "Use somente letras, espaços, apóstrofo ou hífen no nome.";
+  if (/\d/.test(nome)) return "Não utilize números no nome. Informe seu nome e sobrenome verdadeiros.";
+  if (!/^[\p{L}\s.'’-]+$/u.test(nome)) return "Use somente letras, espaços, apóstrofo ou hífen no nome.";
   const partes = nome.split(" ").filter(Boolean);
   if (partes.length < 2) return "Informe nome e sobrenome. Apelidos ou apenas o primeiro nome não são aceitos.";
   if (partes.some((parte) => parte.replace(/[.'’-]/g, "").length < 2)) return "Confira o nome e o sobrenome informados.";
-  const normalizado = nome.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase();
+  const normalizado = nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const nomesGenericos = ["admin", "administrador", "teste", "test", "usuario teste", "nome sobrenome", "seu nome", "fulano de tal", "ciclano de tal", "beltrano de tal", "asdf", "qwerty"];
   if (nomesGenericos.includes(normalizado)) return "Apelidos, nomes fictícios ou de teste não são aceitos. Informe seu nome verdadeiro.";
   return "";
