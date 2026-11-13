@@ -171,8 +171,9 @@ export default function PerfilPage() {
         });
 
       if (error) {
-        console.error(error);
-        setErro("Não foi possível carregar a lista de comarcas.");
+        console.error("Erro ao carregar comarcas do perfil:", error);
+        setErro("Não foi possível carregar a lista de comarcas. Atualize a página ou tente novamente mais tarde.");
+        setCarregando(false);
         return;
       }
 
@@ -186,6 +187,12 @@ export default function PerfilPage() {
             item.circunscricoes_tjsp?.rajs_tjsp?.nome ?? "",
         })
       );
+
+      if (listaFormatada.length === 0) {
+        setErro("A lista de comarcas está vazia no momento. Atualize a página ou tente novamente mais tarde.");
+        setCarregando(false);
+        return;
+      }
 
       setComarcas(listaFormatada);
     }
