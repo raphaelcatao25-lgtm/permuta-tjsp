@@ -1,0 +1,11 @@
+begin;
+drop index if exists public.comarcas_nome_unique;
+drop index if exists public.idx_comarcas_desejadas_comarca;
+drop index if exists public.idx_comarcas_desejadas_usuario;
+drop index if exists public.idx_oportunidades_perfil_assinatura;
+drop index if exists public.idx_oportunidades_perfil_assinatura_unique;
+drop index if exists public.idx_oportunidades_perfil_status;
+drop index if exists public.idx_cache_localizacao_perfil;
+drop index if exists public.idx_perfis_comarca;
+drop index if exists public.idx_perfis_comarca_atual;
+commit;
