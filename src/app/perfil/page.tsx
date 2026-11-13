@@ -506,96 +506,73 @@ export default function PerfilPage() {
         updated_at: new Date().toISOString(),
       };
 
-      if (!emMatch) {
+      if (emMatch) {
+        // Com permuta confirmada, somente dados pessoais podem ser alterados.
+        const {
+          data: perfilAtualizado,
+          error: perfilUpdateError,
+        } = await supabase
+          .from("perfis")
+          .update(dadosPerfil)
+          .eq("id", perfilId)
+          .select("id")
+          .maybeSingle();
+
+        if (perfilUpdateError) throw perfilUpdateError;
+        if (!perfilAtualizado?.id) {
+          throw new Error(
+            "Não foi possível confirmar a atualização do seu perfil. Atualize a página e tente novamente."
+          );
+        }
+      } else {
         if (!comarcaAtualId) {
           throw new Error("Selecione sua comarca atual.");
         }
 
-        dadosPerfil.comarca_atual_id =
-          Number(comarcaAtualId);
-      }
-
-      const {
-        data: perfilAtualizado,
-        error: perfilUpdateError,
-      } = await supabase
-        .from("perfis")
-        .update(dadosPerfil)
-        .eq("id", perfilId)
-        .select("id")
-        .maybeSingle();
-
-      if (perfilUpdateError) {
-        throw perfilUpdateError;
-      }
-
-      if (!perfilAtualizado?.id) {
-        throw new Error(
-          "Não foi possível confirmar a atualização do seu perfil. Atualize a página e tente novamente."
-        );
-      }
-
-      /*
-      ========================================
-      PREFERÊNCIAS / MATCHING
-      ========================================
-      */
-
-      if (!emMatch) {
-        const {
-          error: limparPreferenciasError,
-        } = await supabase
-          .from("preferencias_movimentacao")
-          .delete()
-          .eq("perfil_id", perfilId);
-
-        if (limparPreferenciasError) {
-          throw limparPreferenciasError;
+        if (destinos.length === 0) {
+          throw new Error(
+            "Selecione pelo menos uma comarca desejada para manter sua busca ativa."
+          );
         }
 
         /*
-        A ordem atual do array destinos determina
-        a prioridade salva: índice 0 = prioridade 1.
-        */
+         * Perfil e preferências são salvos na mesma transação.
+         * Em caso de falha, o banco mantém os dados anteriores.
+         */
+        const {
+          data: perfilSalvo,
+          error: salvarPerfilError,
+        } = await supabase.rpc("salvar_perfil_com_preferencias", {
+          p_perfil: {
+            ...dadosPerfil,
+            email: perfil.email,
+            comarca_atual_id: Number(comarcaAtualId),
+          },
+          p_preferencias: destinos.map((item, index) => ({
+            comarca_destino_id: item.id,
+            prioridade: index + 1,
+          })),
+        });
 
-        const registros = destinos.map((item, index) => ({
-          perfil_id: perfilId,
-          comarca_destino_id: item.id,
-          prioridade: index + 1,
-          ativo: true,
-          tipo_preferencia: "mudanca",
-        }));
-
-        if (registros.length > 0) {
-          const {
-            error: destinoError,
-          } = await supabase
-            .from("preferencias_movimentacao")
-            .insert(registros);
-
-          if (destinoError) {
-            console.error(
-              "Erro ao salvar preferências:",
-              destinoError
-            );
-
-            throw new Error(
-              "Não foi possível salvar suas preferências agora. Atualize a página e tente novamente."
-            );
-          }
+        if (salvarPerfilError) throw salvarPerfilError;
+        if (perfilSalvo !== perfilId) {
+          throw new Error(
+            "Não foi possível confirmar o salvamento completo do perfil e das preferências."
+          );
         }
 
-        const {
-          error: recalculoError,
-        } = await supabase.rpc(
+        const { error: recalculoError } = await supabase.rpc(
           "recalcular_matches_ciclo_3_usuario",
-          {
-            p_perfil_id: perfilId,
-          }
+          { p_perfil_id: perfilId }
         );
 
         if (recalculoError) {
-          throw recalculoError;
+          // O perfil e as preferências já foram salvos atomicamente.
+          // Falha no recálculo não deve induzir o usuário a repetir a gravação.
+          console.warn(
+            "Perfil salvo, mas houve falha ao recalcular os ciclos:",
+            recalculoError.message
+          );
         }
       }
 
