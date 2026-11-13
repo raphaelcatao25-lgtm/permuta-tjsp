@@ -268,14 +268,14 @@ export function ChatFlutuante() {
                 {modoBusca && (
                   <div className="mt-3">
                     <input value={busca} onChange={(event) => setBusca(event.target.value)} autoFocus placeholder="Digite um nome ou uma comarca..." className="w-full rounded-xl border border-white/10 bg-[#04131f] px-3 py-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-teal-400/60" />
-                    <p className="mt-2 text-[11px] text-slate-500">Digite pelo menos 2 caracteres. Você pode iniciar uma conversa com qualquer servidor cadastrado.</p>
+                    <p className="mt-2 text-[11px] text-slate-500">Busque por parte do nome ou da comarca. A pesquisa ignora acentos e não exige o nome completo.</p>
                   </div>
                 )}
               </div>
               <div className="min-h-0 flex-1 overflow-y-auto">
                 {modoBusca ? (
                   carregando ? <div className="flex justify-center py-10 text-teal-300"><LoaderCircle className="animate-spin" /></div> :
-                  busca.trim().length < 2 ? <p className="px-5 py-10 text-center text-sm text-slate-500">Pesquise pelo nome do servidor ou pela comarca.</p> :
+                  busca.trim().length < 2 ? <p className="px-5 py-10 text-center text-sm text-slate-500">Digite parte do nome ou da comarca. Não precisa escrever o nome completo nem usar acentos.</p> :
                   resultados.length === 0 ? <p className="px-5 py-10 text-center text-sm text-slate-500">Nenhum servidor encontrado.</p> :
                   resultados.map((servidor) => (
                     <button key={servidor.id} type="button" onClick={() => void abrirConversa(servidor.id)} className="flex w-full items-center gap-3 border-b border-white/[0.06] px-4 py-3 text-left transition hover:bg-teal-400/[0.06]">
