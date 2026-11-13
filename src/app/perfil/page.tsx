@@ -419,6 +419,11 @@ export default function PerfilPage() {
       return;
     }
 
+    if (!emMatch && destinos.length === 0) {
+      setErro("Selecione pelo menos uma comarca desejada para manter sua busca ativa.");
+      return;
+    }
+
     if (!perfil?.id) {
       setErro(
         "Seu perfil ainda não foi carregado corretamente. Atualize a página e tente novamente."
