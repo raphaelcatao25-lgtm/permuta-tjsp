@@ -25,6 +25,7 @@ import {
 
 import PermutasDiretas from "@/components/PermutasDiretas";
 import CiclosPermuta from "@/components/CiclosPermuta";
+import CiclosQuatroPermuta from "@/components/CiclosQuatroPermuta";
 
 
 export default function BuscarPermutasPage() {
@@ -721,6 +722,37 @@ export default function BuscarPermutasPage() {
 
             </div>
 
+          </section>
+
+
+          {/* =========================================
+              CICLO DE 4
+          ========================================= */}
+          <section
+            className="
+              overflow-hidden
+              rounded-2xl
+              border
+              border-teal-300/10
+              bg-[#0d2232]
+              shadow-[0_16px_40px_rgba(0,0,0,0.16)]
+            "
+          >
+            <div className="flex items-center gap-4 border-b border-teal-300/10 bg-[#0a1f2f] px-6 py-5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-violet-300/15 bg-violet-400/[0.07] text-violet-300">
+                <UsersRound size={20} />
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-violet-300">Terceira opção</p>
+                <h2 className="mt-1 text-xl font-bold text-white">Ciclos de 4 servidores</h2>
+                <p className="mt-1 text-sm leading-6 text-slate-400">
+                  Uma cadeia com quatro participantes, na qual cada servidor segue para a comarca ou unidade desejada pelo próximo.
+                </p>
+              </div>
+            </div>
+            <div className="p-6">
+              {usuarioId ? <CiclosQuatroPermuta usuarioId={usuarioId} /> : <Carregando />}
+            </div>
           </section>
 
 
