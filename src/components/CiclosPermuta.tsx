@@ -829,7 +829,6 @@ export default function CiclosPermuta({
 
       {
         ciclos
-          .slice(0, 3)
           .map(
             (ciclo, index) => (
 
