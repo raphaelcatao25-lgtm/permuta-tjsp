@@ -371,9 +371,9 @@ export default function DashboardPage() {
 
         if (!dadosPerfil) {
 
-          throw new Error(
-            "Seu perfil ainda não foi encontrado. Complete ou revise seu cadastro."
-          );
+          window.location.replace("/cadastro?completar=1");
+
+          return;
 
         }
 
