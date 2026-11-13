@@ -8,6 +8,7 @@ import {
 import "./globals.css";
 
 import { Footer } from "@/components/layout/Footer";
+import { ChatFlutuante } from "@/components/chat/ChatFlutuante";
 
 
 const geistSans = Geist({
@@ -72,6 +73,7 @@ export default function RootLayout({
           </main>
 
           <Footer />
+          <ChatFlutuante />
 
         </div>
 
