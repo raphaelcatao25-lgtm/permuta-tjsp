@@ -5,6 +5,7 @@ import {
 } from "react";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import {
   ArrowRight,
@@ -21,6 +22,7 @@ export function PublicHeader() {
     setMenuAberto,
   ] = useState(false);
 
+  const pathname = usePathname();
 
   return (
 
@@ -175,6 +177,9 @@ export function PublicHeader() {
 
           <Link
             href="/estatisticas"
+            onClick={() => {
+              if (pathname === "/estatisticas") window.location.reload();
+            }}
             className="
               text-sm
               font-medium
@@ -407,9 +412,10 @@ export function PublicHeader() {
 
           <Link
             href="/estatisticas"
-            onClick={() =>
-              setMenuAberto(false)
-            }
+            onClick={() => {
+              setMenuAberto(false);
+              if (pathname === "/estatisticas") window.location.reload();
+            }}
             className="
               rounded-xl
               px-4
