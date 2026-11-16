@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import {
-  Activity, ArrowDownRight, BarChart3, BriefcaseBusiness, Building2,
-  Map, MapPinned, RefreshCw, Users
+  Activity, ArrowDownRight, BriefcaseBusiness, Building2,
+  Map, MapPinned, Users
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
@@ -13,20 +13,16 @@ type Dados = {
     servidores_cadastrados: number;
     servidores_com_preferencias: number;
     preferencias_ativas: number;
-    servidores_com_destino_prioritario: number;
   };
   por_raj: (Linha & { id: number })[];
   por_circunscricao: Linha[];
   destinos_mais_procurados: Linha[];
   comarcas_de_origem: Linha[];
   cargos: Linha[];
-  distribuicao_prioridades: { ordem: number; preferencias: number }[];
   atualizado_em: string;
 };
 
 const fmt = (n: number) => Number(n || 0).toLocaleString("pt-BR");
-const pct = (n: number, t: number) =>
-  t ? ((n / t) * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 }) + "%" : "0%";
 
 export default function EstatisticasPage() {
   const [dados, setDados] = useState<Dados | null>(null);
@@ -49,7 +45,6 @@ export default function EstatisticasPage() {
 
   useEffect(() => { void carregar(); }, []);
 
-  const total = dados?.resumo.servidores_cadastrados ?? 0;
 
   return (
     <div className="min-h-screen bg-[#04111d] text-white">
@@ -66,10 +61,6 @@ export default function EstatisticasPage() {
                 Veja em gráficos os interesses de movimentação informados pelos servidores cadastrados na plataforma.
               </p>
             </div>
-            <button onClick={() => void carregar()} disabled={loading}
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-teal-300/20 bg-teal-400/10 px-5 py-3 text-sm font-semibold text-teal-200 transition hover:bg-teal-400/20 disabled:opacity-60">
-              <RefreshCw size={16} className={loading ? "animate-spin" : ""} /> Atualizar dados
-            </button>
           </div>
         </div>
       </header>
@@ -83,11 +74,10 @@ export default function EstatisticasPage() {
             <div className="mb-5 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.15em] text-teal-400">
               <Activity size={16} /> Visão geral
             </div>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               <Kpi icon={<Users size={21} />} label="Servidores cadastrados" value={fmt(total)} detail="Cadastros fora do grupo de testes" />
-              <Kpi icon={<MapPinned size={21} />} label="Com destinos informados" value={fmt(dados.resumo.servidores_com_preferencias)} detail={pct(dados.resumo.servidores_com_preferencias, total) + " dos cadastrados"} />
+              <Kpi icon={<MapPinned size={21} />} label="Com destinos informados" value={fmt(dados.resumo.servidores_com_preferencias)} detail="Servidores com preferências cadastradas" />
               <Kpi icon={<Map size={21} />} label="Preferências ativas" value={fmt(dados.resumo.preferencias_ativas)} detail="Destinos selecionados pelos servidores" />
-              <Kpi icon={<Activity size={21} />} label="Destino em 1º lugar" value={fmt(dados.resumo.servidores_com_destino_prioritario)} detail="Servidores com preferência prioritária" />
             </div>
           </section>
 
@@ -108,7 +98,7 @@ export default function EstatisticasPage() {
               subtitle="As 15 comarcas mais selecionadas como destino, considerando pessoas distintas." />
             <div className="mt-6">
               <ChartPanel>
-                <HorizontalBarChart items={dados.destinos_mais_procurados} valueLabel="servidores" showRank showPriority />
+                <HorizontalBarChart items={dados.destinos_mais_procurados} valueLabel="servidores" showRank />
               </ChartPanel>
             </div>
           </section>
@@ -147,17 +137,6 @@ export default function EstatisticasPage() {
             </section>
           </div>
 
-          <section className="mt-14">
-            <Heading icon={<BarChart3 size={20} />} eyebrow="Ordem de preferência"
-              title="Distribuição das prioridades"
-              subtitle="Quantidade de destinos ativos registrados em cada posição de preferência." />
-            <div className="mt-6">
-              <ChartPanel>
-                <ColumnChart items={dados.distribuicao_prioridades.map(x => ({ label: x.ordem + "ª", value: x.preferencias }))} />
-              </ChartPanel>
-            </div>
-          </section>
-
           <div className="mt-12 rounded-2xl border border-teal-300/10 bg-[#081b29] p-5 text-sm leading-6 text-slate-400">
             <strong className="text-slate-200">Sobre os dados:</strong> estatísticas calculadas a partir dos cadastros e das preferências ativas. Um servidor pode escolher comarcas de diferentes RAJs e circunscrições; por isso, os números regionais não devem ser somados para obter o total de pessoas. Para preservar a privacidade, categorias com menos de três participantes não são exibidas nos recortes de origem, cargo e circunscrição.
             <div className="mt-3 text-xs text-slate-500">
@@ -195,11 +174,10 @@ function ChartPanel({ children }: { children: React.ReactNode }) {
   return <div className="rounded-2xl border border-teal-300/10 bg-[#0b2030]/90 p-4 sm:p-6">{children}</div>;
 }
 
-function HorizontalBarChart({ items, valueLabel, showRank = false, showPriority = false }: {
+function HorizontalBarChart({ items, valueLabel, showRank = false }: {
   items: Linha[];
   valueLabel: string;
   showRank?: boolean;
-  showPriority?: boolean;
 }) {
   const max = Math.max(1, ...items.map(x => x.usuarios));
   if (!items.length) return <p className="py-8 text-center text-sm text-slate-500">Ainda não há dados suficientes para este gráfico.</p>;
@@ -221,7 +199,6 @@ function HorizontalBarChart({ items, valueLabel, showRank = false, showPriority 
             <div className="h-full rounded-full bg-gradient-to-r from-teal-500 to-cyan-300 transition-all duration-700"
               style={{ width: (item.usuarios / max * 100) + "%" }} />
           </div>
-          {showPriority && <div className="mt-1.5 text-right text-xs text-slate-500">{fmt(item.prioridade_1 ?? 0)} colocaram como 1ª opção</div>}
         </div>
       ))}
       <div className="border-t border-white/[0.06] pt-3 text-xs text-slate-500">Barras proporcionais ao maior valor deste gráfico</div>
@@ -229,24 +206,3 @@ function HorizontalBarChart({ items, valueLabel, showRank = false, showPriority 
   );
 }
 
-function ColumnChart({ items }: { items: { label: string; value: number }[] }) {
-  const max = Math.max(1, ...items.map(x => x.value));
-  if (!items.length) return <p className="py-8 text-center text-sm text-slate-500">Ainda não há dados suficientes para este gráfico.</p>;
-  return (
-    <div>
-      <div className="flex h-64 items-end justify-around gap-2 border-b border-white/10 px-1 sm:gap-4 sm:px-4">
-        {items.map(item => (
-          <div key={item.label} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-2">
-            <span className="text-xs font-semibold tabular-nums text-teal-300">{fmt(item.value)}</span>
-            <div className="flex w-full flex-1 items-end justify-center">
-              <div className="w-full max-w-16 rounded-t-lg bg-gradient-to-t from-teal-600 to-cyan-300 transition-all duration-700"
-                style={{ height: Math.max(2, item.value / max * 100) + "%" }} />
-            </div>
-            <span className="pb-3 text-xs font-medium text-slate-400">{item.label}</span>
-          </div>
-        ))}
-      </div>
-      <p className="mt-3 text-xs text-slate-500">Quantidade de preferências registradas em cada posição</p>
-    </div>
-  );
-}
