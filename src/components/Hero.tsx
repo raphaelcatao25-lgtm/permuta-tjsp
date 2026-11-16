@@ -28,9 +28,9 @@ const SP_PATH = `M 0 404 L 22 395 L 59 405 L 73 396 L 127 412 L 143 390 L 198 41
 export default function Hero() {
 
   const [
-    oportunidadesEncontradas,
-    setOportunidadesEncontradas,
-  ] = useState<number | null>(null);
+    oportunidadesPorTipo,
+    setOportunidadesPorTipo,
+  ] = useState<{ diretas: number; ciclos3: number; ciclos4: number } | null>(null);
 
 
   useEffect(() => {
@@ -43,7 +43,7 @@ export default function Hero() {
         data,
         error,
       } = await supabase.rpc(
-        "total_oportunidades_encontradas"
+        "resumo_oportunidades_por_tipo"
       );
 
       if (!ativo) {
@@ -60,9 +60,11 @@ export default function Hero() {
         return;
       }
 
-      setOportunidadesEncontradas(
-        Number(data ?? 0)
-      );
+      setOportunidadesPorTipo({
+        diretas: Number(data?.diretas ?? 0),
+        ciclos3: Number(data?.ciclos3 ?? 0),
+        ciclos4: Number(data?.ciclos4 ?? 0),
+      });
 
     }
 
@@ -477,104 +479,50 @@ export default function Hero() {
               </div>
 
 
-              {
-                oportunidadesEncontradas !== null && (
-
-                  <div
-                    className="
-                      flex
-                      min-h-[120px]
-                      w-full
-                      sm:w-[352px]
-                      items-center
-                      gap-4
-                      rounded-2xl
-                      border
-                      border-teal-300/15
-                      bg-[#0d2637]/80
-                      px-5
-                      py-5
-                      shadow-[0_18px_45px_rgba(0,0,0,0.18)]
-                      backdrop-blur-lg
-                      transition
-                      duration-300
-                      hover:-translate-y-1
-                      hover:border-teal-300/30
-                      hover:bg-[#103047]/90
-                      hover:shadow-[0_22px_55px_rgba(45,212,191,0.14)]
-                    "
-                  >
-
+              {oportunidadesPorTipo !== null && (
+                <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3">
+                  {[
+                    {
+                      titulo: "Permutas diretas",
+                      valor: oportunidadesPorTipo.diretas,
+                      descricao: "2 servidores",
+                      icone: <ArrowRightLeft size={25} />,
+                    },
+                    {
+                      titulo: "Permuta em cadeia",
+                      valor: oportunidadesPorTipo.ciclos3,
+                      descricao: "3 servidores",
+                      icone: <RefreshCw size={25} />,
+                    },
+                    {
+                      titulo: "Permuta em cadeia",
+                      valor: oportunidadesPorTipo.ciclos4,
+                      descricao: "4 servidores",
+                      icone: <RefreshCw size={25} />,
+                    },
+                  ].map((item) => (
                     <div
-                      className="
-                        flex
-                        h-14
-                        w-14
-                        shrink-0
-                        items-center
-                        justify-center
-                        rounded-full
-                        border
-                        border-teal-300/20
-                        bg-teal-400/10
-                        text-teal-300
-                      "
+                      key={item.titulo + item.descricao}
+                      className="flex min-h-[142px] min-w-0 items-center gap-3 rounded-2xl border border-teal-300/15 bg-[#0d2637]/80 px-4 py-5 shadow-[0_18px_45px_rgba(0,0,0,0.18)] backdrop-blur-lg transition duration-300 hover:-translate-y-1 hover:border-teal-300/30 hover:bg-[#103047]/90 hover:shadow-[0_22px_55px_rgba(45,212,191,0.14)]"
                     >
-                      <RefreshCw size={27} />
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-teal-300/20 bg-teal-400/10 text-teal-300">
+                        {item.icone}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-3xl font-black leading-none tracking-tight text-teal-300">
+                          {item.valor.toLocaleString("pt-BR")}
+                        </div>
+                        <div className="mt-2 text-sm font-bold leading-5 text-white">
+                          {item.titulo}
+                        </div>
+                        <div className="mt-1 text-[11px] leading-4 text-slate-400">
+                          {item.descricao}
+                        </div>
+                      </div>
                     </div>
-
-
-                    <div className="min-w-0">
-
-                      <div
-                        className="
-                          text-3xl
-                          font-black
-                          leading-none
-                          tracking-tight
-                          text-teal-300
-                        "
-                      >
-                        {
-                          oportunidadesEncontradas
-                            .toLocaleString("pt-BR")
-                        }
-                      </div>
-
-
-                      <div
-                        className="
-                          mt-1
-                          text-sm
-                          font-bold
-                          text-white
-                        "
-                      >
-                        {
-                          oportunidadesEncontradas === 1
-                            ? "oportunidade encontrada"
-                            : "oportunidades encontradas"
-                        }
-                      </div>
-
-
-                      <div
-                        className="
-                          mt-1
-                          text-xs
-                          leading-5
-                          text-slate-400
-                        "
-                      >
-                        Combinações identificadas pela plataforma
-                      </div>
-
-                    </div>
-
-                  </div>
-
-                )
-              }
+                  ))}
+                </div>
+              )}
 
             </div>
 
