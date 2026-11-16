@@ -174,7 +174,22 @@ export function PublicHeader() {
 
 
           <Link
-            href="/sobre"
+            href="/estatisticas"
+            className="
+              text-sm
+              font-medium
+              text-slate-300
+              transition
+              hover:-translate-y-0.5
+              hover:!text-teal-300
+            "
+          >
+            Estatísticas
+          </Link>
+
+
+          <Link
+            
             className="
               text-sm
               font-medium
@@ -391,7 +406,28 @@ export function PublicHeader() {
 
 
           <Link
-            href="/sobre"
+            href="/estatisticas"
+            onClick={() =>
+              setMenuAberto(false)
+            }
+            className="
+              rounded-xl
+              px-4
+              py-3
+              text-sm
+              font-medium
+              text-slate-200
+              transition
+              hover:bg-teal-400/10
+              hover:!text-teal-300
+            "
+          >
+            Estatísticas
+          </Link>
+
+
+          <Link
+            
             onClick={() =>
               setMenuAberto(false)
             }
