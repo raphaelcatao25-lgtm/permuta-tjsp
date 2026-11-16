@@ -189,7 +189,7 @@ export function PublicHeader() {
 
 
           <Link
-            
+            href="/sobre"
             className="
               text-sm
               font-medium
@@ -427,7 +427,7 @@ export function PublicHeader() {
 
 
           <Link
-            
+            href="/sobre"
             onClick={() =>
               setMenuAberto(false)
             }
