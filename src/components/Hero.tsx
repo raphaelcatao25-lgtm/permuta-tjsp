@@ -268,6 +268,33 @@ export default function Hero() {
                 Já tenho conta
               </Link>
 
+              
+              <Link
+                href="/estatisticas"
+                className="
+                  inline-flex
+                  min-h-12
+                  items-center
+                  justify-center
+                  gap-2
+                  rounded-full
+                  border
+                  border-teal-300/20
+                  bg-teal-400/10
+                  px-5
+                  py-3
+                  text-sm
+                  font-semibold
+                  text-teal-200
+                  transition
+                  hover:-translate-y-0.5
+                  hover:bg-teal-400/20
+                "
+              >
+                <Search size={17} />
+                Ver estatísticas
+              </Link>
+
             </div>
 
 
