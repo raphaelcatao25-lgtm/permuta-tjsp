@@ -75,7 +75,7 @@ export default function EstatisticasPage() {
               <Activity size={16} /> Visão geral
             </div>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              <Kpi icon={<Users size={21} />} label="Servidores cadastrados" value={fmt(total)} detail="Cadastros fora do grupo de testes" />
+              <Kpi icon={<Users size={21} />} label="Servidores cadastrados" value={fmt(dados.resumo.servidores_cadastrados)} detail="Cadastros fora do grupo de testes" />
               <Kpi icon={<MapPinned size={21} />} label="Com destinos informados" value={fmt(dados.resumo.servidores_com_preferencias)} detail="Servidores com preferências cadastradas" />
               <Kpi icon={<Map size={21} />} label="Preferências ativas" value={fmt(dados.resumo.preferencias_ativas)} detail="Destinos selecionados pelos servidores" />
             </div>
