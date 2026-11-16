@@ -1313,7 +1313,40 @@ export async function GET(
 
 
     /* ========================================================
-       8. BUSCAR SOMENTE ALERTAS QUE CONTINUAM ATUAIS
+       8. HISTÓRICO DE CICLOS COM QUATRO PARTICIPANTES
+
+       A busca de ciclo 4 é dinâmica e individual. Este processamento
+       registra as combinações únicas encontradas para alimentar
+       o contador público, sem armazenar nomes ou dados pessoais.
+    ======================================================== */
+
+    const {
+      data: historicoCiclo4Data,
+      error: historicoCiclo4Error,
+    } = await supabase.rpc(
+      "registrar_oportunidades_ciclo4_lote"
+    );
+
+    if (historicoCiclo4Error) {
+      throw new Error(
+        `Erro ao registrar histórico de ciclos de 4: ${historicoCiclo4Error.message}`
+      );
+    }
+
+    const historicoCiclo4 =
+      Array.isArray(historicoCiclo4Data)
+        ? historicoCiclo4Data[0]
+        : null;
+
+    const perfisAnalisadosCiclo4 =
+      Number(historicoCiclo4?.perfis_analisados ?? 0);
+
+    const ciclosQuatroEncontrados =
+      Number(historicoCiclo4?.ciclos_unicos_encontrados ?? 0);
+
+
+    /* ========================================================
+       9. BUSCAR SOMENTE ALERTAS QUE CONTINUAM ATUAIS
 
        Isso é importante.
 
@@ -1372,7 +1405,7 @@ export async function GET(
 
 
     /* ========================================================
-       9. MODO DE TESTE
+       10. MODO DE TESTE
 
        Se CRON_EMAIL_TEST_USER_ID estiver definido,
        nenhum outro servidor recebe e-mail.
@@ -1395,7 +1428,7 @@ export async function GET(
 
 
     /* ========================================================
-       10. AGRUPAR POR USUÁRIO
+       11. AGRUPAR POR USUÁRIO
     ======================================================== */
 
     const alertasPorUsuario =
@@ -1430,7 +1463,7 @@ export async function GET(
 
 
     /* ========================================================
-       11. ENVIAR UM E-MAIL POR SERVIDOR
+       12. ENVIAR UM E-MAIL POR SERVIDOR
     ======================================================== */
 
     let emailsEnviados =
@@ -1671,7 +1704,7 @@ export async function GET(
 
 
     /* ========================================================
-       12. RESULTADO
+       13. RESULTADO
     ======================================================== */
 
     const duracaoMs =
@@ -1707,6 +1740,10 @@ export async function GET(
       alertasDiretaNovos,
 
       alertasCicloNovos,
+
+      perfisAnalisadosCiclo4,
+
+      ciclosQuatroEncontrados,
 
       usuariosComAlertasAtuais:
         alertasPorUsuario.size,
