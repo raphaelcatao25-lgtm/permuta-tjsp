@@ -351,7 +351,7 @@ export function PublicHeader() {
 
           ${
             menuAberto
-              ? "max-h-[430px] opacity-100"
+              ? "max-h-[500px] opacity-100"
               : "max-h-0 border-transparent opacity-0"
           }
         `}
