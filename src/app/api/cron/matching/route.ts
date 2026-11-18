@@ -75,6 +75,9 @@ const REMETENTE_NOME =
 const TAMANHO_LOTE =
   20;
 
+const TAMANHO_LOTE_CICLO4 =
+  20;
+
 
 /* ============================================================
    TIPOS
@@ -1320,29 +1323,67 @@ export async function GET(
        o contador público, sem armazenar nomes ou dados pessoais.
     ======================================================== */
 
-    const {
-      data: historicoCiclo4Data,
-      error: historicoCiclo4Error,
-    } = await supabase.rpc(
-      "registrar_oportunidades_ciclo4_lote"
-    );
+    let perfisAnalisadosCiclo4 = 0;
 
-    if (historicoCiclo4Error) {
-      throw new Error(
-        `Erro ao registrar histórico de ciclos de 4: ${historicoCiclo4Error.message}`
+    const hashesCiclo4Encontrados = new Set<string>();
+
+    for (
+      let offsetCiclo4 = 0;
+      offsetCiclo4 < perfis.length;
+      offsetCiclo4 += TAMANHO_LOTE_CICLO4
+    ) {
+      const lotePerfisCiclo4 = perfis
+        .slice(
+          offsetCiclo4,
+          offsetCiclo4 + TAMANHO_LOTE_CICLO4
+        )
+        .map((perfil) => perfil.id);
+
+      const {
+        data: historicoCiclo4Data,
+        error: historicoCiclo4Error,
+      } = await supabase.rpc(
+        "registrar_oportunidades_ciclo4_lote",
+        {
+          p_perfis_ids: lotePerfisCiclo4,
+        }
       );
-    }
 
-    const historicoCiclo4 =
-      Array.isArray(historicoCiclo4Data)
+      if (historicoCiclo4Error) {
+        throw new Error(
+          `Erro no lote de ciclo 4 (perfis ${offsetCiclo4 + 1} a ${offsetCiclo4 + lotePerfisCiclo4.length}): ${historicoCiclo4Error.message}`
+        );
+      }
+
+      const historicoCiclo4 = Array.isArray(historicoCiclo4Data)
         ? historicoCiclo4Data[0]
         : null;
 
-    const perfisAnalisadosCiclo4 =
-      Number(historicoCiclo4?.perfis_analisados ?? 0);
+      perfisAnalisadosCiclo4 += Number(
+        historicoCiclo4?.perfis_analisados ?? 0
+      );
+
+      const hashesLote = Array.isArray(historicoCiclo4?.hashes_lote)
+        ? historicoCiclo4.hashes_lote as string[]
+        : [];
+
+      for (const hash of hashesLote) {
+        hashesCiclo4Encontrados.add(hash);
+      }
+
+      console.log(
+        "[CRON MATCHING] Lote de ciclo 4 concluído.",
+        {
+          inicio: offsetCiclo4 + 1,
+          fim: offsetCiclo4 + lotePerfisCiclo4.length,
+          perfisAnalisados: historicoCiclo4?.perfis_analisados ?? 0,
+          ciclosUnicosNoLote: historicoCiclo4?.ciclos_unicos_encontrados ?? 0,
+        }
+      );
+    }
 
     const ciclosQuatroEncontrados =
-      Number(historicoCiclo4?.ciclos_unicos_encontrados ?? 0);
+      hashesCiclo4Encontrados.size;
 
 
     /* ========================================================
