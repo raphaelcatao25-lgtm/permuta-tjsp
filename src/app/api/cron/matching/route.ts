@@ -14,6 +14,8 @@ export const runtime =
 export const dynamic =
   "force-dynamic";
 
+export const maxDuration = 300;
+
 
 /* ============================================================
    CONFIGURAÇÕES
