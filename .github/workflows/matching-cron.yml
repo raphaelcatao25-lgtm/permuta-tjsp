@@ -35,10 +35,8 @@ jobs:
             --show-error \
             --output resposta.json \
             --write-out "%{http_code}" \
-            --max-time 180 \
-            --retry 2 \
-            --retry-delay 10 \
-            --retry-all-errors \
+            --connect-timeout 20 \
+            --max-time 300 \
             --request GET \
             --header "Authorization: Bearer ${CRON_SECRET}" \
             "https://permuta-tjsp.vercel.app/api/cron/matching")
