@@ -125,6 +125,13 @@ type MatchCiclo3 = {
   participante_2: string;
   participante_3: string;
 
+  origem_1: number | null;
+  destino_1: number | null;
+  origem_2: number | null;
+  destino_2: number | null;
+  origem_3: number | null;
+  destino_3: number | null;
+
   chave_ciclo:
     string | null;
 
@@ -1221,6 +1228,12 @@ export async function GET(
           participante_1,
           participante_2,
           participante_3,
+          origem_1,
+          destino_1,
+          origem_2,
+          destino_2,
+          origem_3,
+          destino_3,
           chave_ciclo,
           status
         `)
@@ -1251,39 +1264,35 @@ export async function GET(
     const idsTodosCiclos = [...new Set(ciclos.flatMap((c) => [
       c.participante_1, c.participante_2, c.participante_3
     ]))];
-    const [{ data: perfisCiclo }, { data: preferenciasCiclo }] = await Promise.all([
+    const idsComarcasCiclo = [...new Set(ciclos.flatMap((c) => [
+      c.origem_1, c.destino_1, c.origem_2, c.destino_2, c.origem_3, c.destino_3
+    ]).filter(Boolean))];
+    const [{ data: perfisCiclo }, { data: comarcasCiclo }] = await Promise.all([
       idsTodosCiclos.length
-        ? supabase.from("perfis").select("id,nome,comarca_atual_id").in("id", idsTodosCiclos)
+        ? supabase.from("perfis").select("id,nome").in("id", idsTodosCiclos)
         : Promise.resolve({ data: [] as any[] }),
-      idsTodosCiclos.length
-        ? supabase.from("preferencias_movimentacao").select("perfil_id,comarca_destino_id").in("perfil_id", idsTodosCiclos).eq("ativo", true)
+      idsComarcasCiclo.length
+        ? supabase.from("comarcas_tjsp").select("id,nome").in("id", idsComarcasCiclo)
         : Promise.resolve({ data: [] as any[] }),
     ]);
     const mapaPerfisCiclo = new Map((perfisCiclo ?? []).map((p: any) => [p.id, p]));
-    const mapaDestinosCiclo = new Map((preferenciasCiclo ?? []).map((p: any) => [p.perfil_id, p.comarca_destino_id]));
-    const idsComarcasCiclo = [...new Set([
-      ...(perfisCiclo ?? []).map((p: any) => p.comarca_atual_id),
-      ...(preferenciasCiclo ?? []).map((p: any) => p.comarca_destino_id),
-    ].filter(Boolean))];
-    const { data: comarcasCiclo } = idsComarcasCiclo.length
-      ? await supabase.from("comarcas_tjsp").select("id,nome").in("id", idsComarcasCiclo)
-      : { data: [] as any[] };
     const mapaComarcasCiclo = new Map((comarcasCiclo ?? []).map((c: any) => [c.id, c.nome]));
 
     for (const ciclo of ciclos) {
       const ids = [ciclo.participante_1, ciclo.participante_2, ciclo.participante_3];
       const assinatura = [...ids].sort().join("--");
       const participantes = ids.map((id, index) => {
-        const p: any = mapaPerfisCiclo.get(id);
-        const destino = mapaDestinosCiclo.get(id);
+        const ordem = index + 1;
+        const origemId = ciclo[`origem_${ordem}`];
+        const destinoId = ciclo[`destino_${ordem}`];
         return {
-          ordem: index + 1,
+          ordem,
           usuario_id: id,
-          nome: p?.nome ?? "Servidor TJSP",
-          origem_comarca_id: p?.comarca_atual_id ?? null,
-          origem_comarca: mapaComarcasCiclo.get(p?.comarca_atual_id) ?? "Comarca não informada",
-          destino_comarca_id: destino ?? null,
-          destino_comarca: mapaComarcasCiclo.get(destino) ?? "Destino não informado",
+          nome: mapaPerfisCiclo.get(id)?.nome ?? "Servidor TJSP",
+          origem_comarca_id: origemId,
+          origem_comarca: mapaComarcasCiclo.get(origemId) ?? "Comarca não informada",
+          destino_comarca_id: destinoId,
+          destino_comarca: mapaComarcasCiclo.get(destinoId) ?? "Destino não informado",
         };
       });
       for (const id of ids) {
@@ -1303,168 +1312,6 @@ export async function GET(
         .upsert(historicoCiclo3Atual, { onConflict: "usuario_id,tipo,assinatura" });
       if (error) throw new Error(`Erro ao registrar ciclos atuais no histórico: ${error.message}`);
     }
-
-
-    let alertasCicloNovos =
-      0;
-
-
-    for (
-      const ciclo
-      of ciclos
-    ) {
-
-      const participantes =
-        Array.from(
-          new Set([
-            ciclo.participante_1,
-            ciclo.participante_2,
-            ciclo.participante_3,
-          ])
-        );
-
-
-      if (
-        participantes.length !==
-        3
-      ) {
-        continue;
-      }
-
-
-      const assinatura =
-        criarAssinaturaCiclo3(
-          participantes
-        );
-
-
-      for (
-        const usuarioId
-        of participantes
-      ) {
-
-        const {
-          data:
-            existente,
-
-          error:
-            existenteError,
-        } =
-          await supabase
-            .from(
-              "alertas_oportunidades_email"
-            )
-            .select(
-              "id"
-            )
-            .eq(
-              "usuario_id",
-              usuarioId
-            )
-            .eq(
-              "tipo",
-              "ciclo_3"
-            )
-            .eq(
-              "assinatura",
-              assinatura
-            )
-            .maybeSingle();
-
-
-        if (
-          existenteError
-        ) {
-
-          console.error(
-            "[CRON] Erro alerta ciclo:",
-            existenteError.message
-          );
-
-          continue;
-
-        }
-
-
-        const agora =
-          new Date()
-            .toISOString();
-
-
-        if (
-          existente
-        ) {
-
-          await supabase
-            .from(
-              "alertas_oportunidades_email"
-            )
-            .update({
-              ultima_encontrada_em:
-                agora,
-
-              updated_at:
-                agora,
-            })
-            .eq(
-              "id",
-              existente.id
-            );
-
-
-          continue;
-
-        }
-
-
-        const {
-          error:
-            inserirError,
-        } =
-          await supabase
-            .from(
-              "alertas_oportunidades_email"
-            )
-            .insert({
-              usuario_id:
-                usuarioId,
-
-              tipo:
-                "ciclo_3",
-
-              assinatura,
-
-              primeira_encontrada_em:
-                agora,
-
-              ultima_encontrada_em:
-                agora,
-
-              email_enviado:
-                false,
-            });
-
-
-        if (
-          inserirError
-        ) {
-
-          console.error(
-            "[CRON] Erro inserindo alerta ciclo:",
-            inserirError.message
-          );
-
-          continue;
-
-        }
-
-
-        alertasCicloNovos++;
-
-      }
-
-    }
-
 
     /* ========================================================
        8. HISTÓRICO DE CICLOS COM QUATRO PARTICIPANTES
