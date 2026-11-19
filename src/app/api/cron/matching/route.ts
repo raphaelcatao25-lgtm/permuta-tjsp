@@ -791,6 +791,73 @@ export async function GET(
         []
       ) as Perfil[];
 
+    const { error: historicoStatusError } = await supabase
+      .from("historico_oportunidades_usuario")
+      .update({ status: "indisponivel", updated_at: new Date().toISOString() })
+      .eq("status", "ativa");
+    if (historicoStatusError) {
+      throw new Error(`Erro ao atualizar status do histórico: ${historicoStatusError.message}`);
+    }
+
+
+    /* ========================================================
+       4. PRESERVAR CICLOS ANTERIORES ANTES DA REGERAÇÃO
+    ======================================================== */
+    const { data: ciclosAnteriores, error: ciclosAnterioresError } = await supabase
+      .from("matches_ciclo_3").select("*").eq("status", "disponivel");
+    if (ciclosAnterioresError) {
+      throw new Error(`Erro ao preservar ciclos anteriores: ${ciclosAnterioresError.message}`);
+    }
+
+    const idsParticipantesAnteriores = [...new Set((ciclosAnteriores ?? []).flatMap((c: any) => [
+      c.participante_1, c.participante_2, c.participante_3
+    ]).filter(Boolean))];
+    const idsComarcasAnteriores = [...new Set((ciclosAnteriores ?? []).flatMap((c: any) => [
+      c.origem_1, c.destino_1, c.origem_2, c.destino_2, c.origem_3, c.destino_3
+    ]).filter(Boolean))];
+
+    const [{ data: perfisAnteriores }, { data: comarcasAnteriores }] = await Promise.all([
+      idsParticipantesAnteriores.length
+        ? supabase.from("perfis").select("id,nome").in("id", idsParticipantesAnteriores)
+        : Promise.resolve({ data: [] as any[] }),
+      idsComarcasAnteriores.length
+        ? supabase.from("comarcas_tjsp").select("id,nome").in("id", idsComarcasAnteriores)
+        : Promise.resolve({ data: [] as any[] }),
+    ]);
+    const nomesAnteriores = new Map((perfisAnteriores ?? []).map((p: any) => [p.id, p.nome]));
+    const nomesComarcasAnteriores = new Map((comarcasAnteriores ?? []).map((c: any) => [c.id, c.nome]));
+    const historicoCiclo3Anterior: any[] = [];
+
+    for (const ciclo of ciclosAnteriores ?? []) {
+      const participantes = [1, 2, 3].map((n) => ({
+        ordem: n,
+        usuario_id: ciclo[`participante_${n}`],
+        nome: nomesAnteriores.get(ciclo[`participante_${n}`]) ?? "Servidor TJSP",
+        origem_comarca_id: ciclo[`origem_${n}`],
+        origem_comarca: nomesComarcasAnteriores.get(ciclo[`origem_${n}`]) ?? "Comarca não informada",
+        destino_comarca_id: ciclo[`destino_${n}`],
+        destino_comarca: nomesComarcasAnteriores.get(ciclo[`destino_${n}`]) ?? "Comarca não informada",
+        origem_unidade_id: ciclo[`origem_unidade_${n}`] ?? null,
+        destino_unidade_id: ciclo[`destino_unidade_${n}`] ?? null,
+      }));
+      const assinatura = [ciclo.participante_1, ciclo.participante_2, ciclo.participante_3].sort().join("--");
+      for (const participante of participantes) {
+        historicoCiclo3Anterior.push({
+          usuario_id: participante.usuario_id,
+          tipo: "ciclo_3",
+          assinatura,
+          participantes,
+          status: "indisponivel",
+          ultima_encontrada_em: ciclo.updated_at ?? ciclo.created_at ?? new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+      }
+    }
+    if (historicoCiclo3Anterior.length) {
+      const { error } = await supabase.from("historico_oportunidades_usuario")
+        .upsert(historicoCiclo3Anterior, { onConflict: "usuario_id,tipo,assinatura" });
+      if (error) throw new Error(`Erro ao arquivar ciclos anteriores: ${error.message}`);
+    }
 
     /* ========================================================
        4. LIMPAR SOMENTE CICLOS DISPONÍVEIS
@@ -984,6 +1051,31 @@ export async function GET(
             candidato.candidato_id
           );
 
+        const participantesDireta = [
+          { usuario_id: perfil.id, nome: perfil.nome, origem_comarca: "Sua comarca atual" },
+          {
+            usuario_id: candidato.candidato_id,
+            nome: candidato.candidato_nome ?? "Servidor TJSP",
+            origem_comarca: candidato.comarca_origem ?? "Comarca não informada",
+            destino_comarca: candidato.comarca_destino ?? "Destino não informado",
+            unidade_origem: candidato.unidade_origem ?? null,
+          },
+        ];
+        const { error: historicoDiretaError } = await supabase
+          .from("historico_oportunidades_usuario")
+          .upsert({
+            usuario_id: perfil.id,
+            tipo: "direta",
+            assinatura,
+            participantes: participantesDireta,
+            status: "ativa",
+            ultima_encontrada_em: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }, { onConflict: "usuario_id,tipo,assinatura" });
+        if (historicoDiretaError) {
+          console.error("[CRON] Erro ao preservar permuta direta:", historicoDiretaError.message);
+        }
+
 
         const {
           data:
@@ -1154,6 +1246,63 @@ export async function GET(
         ciclosData ??
         []
       ) as MatchCiclo3[];
+
+    const historicoCiclo3Atual: any[] = [];
+    const idsTodosCiclos = [...new Set(ciclos.flatMap((c) => [
+      c.participante_1, c.participante_2, c.participante_3
+    ]))];
+    const [{ data: perfisCiclo }, { data: preferenciasCiclo }] = await Promise.all([
+      idsTodosCiclos.length
+        ? supabase.from("perfis").select("id,nome,comarca_atual_id").in("id", idsTodosCiclos)
+        : Promise.resolve({ data: [] as any[] }),
+      idsTodosCiclos.length
+        ? supabase.from("preferencias_movimentacao").select("perfil_id,comarca_destino_id").in("perfil_id", idsTodosCiclos).eq("ativo", true)
+        : Promise.resolve({ data: [] as any[] }),
+    ]);
+    const mapaPerfisCiclo = new Map((perfisCiclo ?? []).map((p: any) => [p.id, p]));
+    const mapaDestinosCiclo = new Map((preferenciasCiclo ?? []).map((p: any) => [p.perfil_id, p.comarca_destino_id]));
+    const idsComarcasCiclo = [...new Set([
+      ...(perfisCiclo ?? []).map((p: any) => p.comarca_atual_id),
+      ...(preferenciasCiclo ?? []).map((p: any) => p.comarca_destino_id),
+    ].filter(Boolean))];
+    const { data: comarcasCiclo } = idsComarcasCiclo.length
+      ? await supabase.from("comarcas_tjsp").select("id,nome").in("id", idsComarcasCiclo)
+      : { data: [] as any[] };
+    const mapaComarcasCiclo = new Map((comarcasCiclo ?? []).map((c: any) => [c.id, c.nome]));
+
+    for (const ciclo of ciclos) {
+      const ids = [ciclo.participante_1, ciclo.participante_2, ciclo.participante_3];
+      const assinatura = [...ids].sort().join("--");
+      const participantes = ids.map((id, index) => {
+        const p: any = mapaPerfisCiclo.get(id);
+        const destino = mapaDestinosCiclo.get(id);
+        return {
+          ordem: index + 1,
+          usuario_id: id,
+          nome: p?.nome ?? "Servidor TJSP",
+          origem_comarca_id: p?.comarca_atual_id ?? null,
+          origem_comarca: mapaComarcasCiclo.get(p?.comarca_atual_id) ?? "Comarca não informada",
+          destino_comarca_id: destino ?? null,
+          destino_comarca: mapaComarcasCiclo.get(destino) ?? "Destino não informado",
+        };
+      });
+      for (const id of ids) {
+        historicoCiclo3Atual.push({
+          usuario_id: id,
+          tipo: "ciclo_3",
+          assinatura,
+          participantes,
+          status: "ativa",
+          ultima_encontrada_em: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+      }
+    }
+    if (historicoCiclo3Atual.length) {
+      const { error } = await supabase.from("historico_oportunidades_usuario")
+        .upsert(historicoCiclo3Atual, { onConflict: "usuario_id,tipo,assinatura" });
+      if (error) throw new Error(`Erro ao registrar ciclos atuais no histórico: ${error.message}`);
+    }
 
 
     let alertasCicloNovos =
