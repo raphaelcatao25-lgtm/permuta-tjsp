@@ -798,14 +798,6 @@ export async function GET(
         []
       ) as Perfil[];
 
-    const { error: historicoStatusError } = await supabase
-      .from("historico_oportunidades_usuario")
-      .update({ status: "indisponivel", updated_at: new Date().toISOString() })
-      .eq("status", "ativa");
-    if (historicoStatusError) {
-      throw new Error(`Erro ao atualizar status do histórico: ${historicoStatusError.message}`);
-    }
-
 
     /* ========================================================
        4. PRESERVAR CICLOS ANTERIORES ANTES DA REGERAÇÃO
@@ -1388,6 +1380,23 @@ export async function GET(
     const ciclosQuatroEncontrados =
       hashesCiclo4Encontrados.size;
 
+
+    /* ========================================================
+       9. FINALIZAR SITUAÇÃO DO HISTÓRICO
+
+       Só marca como indisponíveis as oportunidades que não foram
+       reencontradas nesta execução completa. Se o cron falhar antes
+       daqui, o histórico anterior permanece preservado como estava.
+    ======================================================== */
+    const { error: historicoStatusError } = await supabase
+      .from("historico_oportunidades_usuario")
+      .update({ status: "indisponivel", updated_at: new Date().toISOString() })
+      .eq("status", "ativa")
+      .lt("ultima_encontrada_em", execucaoIniciadaEm);
+
+    if (historicoStatusError) {
+      throw new Error(`Erro ao finalizar status do histórico: ${historicoStatusError.message}`);
+    }
 
     /* ========================================================
        9. BUSCAR SOMENTE ALERTAS QUE CONTINUAM ATUAIS
