@@ -1275,16 +1275,21 @@ export async function GET(
         ? supabase.from("comarcas_tjsp").select("id,nome").in("id", idsComarcasCiclo)
         : Promise.resolve({ data: [] as any[] }),
     ]);
-    const mapaPerfisCiclo = new Map((perfisCiclo ?? []).map((p: any) => [p.id, p]));
-    const mapaComarcasCiclo = new Map((comarcasCiclo ?? []).map((c: any) => [c.id, c.nome]));
+    const mapaPerfisCiclo = new Map<string, { id: string; nome: string }>(
+      (perfisCiclo ?? []).map((p: any) => [p.id, p] as [string, { id: string; nome: string }])
+    );
+    const mapaComarcasCiclo = new Map<number, string>(
+      (comarcasCiclo ?? []).map((c: any) => [c.id, c.nome] as [number, string])
+    );
 
     for (const ciclo of ciclos) {
       const ids = [ciclo.participante_1, ciclo.participante_2, ciclo.participante_3];
       const assinatura = [...ids].sort().join("--");
+      const origens = [ciclo.origem_1, ciclo.origem_2, ciclo.origem_3];
+      const destinos = [ciclo.destino_1, ciclo.destino_2, ciclo.destino_3];
       const participantes = ids.map((id, index) => {
-        const ordem = index + 1;
-        const origemId = ciclo[`origem_${ordem}`];
-        const destinoId = ciclo[`destino_${ordem}`];
+        const origemId = origens[index];
+        const destinoId = destinos[index];
         return {
           ordem,
           usuario_id: id,
