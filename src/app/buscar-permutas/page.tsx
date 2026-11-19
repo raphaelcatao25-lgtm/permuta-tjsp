@@ -26,6 +26,7 @@ import {
 import PermutasDiretas from "@/components/PermutasDiretas";
 import CiclosPermuta from "@/components/CiclosPermuta";
 import CiclosQuatroPermuta from "@/components/CiclosQuatroPermuta";
+import HistoricoOportunidades from "@/components/HistoricoOportunidades";
 
 
 export default function BuscarPermutasPage() {
@@ -755,6 +756,10 @@ export default function BuscarPermutasPage() {
             </div>
           </section>
 
+
+          {usuarioId && (
+            <HistoricoOportunidades usuarioId={usuarioId} />
+          )}
 
           {/* =========================================
               EXPLICAÇÃO FINAL
